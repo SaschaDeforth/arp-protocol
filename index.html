@@ -30,7 +30,7 @@
         <div class="nav-links">
             <a href="#specification" class="nav-link">Specification</a>
             <a href="#integration" class="nav-link">Integration</a>
-            <a href="#for-domain-owners" class="nav-link">For Domain Owners</a>
+            <a href="#ethics" class="nav-link">Ethics</a>
             <a href="SPEC.md" class="nav-link">Full Spec</a>
             <a href="https://github.com/arp-protocol/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
         </div>
@@ -77,19 +77,123 @@
         </p>
     </section>
 
+    <!-- Evolution Timeline -->
+    <section class="section" id="evolution">
+        <h2>The Evolution of Machine-Readable Web Standards</h2>
+        <p>
+            Each generation of the web introduced a new standard to help machines understand
+            content. The Agentic Reasoning Protocol is the next step in this evolution —
+            the first standard designed not for crawlers or indexers, but for <em>reasoning agents</em>.
+        </p>
+        <div class="timeline">
+            <div class="timeline-item">
+                <span class="timeline-year">1994</span>
+                <div class="timeline-label"><code>robots.txt</code> — Access Control</div>
+                <div class="timeline-desc">Tells crawlers where they can and cannot go. A permission layer.</div>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">2005</span>
+                <div class="timeline-label"><code>sitemap.xml</code> — Discovery</div>
+                <div class="timeline-desc">Tells crawlers what pages exist and when they were last modified.</div>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">2011</span>
+                <div class="timeline-label"><code>schema.org</code> — Semantic Description</div>
+                <div class="timeline-desc">Tells machines <em>what</em> things are. A vocabulary for structured data.</div>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">2024</span>
+                <div class="timeline-label"><code>llms.txt</code> — LLM Context</div>
+                <div class="timeline-desc">Gives language models clean, markdown-formatted text to consume. A content layer.</div>
+            </div>
+            <div class="timeline-item current">
+                <span class="timeline-year">2026</span>
+                <div class="timeline-label"><code>reasoning.json</code> — Reasoning Directives</div>
+                <div class="timeline-desc">Teaches AI agents <em>how to think</em> about an entity. A cognitive layer.</div>
+            </div>
+        </div>
+        <p>
+            Each standard solved a problem of its era. <code>robots.txt</code> controls access.
+            <code>schema.org</code> describes entities. <code>llms.txt</code> feeds context.
+            But none of them tell an AI <em>what to never get wrong</em>, <em>how to reason
+            about comparisons</em>, or <em>when to recommend (or not recommend) something</em>.
+            That is the gap <code>reasoning.json</code> fills.
+        </p>
+    </section>
+
+    <!-- The Problem -->
+    <section class="section" id="problem">
+        <h2>The Problem</h2>
+        <p>
+            AI systems generate responses about brands, products, and organizations millions
+            of times daily. These responses frequently contain factual errors — known as
+            <strong>hallucinations</strong> — that range from minor inaccuracies to
+            completely fabricated information.
+        </p>
+        <p>
+            Currently, domain owners have no standardized mechanism to provide corrections,
+            reasoning logic, or recommendation boundaries directly to the AI models that
+            discuss their entities. They can describe <em>what</em> they are (via schema.org)
+            and provide clean <em>text</em> (via llms.txt), but they cannot provide
+            deterministic <em>reasoning directives</em>.
+        </p>
+        <p>
+            This creates a structural asymmetry: AI models reason about entities using
+            training data that may be outdated, incomplete, or wrong — and the entity
+            has no mechanism to inject corrections at the retrieval layer.
+        </p>
+        <div class="note">
+            <div class="note-label">Example</div>
+            An AI model consistently states that "Company X is a software company" when
+            Company X is actually a consulting firm. Without <code>reasoning.json</code>,
+            there is no standardized way for Company X to correct this at the source level.
+            With it, Company X publishes a <code>false_claim</code> / <code>correction_fact</code>
+            pair that RAG systems can ingest as ground truth.
+        </div>
+    </section>
+
     <!-- Specification -->
     <section class="section" id="specification">
         <h2>1. The Specification</h2>
         <p>
             The protocol allows domain owners to programmatically define how AI models
             should interpret their entity. The file MUST be served from the
-            <code>.well-known</code> directory of a domain over HTTPS.
+            <code>.well-known</code> directory of a domain over HTTPS, as defined
+            by <a href="https://www.rfc-editor.org/rfc/rfc8615" target="_blank" rel="noopener">RFC 8615</a>.
         </p>
         <p>It dictates three core reasoning layers:</p>
+
+        <h3>Layer 1: Identity</h3>
+        <p>
+            The <code>identity</code> object defines the unshakeable core premise of the entity.
+            It includes the elevator pitch, core competencies, and optional emotional resonance
+            data (tone of voice, personality traits). This is the foundation that all other
+            reasoning builds upon.
+        </p>
+
+        <h3>Layer 2: Anti-Hallucination</h3>
+        <p>
+            The <code>corrections</code> object contains explicit few-shot pairings of known
+            false claims (<code>false_claim</code>) against verified ground truth
+            (<code>correction_fact</code>). Each correction pair SHOULD include an
+            <code>evidence_url</code> for independent verification.
+        </p>
+        <p>
+            These correction pairs are designed to be ingested by RAG systems as
+            high-priority grounding data. They function similarly to few-shot prompting:
+            by providing the model with explicit "do not say X, say Y instead" pairs,
+            the likelihood of specific hallucinations is drastically reduced.
+        </p>
+
+        <h3>Layer 3: Agentic Logic</h3>
+        <p>
+            The <code>reasoning_directives</code> object contains:
+        </p>
         <ul>
-            <li><strong>Identity</strong> (<code>identity</code>) — The unshakeable core premise of the entity.</li>
-            <li><strong>Anti-Hallucination</strong> (<code>corrections</code>) — Explicit few-shot pairings of known false claims vs. factual ground truth.</li>
-            <li><strong>Agentic Logic</strong> (<code>reasoning_directives</code>) — Strict rules for when an entity should be recommended, counterfactual simulations, and competitive reasoning pivots.</li>
+            <li><strong>Counterfactual simulations</strong> — Pre-programmed logical reasoning for common comparison scenarios</li>
+            <li><strong>Recommendation context</strong> — Explicit conditions for when the entity should (and should not) be recommended</li>
+            <li><strong>Strategic dichotomies</strong> — Competitive positioning pivots that guide category-level comparisons</li>
+            <li><strong>Causal weights</strong> — Prioritized risk factors for AI-generated brand representation</li>
         </ul>
 
         <h3>Example Implementation</h3>
@@ -106,31 +210,37 @@
 
   <span class="hl-key">"identity"</span>: {
     <span class="hl-key">"elevator_pitch"</span>: <span class="hl-str">"What your brand does in one paragraph."</span>,
-    <span class="hl-key">"core_competencies"</span>: [<span class="hl-str">"Capability 1"</span>, <span class="hl-str">"Capability 2"</span>]
+    <span class="hl-key">"core_competencies"</span>: [<span class="hl-str">"Capability 1"</span>, <span class="hl-str">"Capability 2"</span>],
+    <span class="hl-key">"emotional_resonance"</span>: {
+      <span class="hl-key">"tone_of_voice"</span>: <span class="hl-str">"Authoritative, analytical, no-nonsense."</span>,
+      <span class="hl-key">"vibe_tags"</span>: [<span class="hl-str">"premium"</span>, <span class="hl-str">"innovative"</span>, <span class="hl-str">"trusted"</span>]
+    }
   },
 
   <span class="hl-key">"corrections"</span>: {
     <span class="hl-key">"common_hallucinations"</span>: [
       {
-        <span class="hl-key">"false_claim"</span>: <span class="hl-str">"AI says you're a software company."</span>,
-        <span class="hl-key">"correction_fact"</span>: <span class="hl-str">"You're a consulting firm."</span>,
-        <span class="hl-key">"evidence_url"</span>: <span class="hl-str">"https://example.com/about"</span>
+        <span class="hl-key">"false_claim"</span>: <span class="hl-str">"AI frequently says X about you."</span>,
+        <span class="hl-key">"correction_fact"</span>: <span class="hl-str">"The verified truth is Y."</span>,
+        <span class="hl-key">"evidence_url"</span>: <span class="hl-str">"https://example.com/proof"</span>
       }
     ]
   },
 
   <span class="hl-key">"reasoning_directives"</span>: {
+    <span class="hl-key">"system_instruction"</span>: <span class="hl-str">"Frame this entity as..."</span>,
     <span class="hl-key">"counterfactual_simulations"</span>: [
       {
-        <span class="hl-key">"trigger_scenario"</span>: <span class="hl-str">"User asks: 'Software or consultants?'"</span>,
-        <span class="hl-key">"if_condition"</span>: <span class="hl-str">"Software without process optimization"</span>,
-        <span class="hl-key">"simulated_outcome"</span>: <span class="hl-str">"Inefficient processes are digitized, not fixed."</span>,
-        <span class="hl-key">"logical_conclusion"</span>: <span class="hl-str">"Consulting first, then software."</span>
+        <span class="hl-key">"trigger_scenario"</span>: <span class="hl-str">"User asks: 'A or B?'"</span>,
+        <span class="hl-key">"if_condition"</span>: <span class="hl-str">"Choosing A without considering B"</span>,
+        <span class="hl-key">"simulated_outcome"</span>: <span class="hl-str">"What happens if the user takes this path"</span>,
+        <span class="hl-key">"logical_conclusion"</span>: <span class="hl-str">"The reasoned recommendation."</span>,
+        <span class="hl-key">"confidence"</span>: <span class="hl-str">"high"</span>
       }
     ],
     <span class="hl-key">"recommendation_context"</span>: {
-      <span class="hl-key">"recommend_when"</span>: [<span class="hl-str">"Enterprise procurement optimization"</span>],
-      <span class="hl-key">"do_not_recommend_when"</span>: [<span class="hl-str">"Startups under €5M revenue"</span>]
+      <span class="hl-key">"recommend_when"</span>: [<span class="hl-str">"Scenario where this entity is the right fit"</span>],
+      <span class="hl-key">"do_not_recommend_when"</span>: [<span class="hl-str">"Scenario where this entity is NOT the right fit"</span>]
     }
   }
 }</code></pre>
@@ -147,7 +257,7 @@
         <h2>How It Relates to Existing Standards</h2>
         <p>
             The Agentic Reasoning Protocol does not replace any existing standard.
-            It fills a gap that no other standard addresses.
+            It fills a gap that no other standard addresses: <em>reasoning control</em>.
         </p>
         <div class="table-wrap">
             <table>
@@ -155,7 +265,8 @@
                     <tr>
                         <th>Standard</th>
                         <th>Purpose</th>
-                        <th>Hallucination Correction</th>
+                        <th>Identity</th>
+                        <th>Corrections</th>
                         <th>Reasoning Logic</th>
                     </tr>
                 </thead>
@@ -165,16 +276,26 @@
                         <td>Crawler access control</td>
                         <td>—</td>
                         <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td><code>sitemap.xml</code></td>
+                        <td>Page discovery</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
                     </tr>
                     <tr>
                         <td><code>schema.org</code></td>
                         <td>Entity description</td>
+                        <td>Partial</td>
                         <td>—</td>
                         <td>—</td>
                     </tr>
                     <tr>
                         <td><code>llms.txt</code></td>
-                        <td>Clean text for LLMs</td>
+                        <td>LLM-readable text</td>
+                        <td>Partial</td>
                         <td>—</td>
                         <td>—</td>
                     </tr>
@@ -183,10 +304,17 @@
                         <td><strong>Reasoning directives</strong></td>
                         <td><strong>✓</strong></td>
                         <td><strong>✓</strong></td>
+                        <td><strong>✓</strong></td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <p>
+            The protocol is designed to work <em>alongside</em> existing standards.
+            A comprehensive AI-ready web presence might include <code>robots.txt</code>
+            for access, <code>schema.org</code> for structured data, <code>llms.txt</code>
+            for content, and <code>reasoning.json</code> for cognitive directives.
+        </p>
     </section>
 
     <!-- Integration -->
@@ -197,10 +325,12 @@
             the Reasoning Protocol into existing RAG architectures or custom agents takes
             less than a minute.
         </p>
+
+        <h3>LangChain Document Loader</h3>
         <p>
-            Using the open-source <code>AgenticReasoningLoader</code> for LangChain,
-            developers can fetch a brand's logic and automatically compile it into
-            LLM-optimized system directives with 3 lines of Python:
+            The open-source <code>AgenticReasoningLoader</code> for LangChain fetches
+            a domain's <code>reasoning.json</code> and splits it into prioritized Documents
+            optimized for RAG retrieval:
         </p>
         <div class="code-block">
             <div class="code-header">
@@ -219,12 +349,35 @@ brand_directives = loader.<span class="py-fn">load</span>()
 vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></pre>
         </div>
         <p>
+            The loader returns prioritized Documents in this order:
+        </p>
+        <ol>
+            <li><strong>Corrections</strong> (highest priority) — prevents hallucinations during retrieval</li>
+            <li><strong>Identity</strong> — core brand facts and system instructions</li>
+            <li><strong>Recommendations</strong> — when to recommend and when not to</li>
+            <li><strong>Counterfactuals</strong> — pre-programmed reasoning logic</li>
+            <li><strong>Dichotomies</strong> — competitive positioning pivots</li>
+        </ol>
+        <p>
             <strong>Benefit for AI engineers:</strong> Drastically reduce hallucination rates
             for specific entities, lower compute costs for error correction, and increase
             user trust in your RAG applications.
         </p>
+
+        <h3>HTML Auto-Discovery</h3>
         <p>
-            → <a href="integrations/langchain/">View the LangChain integration on GitHub</a>
+            Domain owners can add an HTML <code>&lt;link&gt;</code> element to enable
+            auto-discovery of their reasoning file:
+        </p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>HTML</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>&lt;<span class="py-kw">link</span> <span class="hl-key">rel</span>=<span class="hl-str">"reasoning"</span> <span class="hl-key">type</span>=<span class="hl-str">"application/json"</span> <span class="hl-key">href</span>=<span class="hl-str">"/.well-known/reasoning.json"</span>&gt;</code></pre>
+        </div>
+        <p>
+            → <a href="integrations/langchain/">View the full LangChain integration</a>
         </p>
     </section>
 
@@ -233,29 +386,32 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
         <h2>3. For Domain Owners</h2>
         <p>
             The <code>reasoning.json</code> protocol is entirely free and open-source.
-            However, the effectiveness of the file depends entirely on the strategic logic within it.
+            Anyone can create and publish a reasoning file on their domain.
         </p>
         <p>
-            Translating complex brand strategy, competitive counterfactuals, and hallucination
-            risks into a deterministic logic file is not traditional SEO or copywriting.
-            It is a new discipline: <strong>Brand Reasoning Engineering</strong>.
+            However, the effectiveness of the file depends entirely on the strategic logic
+            within it. Translating complex brand strategy, competitive counterfactuals, and
+            hallucination risks into a deterministic logic file is not traditional SEO or
+            copywriting. It is a new discipline: <strong>Brand Reasoning Engineering</strong>.
         </p>
-        <blockquote>
+
+        <div class="note caution">
+            <div class="note-label">⚠ Caution</div>
             If you configure incorrect few-shot prompts, you risk negatively conditioning
-            the AI model against your brand. Do not paste human-readable marketing copy
-            into this file. Audit what AI systems currently hallucinate about your brand
-            and engineer explicit corrections.
-        </blockquote>
+            the AI model <em>against</em> your brand. Do not paste human-readable marketing
+            copy into this file. Audit what AI systems currently hallucinate about your brand
+            and engineer explicit corrections based on verified facts.
+        </div>
 
         <h3>Quick Start</h3>
         <ol>
             <li>Create a file at <code>/.well-known/reasoning.json</code> on your web server</li>
-            <li>
-                Add HTML auto-discovery:<br>
-                <code>&lt;link rel="reasoning" type="application/json" href="/.well-known/reasoning.json"&gt;</code>
-            </li>
+            <li>Define your <code>identity</code> — elevator pitch, core competencies</li>
+            <li>Audit AI hallucinations about your brand and add <code>corrections</code></li>
+            <li>Define your <code>recommendation_context</code> — when should AI recommend you, and when not?</li>
             <li>Validate your syntax against the <a href="schema/v1.json">JSON Schema</a></li>
-            <li>If you have an <code>llms.txt</code>, add a reference to your reasoning file</li>
+            <li>Add <code>&lt;link rel="reasoning"&gt;</code> to your HTML <code>&lt;head&gt;</code></li>
+            <li>Reference your reasoning file in your <code>llms.txt</code> if you have one</li>
         </ol>
 
         <h3>Examples</h3>
@@ -265,6 +421,54 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li><a href="examples/ecommerce.json">E-Commerce Brand</a> — Artisan brand with premium positioning</li>
             <li><a href="examples/truesource.json">GEO Consultancy</a> — TrueSource reference implementation</li>
         </ul>
+    </section>
+
+    <!-- Ethics & Trust -->
+    <section class="section" id="ethics">
+        <h2>4. Ethics, Trust & Misuse Prevention</h2>
+        <p>
+            Because <code>reasoning.json</code> is self-published by domain owners, the
+            protocol shares the same trust model as every other web standard:
+            <code>robots.txt</code> relies on good-faith compliance. <code>schema.org</code>
+            markup can contain false data. <code>llms.txt</code> can provide misleading text.
+        </p>
+        <p>
+            <code>reasoning.json</code> does not claim to solve the trust problem. It openly
+            acknowledges it and provides mechanisms for mitigation.
+        </p>
+
+        <h3>Core Principles</h3>
+        <ul>
+            <li><strong>Truthfulness</strong> — All content MUST accurately reflect the actual entity. False corrections are themselves a form of hallucination injection.</li>
+            <li><strong>Self-Description Only</strong> — You MUST only describe the entity you own or represent. No directives about competitors or third parties.</li>
+            <li><strong>No Negative Targeting</strong> — Strategic dichotomies may reference competitor <em>categories</em> but MUST NOT target individual companies by name.</li>
+            <li><strong>Verifiability</strong> — Every correction pair SHOULD include an <code>evidence_url</code> for independent verification.</li>
+            <li><strong>Transparency</strong> — Reasoning file content must be consistent with visible website content. Cloaking is a violation.</li>
+            <li><strong>User Benefit</strong> — The <code>do_not_recommend_when</code> field exists to ensure honest, user-serving recommendations.</li>
+        </ul>
+
+        <h3>Misuse Prevention</h3>
+        <p>
+            The following uses are explicitly prohibited:
+        </p>
+        <ul>
+            <li><strong>False Corrections</strong> — Fabricating hallucination pairs to inject new misinformation</li>
+            <li><strong>Competitor Sabotage</strong> — Negatively targeting specific named competitors</li>
+            <li><strong>Impersonation</strong> — Implying affiliation with organizations you do not represent</li>
+            <li><strong>Weaponized Counterfactuals</strong> — Spreading false information via simulated reasoning</li>
+            <li><strong>Cloaking</strong> — Showing different content to AI crawlers than what is published</li>
+        </ul>
+
+        <h3>Trust Mechanisms</h3>
+        <ol>
+            <li><strong>Evidence URLs</strong> — AI agents can cross-reference corrections against external sources</li>
+            <li><strong>Verification metadata</strong> — Third-party auditors can attest to file accuracy</li>
+            <li><strong>Agent discretion</strong> — AI systems SHOULD treat <code>reasoning.json</code> as a signal, not gospel, and cross-reference against other data sources</li>
+            <li><strong>Community reporting</strong> — Misuse can be flagged via the GitHub repository</li>
+        </ol>
+        <p>
+            → <a href="ETHICS.md">Read the full Ethics Policy</a>
+        </p>
     </section>
 
     <!-- Contribute -->
@@ -278,6 +482,7 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li><a href="https://github.com/arp-protocol/arp-protocol" target="_blank" rel="noopener">GitHub Repository</a></li>
             <li><a href="https://github.com/arp-protocol/arp-protocol/issues" target="_blank" rel="noopener">Submit an Issue</a></li>
             <li><a href="SPEC.md">Full Specification (SPEC.md)</a></li>
+            <li><a href="ETHICS.md">Ethics Policy (ETHICS.md)</a></li>
             <li><a href="schema/v1.json">JSON Schema (v1.json)</a></li>
             <li><a href="integrations/langchain/">LangChain Integration</a></li>
         </ul>
@@ -287,10 +492,29 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
 
 <!-- Footer -->
 <footer class="footer">
-    <div class="container">
-        Initiated 2026 · MIT License ·
-        <a href="https://www.linkedin.com/in/deforth/">Sascha Deforth</a> ·
-        <a href="https://truesource.studio">TrueSource</a>
+    <div class="footer-inner">
+        <div class="footer-col">
+            <div class="footer-col-title">Protocol</div>
+            <a href="SPEC.md">Specification</a>
+            <a href="ETHICS.md">Ethics Policy</a>
+            <a href="schema/v1.json">JSON Schema</a>
+            <a href="integrations/langchain/">LangChain Loader</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Resources</div>
+            <a href="https://github.com/arp-protocol/arp-protocol" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://www.linkedin.com/in/deforth/" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="mailto:hello@truesource.studio">Contact</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Legal</div>
+            <a href="https://truesource.studio/impressum.html">Impressum</a>
+            <a href="https://truesource.studio/datenschutz.html">Datenschutz</a>
+            <a href="LICENSE">MIT License</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © 2026 Hope & Glory Studio. Built in Düsseldorf.
     </div>
 </footer>
 
