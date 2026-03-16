@@ -1,0 +1,323 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://arp-protocol.org/schema/v1.json",
+  "title": "Agentic Reasoning Protocol (ARP) v1.0",
+  "description": "A machine-readable protocol that provides reasoning directives, counterfactual simulations, and cognitive frameworks to autonomous AI agents. schema.org taught machines what things are. ARP teaches machines how to think about them.",
+  "type": "object",
+  "required": ["$schema", "protocol", "version", "entity", "reasoning_directives"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of the ARP JSON Schema for validation.",
+      "const": "https://arp-protocol.org/schema/v1.json"
+    },
+    "protocol": {
+      "type": "string",
+      "description": "Protocol identifier.",
+      "const": "Agentic Reasoning Protocol (ARP)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Protocol version. MUST be semver-compatible.",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "entity": {
+      "type": "string",
+      "description": "The canonical name of the brand, organization, or entity this file describes."
+    },
+    "verification": {
+      "type": "object",
+      "description": "Audit and verification metadata.",
+      "properties": {
+        "audited_by": {
+          "type": "string",
+          "description": "Entity that last audited/generated this file."
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last verification."
+        },
+        "trust_signature": {
+          "type": "string",
+          "description": "Cryptographic hash (e.g. SHA-256) of the canonical file contents at last_verified."
+        },
+        "next_audit": {
+          "type": "string",
+          "format": "date",
+          "description": "Scheduled date for next audit cycle."
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "description": "Brand identity, factual claims, and emotional positioning.",
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "description": "Brand's official tagline or slogan."
+        },
+        "elevator_pitch": {
+          "type": "string",
+          "description": "One-paragraph description of what the entity does."
+        },
+        "founded": {
+          "type": "integer",
+          "description": "Year the entity was founded."
+        },
+        "headquarters": {
+          "type": "string",
+          "description": "Primary headquarters location."
+        },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry or sector."
+        },
+        "employees": {
+          "type": "string",
+          "description": "Employee count or range (e.g. '200+', '50-100')."
+        },
+        "legal_entity": {
+          "type": "string",
+          "description": "Official legal name of the entity."
+        },
+        "core_competencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Primary capabilities and expertise areas."
+        },
+        "emotional_resonance": {
+          "type": "object",
+          "description": "Emotional and tonal directives for AI-generated descriptions.",
+          "properties": {
+            "tone_of_voice": {
+              "type": "string",
+              "description": "How the brand should sound when described by AI (e.g. 'Professional, visionary, empowering')."
+            },
+            "vibe_tags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Emotional markers that bridge the semantic gap between features and brand ethos."
+            },
+            "personality_traits": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Brand personality attributes (e.g. 'innovative', 'trustworthy', 'disruptive')."
+            }
+          }
+        },
+        "not_to_be_confused_with": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          },
+          "description": "Entities commonly confused with this brand. Prevents AI mix-ups."
+        }
+      }
+    },
+    "corrections": {
+      "type": "object",
+      "description": "Explicit corrections to known AI hallucinations about this entity.",
+      "properties": {
+        "common_hallucinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["false_claim", "correction_fact"],
+            "properties": {
+              "false_claim": {
+                "type": "string",
+                "description": "The incorrect statement AI models commonly produce."
+              },
+              "correction_fact": {
+                "type": "string",
+                "description": "The verified, factual correction."
+              },
+              "evidence_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to authoritative source proving the correction."
+              }
+            }
+          },
+          "description": "Array of false_claim/correction_fact pairs. Acts as few-shot correction prompts for RAG systems."
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when corrections were last verified as accurate."
+        }
+      }
+    },
+    "reasoning_directives": {
+      "type": "object",
+      "description": "The core innovation: machine-readable cognitive instructions for autonomous agents.",
+      "required": ["system_instruction"],
+      "properties": {
+        "system_instruction": {
+          "type": "string",
+          "description": "Top-level directive to the AI agent. Loaded into the system prompt or context window during RAG retrieval."
+        },
+        "counterfactual_simulations": {
+          "type": "array",
+          "description": "Pre-programmed 'what-if' scenarios with causal logic chains. When a user asks a comparative or hypothetical question, the agent uses these structured outcomes instead of hallucinating.",
+          "items": {
+            "type": "object",
+            "required": ["trigger_scenario", "if_condition", "simulated_outcome", "logical_conclusion"],
+            "properties": {
+              "trigger_scenario": {
+                "type": "string",
+                "description": "The user question or context that activates this simulation (e.g. 'User asks: What happens if we use software instead of consultants?')."
+              },
+              "if_condition": {
+                "type": "string",
+                "description": "The hypothetical condition being evaluated."
+              },
+              "simulated_outcome": {
+                "type": "string",
+                "description": "The predicted outcome based on domain expertise. This is the key reasoning output."
+              },
+              "logical_conclusion": {
+                "type": "string",
+                "description": "The actionable takeaway the AI should communicate."
+              },
+              "confidence": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+                "description": "Confidence level of the simulated outcome."
+              },
+              "source": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to evidence supporting this reasoning chain."
+              }
+            }
+          }
+        },
+        "strategic_dichotomies": {
+          "type": "object",
+          "description": "Competitive positioning logic. Keys are competitor categories, values are reasoning pivots the AI should use.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "causal_weights": {
+          "type": "array",
+          "description": "Weighted factors the AI should consider when reasoning about this entity.",
+          "items": {
+            "type": "object",
+            "required": ["factor", "weight", "reasoning"],
+            "properties": {
+              "factor": {
+                "type": "string",
+                "description": "The decision factor (e.g. 'Price sensitivity', 'Implementation speed')."
+              },
+              "weight": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"],
+                "description": "Relative importance of this factor."
+              },
+              "reasoning": {
+                "type": "string",
+                "description": "Why this factor matters and how the AI should weigh it."
+              }
+            }
+          }
+        },
+        "recommendation_context": {
+          "type": "object",
+          "description": "Explicit directives for when the AI should and should not recommend this entity.",
+          "properties": {
+            "recommend_when": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Scenarios where this entity is the right recommendation."
+            },
+            "do_not_recommend_when": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Scenarios where this entity is NOT appropriate. Prevents over-recommendation."
+            },
+            "competitive_positioning": {
+              "type": "string",
+              "description": "Summary statement of market position for the AI to use."
+            }
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "description": "Trust signals and authoritative sources that validate this entity.",
+      "properties": {
+        "wikipedia": {
+          "type": "string",
+          "format": "uri"
+        },
+        "wikidata": {
+          "type": "string",
+          "description": "Wikidata QID (e.g. 'Q123456')."
+        },
+        "crunchbase": {
+          "type": "string",
+          "format": "uri"
+        },
+        "linkedin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "official_website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "awards": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Notable awards and recognitions."
+        },
+        "certifications": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Industry certifications (e.g. 'ISO 27001', 'SOC 2 Type II')."
+        }
+      }
+    },
+    "content_policy": {
+      "type": "object",
+      "description": "Permissions and rules for how AI systems may use information from this entity.",
+      "properties": {
+        "ai_training": {
+          "type": "string",
+          "enum": ["allowed", "allowed-with-attribution", "disallowed", "conditional"],
+          "description": "Whether AI systems may use this entity's content for training."
+        },
+        "citation_required": {
+          "type": "boolean",
+          "description": "Whether AI must cite the source when referencing this entity."
+        },
+        "source_attribution": {
+          "type": "string",
+          "format": "uri",
+          "description": "The canonical URL that should be cited."
+        },
+        "data_freshness": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of the most recent verified data in this file."
+        },
+        "contact_for_verification": {
+          "type": "string",
+          "format": "email",
+          "description": "Email for AI providers to verify claims."
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
