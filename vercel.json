@@ -3,6 +3,7 @@
   "installCommand": null,
   "framework": null,
   "outputDirectory": ".",
+  "cleanUrls": true,
   "headers": [
     {
       "source": "/.well-known/reasoning.json",
@@ -10,12 +11,12 @@
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
-    },
+    }
+  ],
+  "rewrites": [
     {
-      "source": "/.well-known/layer0/(.*)",
-      "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
-      ]
+      "source": "/.well-known/layer0",
+      "destination": "/.well-known/layer0/index.html"
     }
   ]
 }
