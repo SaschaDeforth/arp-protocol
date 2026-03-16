@@ -21,7 +21,7 @@ Usage:
     # The reasoning directives are now in the retriever's context
 
 License: MIT
-Author: Sascha Deforth / Antigravity Ventures
+Author: Sascha Deforth
 """
 
 from __future__ import annotations

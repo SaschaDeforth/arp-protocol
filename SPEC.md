@@ -3,7 +3,7 @@
 **Status:** Draft  
 **Version:** 1.0  
 **Date:** 2026-03-16  
-**Authors:** Sascha Deforth (Antigravity Ventures)  
+**Authors:** Sascha Deforth
 **License:** MIT
 
 ---
