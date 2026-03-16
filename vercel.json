@@ -1,0 +1,15 @@
+{
+  "buildCommand": null,
+  "installCommand": null,
+  "framework": null,
+  "outputDirectory": ".",
+  "headers": [
+    {
+      "source": "/.well-known/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
