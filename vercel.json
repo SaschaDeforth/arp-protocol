@@ -5,10 +5,16 @@
   "outputDirectory": ".",
   "headers": [
     {
-      "source": "/.well-known/(.*)",
+      "source": "/.well-known/reasoning.json",
       "headers": [
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/.well-known/layer0/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
       ]
     }
   ]
