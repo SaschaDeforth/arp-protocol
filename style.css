@@ -277,17 +277,137 @@ hr {
   margin: 32px 0;
 }
 
+/* --- Timeline --- */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+  margin: 24px 0;
+  border-left: 2px solid var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0 0 24px 16px;
+}
+
+.timeline-item:last-child { padding-bottom: 0; }
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -29px;
+  top: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 2px solid var(--bg);
+}
+
+.timeline-item.current::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+}
+
+.timeline-year {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.timeline-label {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.timeline-label code {
+  font-size: 13px;
+}
+
+.timeline-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* --- Note/Caution Boxes --- */
+.note {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 14px;
+  background: var(--code-bg);
+}
+
+.note-label {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.caution {
+  border-left-color: #bf8700;
+}
+
+.caution .note-label {
+  color: #bf8700;
+}
+
 /* --- Footer --- */
 .footer {
-  padding: 24px 0;
+  padding: 32px 0;
   border-top: 1px solid var(--border);
   font-size: 13px;
   color: var(--text-dim);
-  text-align: center;
+}
+
+.footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-col-title {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
 }
 
 .footer a {
   color: var(--text-muted);
+}
+
+.footer a:hover {
+  color: var(--text);
+}
+
+.footer-bottom {
+  max-width: var(--max-width);
+  margin: 20px auto 0;
+  padding: 16px 24px 0;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 /* --- Responsive --- */
