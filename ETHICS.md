@@ -3,7 +3,7 @@
 **Status:** Active  
 **Version:** 1.0  
 **Date:** March 2026  
-**Authors:** Sascha Deforth (Hope & Glory Studio)
+**Authors:** Sascha Deforth
 
 ---
 

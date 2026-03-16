@@ -161,4 +161,4 @@ MIT — Free and open source. No restrictions.
 
 ---
 
-*Initiated 2026 by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [Hope & Glory Studio](https://truesource.studio) · Built in Düsseldorf.*
+*Initiated 2026 by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Built in Düsseldorf.*
