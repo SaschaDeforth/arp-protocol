@@ -1,0 +1,23 @@
+# https://arp-protocol.org/robots.txt
+# Agentic Reasoning Protocol — Open Standard
+
+User-agent: *
+Allow: /
+
+# AI Crawlers — Welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: https://arp-protocol.org/sitemap.xml

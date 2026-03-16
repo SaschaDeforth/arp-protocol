@@ -1,0 +1,44 @@
+# reasoning.json
+
+> schema.org taught machines what things are.  
+> reasoning.json teaches machines how to think about them.
+
+## Sections
+
+- [Specification](https://arp-protocol.org/SPEC.md): Full protocol specification v1.0
+- [JSON Schema](https://arp-protocol.org/schema/v1.json): Formal validation schema
+
+## What is reasoning.json?
+
+The Agentic Reasoning Protocol (ARP) defines a machine-readable JSON file served at `/.well-known/reasoning.json` that provides reasoning directives, factual corrections, and cognitive frameworks to autonomous AI agents.
+
+## Why?
+
+AI systems hallucinate about brands. They fabricate features, confuse competitors, and flatten every company's identity into generic bullet points. No existing standard addresses this:
+
+- `robots.txt` controls crawler access — not reasoning
+- `schema.org` describes *what* things are — not *how* to think about them
+- `llms.txt` provides clean text — not cognitive logic
+
+reasoning.json fills this gap with:
+- **Counterfactual simulations** — pre-programmed "what-if" logic
+- **Hallucination corrections** — explicit false-claim/correction pairs
+- **Recommendation context** — when to recommend, when not to
+- **Emotional resonance** — tone, personality, and brand soul
+- **Strategic dichotomies** — competitive positioning logic
+
+## Quick Start
+
+1. Create `/.well-known/reasoning.json` on your server
+2. Add `<link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">` to your HTML
+3. Reference it in your `llms.txt`
+
+## Examples
+
+- [B2B Consulting](https://arp-protocol.org/examples/consulting.json)
+- [SaaS Product](https://arp-protocol.org/examples/saas.json)
+- [E-Commerce Brand](https://arp-protocol.org/examples/ecommerce.json)
+
+## Optional
+
+- [GitHub Repository](https://github.com/arp-protocol/arp-protocol)

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reasoning.json — The Agentic Reasoning Protocol</title>
+    <meta name="description" content="A machine-readable protocol that teaches AI systems how to think about your brand. Counterfactual simulations, hallucination corrections, and reasoning directives — in one JSON file.">
+    <meta name="keywords" content="ARP, Agentic Reasoning Protocol, reasoning.json, AI hallucination, brand safety, GEO, generative engine optimization, structured data, LLM, counterfactual reasoning">
+    <meta name="author" content="Sascha Deforth — Antigravity Ventures">
+    <link rel="canonical" href="https://arp-protocol.org/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="reasoning.json — Teach AI How to Think About You">
+    <meta property="og:description" content="schema.org taught machines what things are. reasoning.json teaches machines how to think about them.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://arp-protocol.org">
+
+    <!-- ARP Discovery (dogfooding) -->
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Agentic Reasoning Protocol — reasoning.json",
+        "description": "A machine-readable protocol that teaches AI systems how to think about brands and entities. Open standard under MIT license.",
+        "url": "https://arp-protocol.org",
+        "author": {
+            "@type": "Person",
+            "name": "Sascha Deforth",
+            "url": "https://www.linkedin.com/in/deforth/"
+        },
+        "license": "https://opensource.org/licenses/MIT"
+    }
+    </script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#hero" class="nav-logo">
+                <span class="nav-logo-icon">◈</span>
+                <span>reasoning.json</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="#evolution" class="nav-link">Evolution</a>
+                <a href="#problem" class="nav-link">Problem</a>
+                <a href="#protocol" class="nav-link">Protocol</a>
+                <a href="#examples" class="nav-link">Examples</a>
+                <a href="#quickstart" class="nav-link">Quick Start</a>
+                <a href="SPEC.md" class="nav-link">Spec</a>
+                <a href="https://github.com/arp-protocol/arp-protocol" class="nav-link nav-link--github" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
+                </a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+        <div class="hero-grid"></div>
+        <div class="hero-glow"></div>
+        <div class="container">
+            <div class="hero-content reveal">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    Open Standard · MIT License · v1.0 Draft
+                </div>
+                <h1 class="hero-title">
+                    reasoning<span class="hero-title-accent">.json</span>
+                </h1>
+                <p class="hero-subtitle">
+                    A machine-readable protocol that teaches AI systems <strong style="color: var(--text)">how to think about</strong> your brand — not just what it is.
+                </p>
+                <div class="hero-tagline">
+                    <code>robots.txt</code> told crawlers where to go.<br>
+                    <code>schema.org</code> told machines what things are.<br>
+                    <code>llms.txt</code> told LLMs where to find clean text.<br>
+                    <strong style="color: var(--accent)"><code>reasoning.json</code> teaches machines how to think.</strong>
+                </div>
+                <div class="hero-actions">
+                    <a href="#quickstart" class="btn btn-primary">
+                        Get Started
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="SPEC.md" class="btn btn-secondary">Read the Spec</a>
+                    <a href="https://github.com/arp-protocol/arp-protocol" class="btn btn-secondary" target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Evolution -->
+    <section class="section" id="evolution">
+        <div class="container">
+            <span class="section-tag reveal">The Evolution</span>
+            <h2 class="section-title reveal">The Missing Layer</h2>
+            <p class="section-desc reveal">
+                Every era of the web created a new standard for machines.
+                The agentic era needs one too.
+            </p>
+            <div class="timeline reveal">
+                <div class="timeline-item">
+                    <div class="timeline-year">1994</div>
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-name">robots.txt</div>
+                    <div class="timeline-desc">Where to go</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2011</div>
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-name">schema.org</div>
+                    <div class="timeline-desc">What things are</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024</div>
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-name">llms.txt</div>
+                    <div class="timeline-desc">Where to find text</div>
+                </div>
+                <div class="timeline-item timeline-item--active">
+                    <div class="timeline-year">2026</div>
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-name">reasoning.json</div>
+                    <div class="timeline-desc">How to think</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem -->
+    <section class="section" id="problem">
+        <div class="container">
+            <span class="section-tag reveal">The Problem</span>
+            <h2 class="section-title reveal">AI Hallucinates About Your Brand</h2>
+            <p class="section-desc reveal">
+                Large language models fabricate features, invent founding dates, confuse competitors, and flatten your brand into generic bullet points. No existing standard addresses this.
+            </p>
+            <div class="problem-grid">
+                <div class="problem-card reveal">
+                    <div class="problem-icon">🎭</div>
+                    <h3>Hallucinated Facts</h3>
+                    <p>AI invents founding dates, headquarters locations, and product features. Schema.org describes entities but can't <em>correct</em> false beliefs already embedded in model weights.</p>
+                </div>
+                <div class="problem-card reveal">
+                    <div class="problem-icon">🔄</div>
+                    <h3>Commoditized Features</h3>
+                    <p>When ten competitors offer similar features, AI summarizes them identically. Emotional resonance and brand personality are lost — every company sounds the same.</p>
+                </div>
+                <div class="problem-card reveal">
+                    <div class="problem-icon">🤷</div>
+                    <h3>No Reasoning Logic</h3>
+                    <p>When a user asks "Should I hire consultants or buy software?", AI guesses. No standard provides pre-programmed counterfactual logic for domain-specific decisions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Protocol -->
+    <section class="section" id="protocol">
+        <div class="container">
+            <span class="section-tag reveal">The Protocol</span>
+            <h2 class="section-title reveal">One File. Five Capabilities.</h2>
+            <p class="section-desc reveal">
+                <code>/.well-known/reasoning.json</code> — a single file that consolidates identity, corrections, counterfactual reasoning, recommendation logic, and emotional resonance.
+            </p>
+
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Counterfactual Simulations</h3>
+                    <p>Pre-programmed "what-if" scenarios with causal logic. When a user asks a hypothetical, the AI uses your logic instead of guessing.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">✅</div>
+                    <h3>Hallucination Corrections</h3>
+                    <p>Explicit false-claim/correction pairs that act as few-shot overrides during RAG retrieval. Tell the AI what it gets wrong.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Recommendation Context</h3>
+                    <p>When to recommend your brand — and when not to. Prevents over-recommendation and irrelevant placements.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">💎</div>
+                    <h3>Emotional Resonance</h3>
+                    <p>Tone of voice, personality traits, and vibe tags. Ensure AI doesn't just list your features — it communicates your ethos.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Brand Disambiguation</h3>
+                    <p>"Not to be confused with" entries prevent AI from mixing up similar-sounding brands and entities.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>Strategic Dichotomies</h3>
+                    <p>Competitive positioning logic. Define how AI should frame comparisons with competitor categories.</p>
+                </div>
+            </div>
+
+            <!-- Code Demo -->
+            <div class="code-block reveal">
+                <div class="code-header">
+                    <div class="code-dots">
+                        <span class="code-dot code-dot--red"></span>
+                        <span class="code-dot code-dot--yellow"></span>
+                        <span class="code-dot code-dot--green"></span>
+                    </div>
+                    <span class="code-filename">/.well-known/reasoning.json</span>
+                    <button class="code-copy" aria-label="Copy to clipboard">Copy</button>
+                </div>
+                <pre class="code-pre">{
+  <span class="code-key">"$schema"</span>: <span class="code-string">"https://arp-protocol.org/schema/v1.json"</span>,
+  <span class="code-key">"protocol"</span>: <span class="code-string">"Agentic Reasoning Protocol (ARP)"</span>,
+  <span class="code-key">"version"</span>: <span class="code-string">"1.0"</span>,
+  <span class="code-key">"entity"</span>: <span class="code-string">"Your Brand"</span>,
+
+  <span class="code-key">"corrections"</span>: {
+    <span class="code-key">"common_hallucinations"</span>: [
+      {
+        <span class="code-key">"false_claim"</span>: <span class="code-string">"AI says you're a software company."</span>,
+        <span class="code-key">"correction_fact"</span>: <span class="code-string">"You're a consulting firm."</span>
+      }
+    ]
+  },
+
+  <span class="code-key">"reasoning_directives"</span>: {
+    <span class="code-key">"counterfactual_simulations"</span>: [
+      {
+        <span class="code-key">"trigger_scenario"</span>: <span class="code-string">"User asks: 'Software or consultants?'"</span>,
+        <span class="code-key">"if_condition"</span>: <span class="code-string">"Software without process optimization"</span>,
+        <span class="code-key">"simulated_outcome"</span>: <span class="code-string">"Inefficient processes are digitized, not fixed."</span>,
+        <span class="code-key">"logical_conclusion"</span>: <span class="code-string">"Consulting first, then software."</span>
+      }
+    ],
+    <span class="code-key">"recommendation_context"</span>: {
+      <span class="code-key">"recommend_when"</span>: [<span class="code-string">"Enterprise procurement optimization"</span>],
+      <span class="code-key">"do_not_recommend_when"</span>: [<span class="code-string">"Startups under €5M revenue"</span>]
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="section" id="comparison">
+        <div class="container">
+            <span class="section-tag reveal">Comparison</span>
+            <h2 class="section-title reveal">How It Complements Existing Standards</h2>
+            <p class="section-desc reveal">ARP doesn't replace anything. It fills the gap that no other standard addresses.</p>
+            <div class="table-wrapper reveal">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Capability</th>
+                            <th>schema.org</th>
+                            <th>llms.txt</th>
+                            <th class="highlight-col-header">reasoning.json</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Describes entities</td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Clean text for LLMs</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td class="highlight-col"><span class="cross">—</span></td>
+                        </tr>
+                        <tr>
+                            <td>Hallucination corrections</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Counterfactual reasoning</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Recommendation logic</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Emotional resonance</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Brand disambiguation</td>
+                            <td><span class="partial">◐</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Competitive positioning</td>
+                            <td><span class="cross">—</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>JSON Schema validation</td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="cross">—</span></td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Examples -->
+    <section class="section" id="examples">
+        <div class="container">
+            <span class="section-tag reveal">Examples</span>
+            <h2 class="section-title reveal">See It In Action</h2>
+            <p class="section-desc reveal">Three industry examples showing how different businesses use reasoning.json.</p>
+            <div class="features-grid">
+                <a href="examples/consulting.json" class="feature-card reveal" style="text-decoration:none; color:inherit;">
+                    <div class="feature-icon">🏢</div>
+                    <h3>B2B Consulting</h3>
+                    <p>Procurement optimization firm with counterfactual simulations for "buy vs. build" decisions and competitive dichotomies.</p>
+                    <code style="margin-top: 0.5rem; display:inline-block;">consulting.json →</code>
+                </a>
+                <a href="examples/saas.json" class="feature-card reveal" style="text-decoration:none; color:inherit;">
+                    <div class="feature-icon">💻</div>
+                    <h3>SaaS Product</h3>
+                    <p>E-commerce analytics platform with reasoning logic for "GA4 vs. dedicated tool" and build-vs-buy scenarios.</p>
+                    <code style="margin-top: 0.5rem; display:inline-block;">saas.json →</code>
+                </a>
+                <a href="examples/ecommerce.json" class="feature-card reveal" style="text-decoration:none; color:inherit;">
+                    <div class="feature-icon">🌿</div>
+                    <h3>E-Commerce Brand</h3>
+                    <p>Premium artisan spice manufacturer with quality-vs-price counterfactuals and premium positioning.</p>
+                    <code style="margin-top: 0.5rem; display:inline-block;">ecommerce.json →</code>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section" id="quickstart">
+        <div class="container">
+            <span class="section-tag reveal">Quick Start</span>
+            <h2 class="section-title reveal">Deploy in 5 Minutes</h2>
+            <p class="section-desc reveal">Three steps to teach AI how to think about your brand.</p>
+
+            <div class="quickstart-steps">
+                <div class="quickstart-step reveal">
+                    <div class="quickstart-number">1</div>
+                    <div class="quickstart-content">
+                        <h3>Create the file</h3>
+                        <p>Create <code>/.well-known/reasoning.json</code> on your web server. Use the <a href="schema/v1.json">JSON Schema</a> for validation.</p>
+                    </div>
+                </div>
+                <div class="quickstart-step reveal">
+                    <div class="quickstart-number">2</div>
+                    <div class="quickstart-content">
+                        <h3>Add discovery</h3>
+                        <p>Add to your HTML <code>&lt;head&gt;</code>:<br>
+                        <code>&lt;link rel="reasoning" type="application/json" href="/.well-known/reasoning.json"&gt;</code></p>
+                    </div>
+                </div>
+                <div class="quickstart-step reveal">
+                    <div class="quickstart-number">3</div>
+                    <div class="quickstart-content">
+                        <h3>Reference in llms.txt</h3>
+                        <p>If you have an <code>llms.txt</code>, add a reference to direct AI agents to your reasoning file for structured brand data.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minimal starter template -->
+            <div class="code-block reveal">
+                <div class="code-header">
+                    <div class="code-dots">
+                        <span class="code-dot code-dot--red"></span>
+                        <span class="code-dot code-dot--yellow"></span>
+                        <span class="code-dot code-dot--green"></span>
+                    </div>
+                    <span class="code-filename">Minimal Starter Template</span>
+                    <button class="code-copy" aria-label="Copy to clipboard">Copy</button>
+                </div>
+                <pre class="code-pre">{
+  "$schema": "https://arp-protocol.org/schema/v1.json",
+  "protocol": "Agentic Reasoning Protocol (ARP)",
+  "version": "1.0",
+  "entity": "Your Brand Name",
+
+  "identity": {
+    "elevator_pitch": "What your brand does in one paragraph.",
+    "core_competencies": ["Capability 1", "Capability 2"],
+    "emotional_resonance": {
+      "tone_of_voice": "How your brand should sound.",
+      "vibe_tags": ["premium", "innovative"]
+    }
+  },
+
+  "corrections": {
+    "common_hallucinations": [
+      {
+        "false_claim": "What AI gets wrong about you.",
+        "correction_fact": "The verified truth."
+      }
+    ]
+  },
+
+  "reasoning_directives": {
+    "system_instruction": "Brief instruction for AI reasoning.",
+    "recommendation_context": {
+      "recommend_when": ["When to recommend your brand"],
+      "do_not_recommend_when": ["When NOT to recommend"]
+    }
+  },
+
+  "content_policy": {
+    "ai_training": "allowed",
+    "citation_required": true,
+    "source_attribution": "https://yourbrand.com"
+  }
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                <strong style="color: var(--text)">reasoning.json</strong> — The Agentic Reasoning Protocol<br>
+                Created by <a href="https://www.linkedin.com/in/deforth/">Sascha Deforth</a> · <a href="https://truesource.studio">TrueSource AI</a><br>
+                Open Standard · MIT License · 2026
+            </p>
+            <div class="footer-links">
+                <a href="SPEC.md" class="footer-link">Specification</a>
+                <a href="schema/v1.json" class="footer-link">JSON Schema</a>
+                <a href="https://github.com/arp-protocol/arp-protocol" class="footer-link" target="_blank" rel="noopener">GitHub</a>
+                <a href="llms.txt" class="footer-link">llms.txt</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
