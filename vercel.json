@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/.well-known/layer0",
-      "destination": "/.well-known/layer0/index.html"
+      "destination": "/layer0/index.html"
     }
   ]
 }
