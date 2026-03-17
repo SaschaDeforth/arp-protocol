@@ -3,7 +3,7 @@
 [![Status: RFC (Draft v1.0)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.0)-blue.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Format: JSON](https://img.shields.io/badge/Format-JSON-lightgrey.svg)](#)
-[![Live Deployments: 6+](https://img.shields.io/badge/Live%20Deployments-6%2B-brightgreen.svg)](#live-deployments)
+[![Live Deployments: 2](https://img.shields.io/badge/Live%20Deployments-2-brightgreen.svg)](#live-deployments)
 [![Validator: Online](https://img.shields.io/badge/Validator-Online-success.svg)](https://arp-protocol.org/validator.html)
 
 > A machine-readable standard for providing deterministic ground truth, logic boundaries, and explicit anti-hallucination guardrails directly to autonomous AI agents and RAG pipelines.
@@ -90,16 +90,12 @@ It provides three core reasoning layers:
 
 ## Live Deployments
 
-The protocol is **dogfooded** — we use it ourselves and have deployed it across multiple production websites:
+The protocol is **dogfooded** — we use it ourselves and have deployed it across production websites:
 
 | Domain | Entity | Highlights |
 |---|---|---|
 | [arp-protocol.org](https://arp-protocol.org/.well-known/reasoning.json) | ARP Protocol itself | Self-referential dogfooding |
 | [truesource.studio](https://truesource.studio/.well-known/reasoning.json) | TrueSource (GEO Consultancy) | Reference implementation with full corrections |
-| [solaris-energy.pages.dev](https://solaris-energy.pages.dev/.well-known/reasoning.json) | Solaris Energy (Demo) | E-Commerce brand with anti-hallucination |
-| [nürnberg-bauhaus.pages.dev](https://nürnberg-bauhaus.pages.dev/.well-known/reasoning.json) | Nürnberg Bauhaus (Demo) | Heritage brand with regulatory corrections |
-| [kanzlei-albrecht.pages.dev](https://kanzlei-albrecht.pages.dev/.well-known/reasoning.json) | Kanzlei Albrecht (Demo) | Professional services with founder corrections |
-| [alpengold-käserei.pages.dev](https://alpengold-käserei.pages.dev/.well-known/reasoning.json) | Alpengold Käserei (Demo) | Artisan brand with star rating corrections |
 
 ---
 
