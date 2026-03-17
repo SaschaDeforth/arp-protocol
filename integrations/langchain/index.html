@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain Integration — Agentic Reasoning Protocol</title>
+    <meta name="description" content="LangChain Document Loader for reasoning.json — fetch, parse, and inject brand reasoning directives into your RAG pipeline.">
+    <link rel="canonical" href="https://arp-protocol.org/integrations/langchain/">
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="/" class="nav-logo">reasoning.json</a>
+        <div class="nav-links">
+            <a href="/#specification" class="nav-link">Specification</a>
+            <a href="/validator.html" class="nav-link">Validator</a>
+            <a href="/#integration" class="nav-link">Integration</a>
+            <a href="/#ethics" class="nav-link">Ethics</a>
+            <a href="/SPEC.md" class="nav-link">Full Spec</a>
+            <a href="https://github.com/975SDE/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Header -->
+<header class="header">
+    <div class="container">
+        <h1>LangChain Integration</h1>
+        <p class="header-desc">
+            A LangChain-compatible Document Loader for <code>reasoning.json</code> files.
+            Fetch, parse, and inject brand reasoning directives into your RAG pipeline.
+        </p>
+        <div class="header-meta">
+            <span>Language: <strong>Python</strong></span>
+            <span>License: <strong>MIT</strong></span>
+            <span>Source: <strong><a href="https://github.com/975SDE/arp-protocol/tree/main/integrations/langchain" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">GitHub</a></strong></span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Installation -->
+    <section class="section">
+        <h2>Installation</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Terminal</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>pip install requests langchain</code></pre>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section">
+        <h2>Quick Start</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Python</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code><span class="py-kw">from</span> arp_loader <span class="py-kw">import</span> AgenticReasoningLoader
+
+<span class="py-comment"># Load from any website</span>
+loader = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>)
+docs = loader.load()
+
+<span class="py-comment"># Each section becomes a separate Document</span>
+<span class="py-kw">for</span> doc <span class="py-kw">in</span> docs:
+    print(f<span class="py-str">"[{doc.metadata['section']}] {doc.page_content[:100]}..."</span>)</code></pre>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section">
+        <h2>How It Works</h2>
+        <p>
+            The loader fetches <code>/.well-known/reasoning.json</code> from any domain
+            and splits it into prioritized Documents optimized for RAG retrieval:
+        </p>
+        <ol>
+            <li><strong>Corrections</strong> (highest priority) — prevents hallucinations during RAG</li>
+            <li><strong>Identity</strong> — brand facts and system instructions</li>
+            <li><strong>Recommendations</strong> — when to recommend / when not to</li>
+            <li><strong>Counterfactuals</strong> — pre-programmed reasoning logic</li>
+            <li><strong>Dichotomies</strong> — competitive positioning pivots</li>
+        </ol>
+        <p>
+            Each Document includes rich metadata (<code>entity</code>, <code>section</code>,
+            <code>protocol</code>, <code>version</code>) for targeted retrieval.
+        </p>
+    </section>
+
+    <!-- RAG Pipeline -->
+    <section class="section">
+        <h2>Use in a RAG Pipeline</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Python — Vector Store Integration</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code><span class="py-kw">from</span> langchain.vectorstores <span class="py-kw">import</span> Chroma
+<span class="py-kw">from</span> langchain.embeddings <span class="py-kw">import</span> OpenAIEmbeddings
+
+<span class="py-comment"># Load reasoning documents</span>
+loader = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>)
+docs = loader.load()
+
+<span class="py-comment"># Add to vector store</span>
+vectorstore = Chroma.from_documents(docs, OpenAIEmbeddings())
+
+<span class="py-comment"># Now your AI agent knows how to reason about this brand</span>
+retriever = vectorstore.as_retriever()</code></pre>
+        </div>
+    </section>
+
+    <!-- Standalone Usage -->
+    <section class="section">
+        <h2>Standalone Usage (No LangChain)</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Python</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code><span class="py-kw">from</span> arp_loader <span class="py-kw">import</span> load_reasoning
+
+docs = load_reasoning(<span class="py-str">"https://example.com"</span>)
+<span class="py-kw">for</span> doc <span class="py-kw">in</span> docs:
+    print(doc.page_content)</code></pre>
+        </div>
+    </section>
+
+    <!-- CLI -->
+    <section class="section">
+        <h2>CLI Usage</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Terminal</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>python arp_loader.py https://example.com</code></pre>
+        </div>
+    </section>
+
+    <!-- Download -->
+    <section class="section">
+        <h2>Source Code</h2>
+        <ul>
+            <li><a href="arp_loader.py">arp_loader.py</a> — Full source code (Python)</li>
+            <li><a href="README.md">README.md</a> — Documentation</li>
+            <li><a href="https://github.com/975SDE/arp-protocol/tree/main/integrations/langchain" target="_blank" rel="noopener">View on GitHub</a></li>
+        </ul>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-col">
+            <div class="footer-col-title">Protocol</div>
+            <a href="/SPEC.md">Specification</a>
+            <a href="/ETHICS.md">Ethics Policy</a>
+            <a href="/schema/v1.json">JSON Schema</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Resources</div>
+            <a href="https://github.com/975SDE/arp-protocol" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://www.linkedin.com/in/deforth/" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="mailto:hello@arp-protocol.org">Contact</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Legal</div>
+            <a href="https://truesource.studio/impressum.html">Impressum</a>
+            <a href="https://truesource.studio/datenschutz.html">Datenschutz</a>
+            <a href="/LICENSE">MIT License</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © 2026 Sascha Deforth. Built in Düsseldorf.
+    </div>
+</footer>
+
+<script>
+function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = '✓ Copied';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+}
+</script>
+
+</body>
+</html>
