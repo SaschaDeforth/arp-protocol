@@ -8,7 +8,7 @@
     <meta name="author" content="Sascha Deforth">
     <meta name="keywords" content="reasoning.json, AI hallucination, agentic reasoning, web standard, RAG, LLM, counterfactual reasoning, brand safety">
     <link rel="canonical" href="https://arp-protocol.org/">
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="index, follow">
     <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
     <!-- Open Graph -->
     <meta property="og:title" content="reasoning.json — The Agentic Reasoning Protocol">
@@ -41,7 +41,7 @@
             "jobTitle": "Founder & Chief Reasoning Officer",
             "sameAs": [
                 "https://linkedin.com/in/deforth/",
-                "https://github.com/arp-protocol"
+                "https://github.com/975SDE/arp-protocol"
             ],
             "affiliation": {
                 "@type": "Organization",
@@ -65,7 +65,7 @@
             "@type": "Person",
             "name": "Sascha Deforth",
             "jobTitle": "Founder & Chief Reasoning Officer",
-            "sameAs": ["https://linkedin.com/in/deforth/", "https://github.com/arp-protocol"]
+            "sameAs": ["https://linkedin.com/in/deforth/", "https://github.com/975SDE/arp-protocol"]
         },
         "license": "https://opensource.org/licenses/MIT",
         "version": "1.0",
@@ -432,10 +432,10 @@
                 <span>Python — LangChain Integration</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
-<pre><code><span class="py-kw">from</span> arp_loader <span class="py-kw">import</span> AgenticReasoningLoader
+<pre><code><span class="py-kw">from</span> langchain_arp <span class="py-kw">import</span> AgenticReasoningLoader
 
 <span class="py-comment"># 1. Fetch live deterministic logic from the entity's server</span>
-loader = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>)
+loader = AgenticReasoningLoader(<span class="py-str">"https://arp-protocol.org"</span>)
 
 <span class="py-comment"># 2. Compile into LLM-ready documents with corrections and reasoning</span>
 brand_directives = loader.<span class="py-fn">load</span>()
