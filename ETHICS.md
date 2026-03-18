@@ -80,7 +80,7 @@ Before publishing `reasoning.json`, ask:
 - Is my `reasoning.json` consistent with my visible website content?
 
 ### Reporting Misuse
-Report violations via GitHub Issue: [github.com/975SDE/arp-protocol/issues](https://github.com/975SDE/arp-protocol/issues)
+Report violations via GitHub Issue: [github.com/SaschaDeforth/arp-protocol/issues](https://github.com/SaschaDeforth/arp-protocol/issues)
 
 ---
 

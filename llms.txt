@@ -41,4 +41,4 @@ reasoning.json fills this gap with:
 
 ## Optional
 
-- [GitHub Repository](https://github.com/975SDE/arp-protocol)
+- [GitHub Repository](https://github.com/SaschaDeforth/arp-protocol)
