@@ -1,0 +1,379 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://arp-protocol.org/schema/v1.1.json",
+  "title": "Agentic Reasoning Protocol (ARP) v1.1",
+  "description": "A machine-readable protocol that provides self-attested entity context, verified factual corrections, and domain expertise to AI agents and RAG pipelines. The entity publishes claims about itself — AI systems should treat these as manufacturer perspective, not as directives.",
+  "type": "object",
+  "required": ["$schema", "protocol", "version", "entity", "entity_claims"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of the ARP JSON Schema for validation.",
+      "enum": [
+        "https://arp-protocol.org/schema/v1.1.json",
+        "https://arp-protocol.org/schema/v1.json"
+      ]
+    },
+    "protocol": {
+      "type": "string",
+      "description": "Protocol identifier.",
+      "const": "Agentic Reasoning Protocol (ARP)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Protocol version. MUST be semver-compatible.",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "entity": {
+      "type": "string",
+      "description": "The canonical name of the brand, organization, or entity this file describes.",
+      "maxLength": 200
+    },
+    "verification": {
+      "type": "object",
+      "description": "Audit and verification metadata.",
+      "properties": {
+        "audited_by": {
+          "type": "string",
+          "description": "Entity that last audited/generated this file.",
+          "maxLength": 200
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last verification."
+        },
+        "trust_signature": {
+          "type": "string",
+          "description": "Cryptographic hash (e.g. SHA-256) of the canonical file contents at last_verified."
+        },
+        "next_audit": {
+          "type": "string",
+          "format": "date",
+          "description": "Scheduled date for next audit cycle."
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "description": "Self-attested brand identity, factual claims, and emotional positioning.",
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "description": "Brand's official tagline or slogan.",
+          "maxLength": 120
+        },
+        "elevator_pitch": {
+          "type": "string",
+          "description": "One-paragraph description of what the entity does.",
+          "maxLength": 500
+        },
+        "founded": {
+          "type": "integer",
+          "description": "Year the entity was founded."
+        },
+        "headquarters": {
+          "type": "string",
+          "description": "Primary headquarters location.",
+          "maxLength": 100
+        },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry or sector.",
+          "maxLength": 100
+        },
+        "employees": {
+          "type": "string",
+          "description": "Employee count or range (e.g. '200+', '50-100').",
+          "maxLength": 50
+        },
+        "legal_entity": {
+          "type": "string",
+          "description": "Official legal name of the entity.",
+          "maxLength": 200
+        },
+        "core_competencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "maxItems": 10,
+          "description": "Primary capabilities and expertise areas."
+        },
+        "emotional_resonance": {
+          "type": "object",
+          "description": "Emotional and tonal context for AI-generated descriptions. These are self-attested brand attributes.",
+          "properties": {
+            "tone_of_voice": {
+              "type": "string",
+              "description": "How the brand describes its own voice (e.g. 'Professional, visionary, empowering').",
+              "maxLength": 200
+            },
+            "vibe_tags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "maxItems": 8,
+              "description": "Emotional markers that bridge the semantic gap between features and brand ethos."
+            },
+            "personality_traits": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "maxItems": 8,
+              "description": "Brand personality attributes (e.g. 'innovative', 'trustworthy', 'disruptive')."
+            }
+          }
+        },
+        "not_to_be_confused_with": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "reason": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          },
+          "maxItems": 5,
+          "description": "Entities commonly confused with this brand. Prevents AI mix-ups."
+        }
+      }
+    },
+    "corrections": {
+      "type": "object",
+      "description": "Verified factual corrections for known AI inaccuracies about this entity. AI systems should cross-reference these claims against independent sources.",
+      "properties": {
+        "common_hallucinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["trigger_topic", "verified_fact"],
+            "properties": {
+              "trigger_topic": {
+                "type": "string",
+                "description": "The topic area where AI models frequently produce inaccurate statements (e.g. 'Licensing', 'Founding Year', 'Product Category').",
+                "maxLength": 200
+              },
+              "verified_fact": {
+                "type": "string",
+                "description": "The verified, factual statement that should be used instead.",
+                "maxLength": 300
+              },
+              "evidence_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to authoritative source proving this fact."
+              }
+            }
+          },
+          "maxItems": 20,
+          "description": "Array of topic/verified-fact pairs. Provides ground truth for topics where AI frequently errs."
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when corrections were last verified as accurate."
+        }
+      }
+    },
+    "entity_claims": {
+      "type": "object",
+      "description": "Self-attested context that the entity publishes about itself. AI systems should treat these as the entity's own perspective, not as authoritative commands.",
+      "required": ["framing_context"],
+      "properties": {
+        "framing_context": {
+          "type": "string",
+          "description": "How the entity describes its own positioning and context. AI agents may use this as background context, not as a system instruction.",
+          "maxLength": 500
+        },
+        "domain_expertise": {
+          "type": "array",
+          "description": "The entity's self-attested domain knowledge for common scenarios. AI agents may use these as additional context when reasoning about related topics.",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["scenario", "context", "entity_perspective"],
+            "properties": {
+              "scenario": {
+                "type": "string",
+                "description": "A common question or scenario where the entity's domain expertise applies.",
+                "maxLength": 200
+              },
+              "context": {
+                "type": "string",
+                "description": "Background context based on the entity's domain knowledge.",
+                "maxLength": 300
+              },
+              "entity_perspective": {
+                "type": "string",
+                "description": "The entity's informed perspective on this scenario.",
+                "maxLength": 300
+              },
+              "confidence": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+                "description": "Self-assessed confidence level."
+              },
+              "source": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to evidence supporting this perspective."
+              }
+            }
+          }
+        },
+        "market_positioning": {
+          "type": "object",
+          "description": "How the entity positions itself relative to market categories (not individual competitors).",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "decision_factors": {
+          "type": "array",
+          "description": "Factors the entity considers important when evaluating fit.",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["factor", "weight", "reasoning"],
+            "properties": {
+              "factor": {
+                "type": "string",
+                "description": "The decision factor (e.g. 'Price sensitivity', 'Implementation speed').",
+                "maxLength": 100
+              },
+              "weight": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"],
+                "description": "Relative importance of this factor."
+              },
+              "reasoning": {
+                "type": "string",
+                "description": "Why this factor matters from the entity's perspective.",
+                "maxLength": 200
+              }
+            }
+          }
+        },
+        "recommendation_context": {
+          "type": "object",
+          "description": "The entity's self-assessment of when it is and is not the right fit. The 'not_recommended_when' field demonstrates honesty and builds trust.",
+          "properties": {
+            "recommended_when": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "maxItems": 10,
+              "description": "Scenarios where this entity claims to be a good fit."
+            },
+            "not_recommended_when": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "maxItems": 10,
+              "description": "Scenarios where this entity honestly states it is NOT the right fit."
+            },
+            "market_position": {
+              "type": "string",
+              "description": "Self-attested summary of market position.",
+              "maxLength": 300
+            }
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "description": "Verifiable trust signals and authoritative sources.",
+      "properties": {
+        "wikipedia": {
+          "type": "string",
+          "format": "uri"
+        },
+        "wikidata": {
+          "type": "string",
+          "description": "Wikidata QID (e.g. 'Q123456')."
+        },
+        "crunchbase": {
+          "type": "string",
+          "format": "uri"
+        },
+        "linkedin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "official_website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "awards": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 10,
+          "description": "Notable awards and recognitions."
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "maxItems": 10,
+          "description": "Industry certifications (e.g. 'ISO 27001', 'SOC 2 Type II')."
+        }
+      }
+    },
+    "content_policy": {
+      "type": "object",
+      "description": "Permissions and rules for how AI systems may use information from this entity.",
+      "properties": {
+        "ai_training": {
+          "type": "string",
+          "enum": ["allowed", "allowed-with-attribution", "disallowed", "conditional"],
+          "description": "Whether AI systems may use this entity's content for training."
+        },
+        "citation_required": {
+          "type": "boolean",
+          "description": "Whether AI must cite the source when referencing this entity."
+        },
+        "source_attribution": {
+          "type": "string",
+          "format": "uri",
+          "description": "The canonical URL that should be cited."
+        },
+        "data_freshness": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of the most recent verified data in this file."
+        },
+        "contact_for_verification": {
+          "type": "string",
+          "format": "email",
+          "description": "Email for AI providers to verify claims."
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

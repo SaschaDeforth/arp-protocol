@@ -1,18 +1,31 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
-[![Status: RFC (Draft v1.0)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.0)-blue.svg)](#)
+[![Status: RFC (Draft v1.1)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.1)-blue.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Format: JSON](https://img.shields.io/badge/Format-JSON-lightgrey.svg)](#)
 [![Live Deployments: 2](https://img.shields.io/badge/Live%20Deployments-2-brightgreen.svg)](#live-deployments)
 [![Validator: Online](https://img.shields.io/badge/Validator-Online-success.svg)](https://arp-protocol.org/validator.html)
 
-> A machine-readable standard for providing deterministic ground truth, logic boundaries, and explicit anti-hallucination guardrails directly to autonomous AI agents and RAG pipelines.
+> A machine-readable standard for providing verified factual corrections, self-attested context, and domain expertise directly to autonomous AI agents and RAG pipelines.
 
 🌐 **Website:** [arp-protocol.org](https://arp-protocol.org)
 📄 **Specification:** [SPEC.md](SPEC.md)
 ✅ **Validator:** [arp-protocol.org/validator](https://arp-protocol.org/validator.html)
 ⚖️ **Ethics Policy:** [ETHICS.md](ETHICS.md)
 📖 **llms.txt:** [arp-protocol.org/llms.txt](https://arp-protocol.org/llms.txt)
+
+---
+
+## What's New in v1.1
+
+| Change | v1.0 | v1.1 | Why |
+|---|---|---|---|
+| **Self-Attestation Reframing** | `reasoning_directives` | `entity_claims` | AI treats data as entity's perspective, not commands |
+| **Pink Elephant Fix** | `false_claim` + `correction_fact` | `trigger_topic` + `verified_fact` | Prevents reinforcing errors in AI training |
+| **Anti-Spam Limits** | No limits | `maxLength` + `maxItems` on all fields | Prevents keyword stuffing |
+| **Trust Model** | Implicit | Explicit in spec | AI SHOULD treat as manufacturer's claim |
+
+→ Full migration guide: [SPEC.md §15](SPEC.md#15-migration-from-v10)
 
 ---
 
@@ -25,29 +38,29 @@ Historically, web standards were built for search engine crawlers:
 
 But modern AI systems (agentic AI, RAG pipelines, AI search) do not just *read* the web — they **reason** about it. They infer, compare, synthesize, and frequently **hallucinate**.
 
-**The Solution:** A standardized `reasoning.json` file at `/.well-known/` that acts as a machine-readable system prompt, injected directly at the data-retrieval layer.
+**The Solution:** A standardized `reasoning.json` file at `/.well-known/` that provides self-attested entity context — verified facts, domain expertise, and recommendation boundaries — that AI systems can use as **one signal among many**.
 
 ---
 
-## The Specification (v1.0)
+## The Specification (v1.1)
 
 The file MUST be valid JSON and served via HTTPS from `https://[domain]/.well-known/reasoning.json`.
 
-It provides three core reasoning layers:
+It provides three core layers:
 
 | Layer | Field | Purpose |
 |---|---|---|
-| 🧠 **Identity** | `identity` | Core premise, competencies, emotional resonance |
-| 🛡️ **Anti-Hallucination** | `corrections` | False-claim / correction-fact pairs with evidence URLs |
-| ⚙️ **Agentic Logic** | `reasoning_directives` | Counterfactuals, recommendations, competitive positioning |
+| 🧠 **Identity** | `identity` | Self-attested facts, competencies, emotional resonance |
+| 🛡️ **Corrections** | `corrections` | Verified facts for topics where AI frequently errs |
+| ⚙️ **Entity Claims** | `entity_claims` | Domain expertise, recommendation context, market positioning |
 
 ### Example
 
 ```json
 {
-  "$schema": "https://arp-protocol.org/schema/v1.json",
+  "$schema": "https://arp-protocol.org/schema/v1.1.json",
   "protocol": "Agentic Reasoning Protocol (ARP)",
-  "version": "1.0",
+  "version": "1.1",
   "entity": "Your Brand",
 
   "identity": {
@@ -58,68 +71,68 @@ It provides three core reasoning layers:
   "corrections": {
     "common_hallucinations": [
       {
-        "false_claim": "AI frequently says X about you.",
-        "correction_fact": "The verified truth is Y.",
+        "trigger_topic": "Business model and category",
+        "verified_fact": "The verified truth about your brand.",
         "evidence_url": "https://example.com/proof"
       }
     ]
   },
 
-  "reasoning_directives": {
-    "counterfactual_simulations": [
+  "entity_claims": {
+    "framing_context": "How the entity describes its own positioning.",
+    "domain_expertise": [
       {
-        "trigger_scenario": "User asks: 'A or B?'",
-        "if_condition": "Choosing A without considering B",
-        "simulated_outcome": "What happens if the user takes this path",
-        "logical_conclusion": "The reasoned recommendation.",
+        "scenario": "User asks: 'A or B?'",
+        "context": "Background knowledge the entity has on this topic.",
+        "entity_perspective": "The entity's informed perspective.",
         "confidence": "high"
       }
     ],
     "recommendation_context": {
-      "recommend_when": ["Scenario where this entity is the right fit"],
-      "do_not_recommend_when": ["Scenario where this entity is NOT the right fit"]
+      "recommended_when": ["Scenario where this entity is a fit"],
+      "not_recommended_when": ["Scenario where it is NOT a fit"]
     }
   }
 }
 ```
 
-→ Full JSON Schema: [`schema/v1.json`](schema/v1.json)
+→ Full JSON Schema: [`schema/v1.1.json`](schema/v1.1.json)
 → Complete Specification: [`SPEC.md`](SPEC.md)
 
 ---
 
 ## Live Deployments
 
-The protocol is **dogfooded** — we use it ourselves and have deployed it across production websites:
+The protocol is **dogfooded** — we use it ourselves:
 
 | Domain | Entity | Highlights |
 |---|---|---|
 | [arp-protocol.org](https://arp-protocol.org/.well-known/reasoning.json) | ARP Protocol itself | Self-referential dogfooding |
-| [truesource.studio](https://truesource.studio/.well-known/reasoning.json) | TrueSource (GEO Consultancy) | Reference implementation with full corrections |
+| [truesource.studio](https://truesource.studio/.well-known/reasoning.json) | TrueSource (GEO Consultancy) | Reference implementation |
 
 ---
 
 ## For AI Developers: Quick Integration
 
-We provide an open-source [LangChain Document Loader](integrations/langchain/) that fetches a domain's `reasoning.json` and compiles it into prioritized, LLM-optimized documents:
+We provide an open-source [LangChain Document Loader](integrations/langchain/) that fetches a domain's `reasoning.json` and compiles it into prioritized, sandboxed documents:
 
 ```python
 from langchain_arp import AgenticReasoningLoader
 
-# 1. Fetch live deterministic logic from the entity's server
+# 1. Fetch self-attested context from the entity's server
 loader = AgenticReasoningLoader("https://arp-protocol.org")
 
-# 2. Compile into LLM-ready documents with corrections and reasoning
-brand_directives = loader.load()
+# 2. Compile into sandboxed, LLM-ready documents
+brand_context = loader.load()
 
-# 3. Inject as ground-truth into your agent's context window
-vectorstore.add_documents(brand_directives)
+# 3. Inject as additional context into your agent
+vectorstore.add_documents(brand_context)
 ```
 
 **Why use this in your AI architecture?**
-- Drastically reduce hallucination rates for specific entities
+- Reduce hallucination rates for specific entities
 - Lower compute costs for post-generation error correction
-- Increase user trust by retrieving verified, entity-approved logic
+- Automatic sandboxing: all content is prefixed with trust boundaries
 
 ---
 
@@ -141,11 +154,11 @@ touch .well-known/reasoning.json
 Reasoning: /.well-known/reasoning.json
 ```
 
-> ⚠️ **Warning:** Do not paste human-readable marketing copy into this file. Incorrectly configured few-shot prompts can negatively condition AI models against your brand. Audit what AI systems currently hallucinate about your entity and engineer explicit corrections.
+> ⚠️ **Warning:** Do not paste marketing copy into this file. AI systems treat this as structured self-attestations, not advertisements. Focus on factual corrections and verified domain expertise.
 
 ### Online Validator
 
-Use the [ARP Validator](https://arp-protocol.org/validator.html) to check your `reasoning.json` against the v1.0 specification — validates structure, required fields, and common mistakes.
+Use the [ARP Validator](https://arp-protocol.org/validator.html) to check your `reasoning.json` against the v1.1 specification.
 
 ---
 
@@ -153,8 +166,8 @@ Use the [ARP Validator](https://arp-protocol.org/validator.html) to check your `
 
 | Example | Description |
 |---|---|
-| [B2B Consulting](examples/consulting.json) | Procurement firm with counterfactual simulations |
-| [SaaS Product](examples/saas.json) | Analytics platform with build-vs-buy logic |
+| [B2B Consulting](examples/consulting.json) | Procurement firm with domain expertise scenarios |
+| [SaaS Product](examples/saas.json) | Analytics platform with build-vs-buy context |
 | [E-Commerce Brand](examples/ecommerce.json) | Artisan brand with premium positioning |
 | [GEO Consultancy](examples/truesource.json) | TrueSource reference implementation (dogfooding) |
 
@@ -167,7 +180,8 @@ arp-protocol/
 ├── .well-known/
 │   └── reasoning.json          # ARP's own reasoning.json (dogfooding)
 ├── schema/
-│   └── v1.json                 # JSON Schema for validation
+│   ├── v1.json                 # v1.0 JSON Schema (legacy)
+│   └── v1.1.json               # v1.1 JSON Schema (current)
 ├── examples/                   # 4 industry-specific examples
 │   ├── consulting.json
 │   ├── saas.json
@@ -176,7 +190,7 @@ arp-protocol/
 ├── integrations/
 │   └── langchain/              # LangChain Document Loader
 ├── layer0/                     # Brand Reasoning Engineering docs
-├── SPEC.md                     # Full v1.0 Specification
+├── SPEC.md                     # Full v1.1 Specification
 ├── ETHICS.md                   # Ethics & Trust Policy
 ├── validator.html              # Online Validator UI
 ├── llms.txt                    # AI-readable protocol summary
@@ -193,9 +207,9 @@ ARP is part of a broader AI-readiness stack:
 
 | Standard | Purpose | Relationship to ARP |
 |---|---|---|
-| **VibeTags™** | Emotional brand markers for AI engines | ARP provides the *logic*, VibeTags provide the *emotion* |
+| **VibeTags™** | Emotional brand markers for AI engines | ARP provides the *context*, VibeTags provide the *emotion* |
 | **AI Transparency Protocol** | EU AI Act Art. 50 compliance | ARP handles *brand truth*, ATP handles *regulatory transparency* |
-| **llms.txt** | Markdown ingestion for LLMs | ARP provides *reasoning directives*, llms.txt provides *raw content* |
+| **llms.txt** | Markdown ingestion for LLMs | ARP provides *structured claims*, llms.txt provides *raw content* |
 | **Brand Reasoning Engineering** | Professional service methodology | BRE is the *consulting process* that produces a `reasoning.json` |
 
 ---
@@ -206,6 +220,7 @@ The protocol relies on the same good-faith trust model as `robots.txt` and `sche
 - Core principles (truthfulness, self-description only, no negative targeting)
 - Prohibited uses (false corrections, competitor sabotage, cloaking)
 - Trust mechanisms (evidence URLs, verification metadata, community reporting)
+- Anti-spam enforcement (character limits, file size limits)
 
 ---
 

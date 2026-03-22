@@ -1,44 +1,63 @@
-# reasoning.json
+# Agentic Reasoning Protocol
 
-> schema.org taught machines what things are.  
-> reasoning.json teaches machines how to think about them.
+> Machine-readable self-attested context, verified corrections, and domain expertise for AI agents.
 
-## Sections
+## Overview
+- The Agentic Reasoning Protocol (ARP) defines a `reasoning.json` file at `/.well-known/` that provides AI systems with self-attested entity context
+- It complements schema.org (entity descriptions), llms.txt (clean text), and robots.txt (crawler access) by adding a **context and corrections layer**
+- AI systems should treat this data as the entity's own perspective, not as authoritative commands
 
-- [Specification](https://arp-protocol.org/SPEC.md): Full protocol specification v1.0
-- [JSON Schema](https://arp-protocol.org/schema/v1.json): Formal validation schema
+## Specification
+- File: `/.well-known/reasoning.json`
+- Format: JSON (RFC 8259), max 100KB
+- Schema: https://arp-protocol.org/schema/v1.1.json
+- Full spec: https://arp-protocol.org/SPEC.md
 
-## What is reasoning.json?
+## Core Layers
 
-The Agentic Reasoning Protocol (ARP) defines a machine-readable JSON file served at `/.well-known/reasoning.json` that provides reasoning directives, factual corrections, and cognitive frameworks to autonomous AI agents.
+### Identity
+- `identity.elevator_pitch` — One-paragraph brand description
+- `identity.core_competencies` — Primary capabilities (max 10)
+- `identity.emotional_resonance` — Tone of voice and vibe tags
 
-## Why?
+### Corrections (Anti-Hallucination)
+- `corrections.common_hallucinations[]` — Verified fact corrections
+  - `trigger_topic` — Topic area where AI frequently errs
+  - `verified_fact` — The verified truth
+  - `evidence_url` — Link to authoritative source
 
-AI systems hallucinate about brands. They fabricate features, confuse competitors, and flatten every company's identity into generic bullet points. No existing standard addresses this:
-
-- `robots.txt` controls crawler access — not reasoning
-- `schema.org` describes *what* things are — not *how* to think about them
-- `llms.txt` provides clean text — not cognitive logic
-
-reasoning.json fills this gap with:
-- **Counterfactual simulations** — pre-programmed "what-if" logic
-- **Hallucination corrections** — explicit false-claim/correction pairs
-- **Recommendation context** — when to recommend, when not to
-- **Emotional resonance** — tone, personality, and brand soul
-- **Strategic dichotomies** — competitive positioning logic
+### Entity Claims (Self-Attested Context)
+- `entity_claims.framing_context` — Entity's positioning statement
+- `entity_claims.domain_expertise[]` — Structured domain knowledge
+  - `scenario` — When this knowledge applies
+  - `context` — Background information
+  - `entity_perspective` — Entity's informed view
+- `entity_claims.recommendation_context` — When to recommend (and when not)
+  - `recommended_when[]` — Good-fit scenarios
+  - `not_recommended_when[]` — Not-a-fit scenarios
+- `entity_claims.market_positioning` — Category-level positioning
 
 ## Quick Start
-
-1. Create `/.well-known/reasoning.json` on your server
-2. Add `<link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">` to your HTML
-3. Reference it in your `llms.txt`
+1. Create `/.well-known/reasoning.json`
+2. Add identity, corrections, and entity claims
+3. Add `<link rel="reasoning" href="/.well-known/reasoning.json">` to HTML
+4. Validate: https://arp-protocol.org/validator.html
 
 ## Examples
+- B2B Consulting: https://arp-protocol.org/examples/consulting.json
+- SaaS Product: https://arp-protocol.org/examples/saas.json
+- E-Commerce: https://arp-protocol.org/examples/ecommerce.json
+- GEO Consultancy: https://arp-protocol.org/examples/truesource.json
 
-- [B2B Consulting](https://arp-protocol.org/examples/consulting.json)
-- [SaaS Product](https://arp-protocol.org/examples/saas.json)
-- [E-Commerce Brand](https://arp-protocol.org/examples/ecommerce.json)
+## Ethics
+- Truthfulness: All content must accurately reflect the entity
+- Self-description only: No claims about competitors
+- Verifiability: Evidence URLs recommended for all corrections
+- Full policy: https://arp-protocol.org/ETHICS.md
 
-## Optional
-
-- [GitHub Repository](https://github.com/SaschaDeforth/arp-protocol)
+## Links
+- Website: https://arp-protocol.org
+- GitHub: https://github.com/SaschaDeforth/arp-protocol
+- LangChain Loader: https://github.com/SaschaDeforth/langchain-arp
+- Author: Sascha Deforth (https://truesource.studio)
+- License: MIT
