@@ -125,6 +125,7 @@
         <div class="nav-links">
             <a href="#specification" class="nav-link">Specification</a>
             <a href="validator.html" class="nav-link">Validator</a>
+            <a href="generator.html" class="nav-link">Generator</a>
             <a href="#integration" class="nav-link">Integration</a>
             <a href="#ethics" class="nav-link">Ethics</a>
             <a href="SPEC.md" class="nav-link">Full Spec</a>
@@ -142,7 +143,7 @@
             anti-hallucination guardrails for the agentic web.
         </p>
         <div class="header-meta">
-            <span>Status: <strong>Draft / RFC (v1.0)</strong></span>
+            <span>Status: <strong>Draft / RFC (v1.1)</strong></span>
             <span>License: <strong>MIT</strong></span>
             <span>File: <strong><code>/.well-known/reasoning.json</code></strong></span>
         </div>
@@ -243,8 +244,8 @@
             An AI model consistently states that "Company X is a software company" when
             Company X is actually a consulting firm. Without <code>reasoning.json</code>,
             there is no standardized way for Company X to correct this at the source level.
-            With it, Company X publishes a <code>false_claim</code> / <code>correction_fact</code>
-            pair that RAG systems can ingest as ground truth.
+            With it, Company X publishes a <code>trigger_topic</code> / <code>verified_fact</code>
+            pair that AI systems can use for fact-checking.
         </div>
     </section>
 
@@ -269,39 +270,41 @@
 
         <h3>Layer 2: Anti-Hallucination</h3>
         <p>
-            The <code>corrections</code> object contains explicit few-shot pairings of known
-            false claims (<code>false_claim</code>) against verified ground truth
-            (<code>correction_fact</code>). Each correction pair SHOULD include an
+            The <code>corrections</code> object uses the v1.1 "Pink Elephant" fix:
+            instead of stating the false claim (which would reinforce the error),
+            corrections use <code>trigger_topic</code> (the area of error) paired with
+            <code>verified_fact</code> (the truth). Each pair SHOULD include an
             <code>evidence_url</code> for independent verification.
         </p>
         <p>
-            These correction pairs are designed to be ingested by RAG systems as
-            high-priority grounding data. They function similarly to few-shot prompting:
-            by providing the model with explicit "do not say X, say Y instead" pairs,
-            the likelihood of specific hallucinations is drastically reduced.
+            These corrections are designed to be ingested by RAG systems as
+            high-priority grounding data. By providing AI systems with the
+            topic where errors occur and the verified truth, the likelihood of
+            specific hallucinations is drastically reduced.
         </p>
 
-        <h3>Layer 3: Agentic Logic</h3>
+        <h3>Layer 3: Self-Attested Context</h3>
         <p>
-            The <code>reasoning_directives</code> object contains:
+            The <code>entity_claims</code> object contains self-attested context that
+            AI systems should treat as the entity's perspective:
         </p>
         <ul>
-            <li><strong>Counterfactual simulations</strong> — Pre-programmed logical reasoning for common comparison scenarios</li>
-            <li><strong>Recommendation context</strong> — Explicit conditions for when the entity should (and should not) be recommended</li>
-            <li><strong>Strategic dichotomies</strong> — Competitive positioning pivots that guide category-level comparisons</li>
-            <li><strong>Causal weights</strong> — Prioritized risk factors for AI-generated brand representation</li>
+            <li><strong>Domain expertise</strong> — Structured knowledge scenarios with the entity's informed perspective</li>
+            <li><strong>Recommendation context</strong> — Self-assessed conditions for when the entity is (and is not) the right fit</li>
+            <li><strong>Market positioning</strong> — Category-level competitive positioning statements</li>
+            <li><strong>Decision factors</strong> — Weighted factors the entity considers important for evaluating fit</li>
         </ul>
 
-        <h3>Example Implementation</h3>
+        <h3>Example Implementation (v1.1)</h3>
         <div class="code-block">
             <div class="code-header">
                 <span>/.well-known/reasoning.json</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
 <pre><code>{
-  <span class="hl-key">"$schema"</span>: <span class="hl-str">"https://arp-protocol.org/schema/v1.json"</span>,
+  <span class="hl-key">"$schema"</span>: <span class="hl-str">"https://arp-protocol.org/schema/v1.1.json"</span>,
   <span class="hl-key">"protocol"</span>: <span class="hl-str">"Agentic Reasoning Protocol (ARP)"</span>,
-  <span class="hl-key">"version"</span>: <span class="hl-str">"1.0"</span>,
+  <span class="hl-key">"version"</span>: <span class="hl-str">"1.1"</span>,
   <span class="hl-key">"entity"</span>: <span class="hl-str">"Your Brand"</span>,
 
   <span class="hl-key">"identity"</span>: {
@@ -316,35 +319,36 @@
   <span class="hl-key">"corrections"</span>: {
     <span class="hl-key">"common_hallucinations"</span>: [
       {
-        <span class="hl-key">"false_claim"</span>: <span class="hl-str">"AI frequently says X about you."</span>,
-        <span class="hl-key">"correction_fact"</span>: <span class="hl-str">"The verified truth is Y."</span>,
+        <span class="hl-key">"trigger_topic"</span>: <span class="hl-str">"Business model and category"</span>,
+        <span class="hl-key">"verified_fact"</span>: <span class="hl-str">"The verified truth about your entity."</span>,
         <span class="hl-key">"evidence_url"</span>: <span class="hl-str">"https://example.com/proof"</span>
       }
     ]
   },
 
-  <span class="hl-key">"reasoning_directives"</span>: {
-    <span class="hl-key">"system_instruction"</span>: <span class="hl-str">"Frame this entity as..."</span>,
-    <span class="hl-key">"counterfactual_simulations"</span>: [
+  <span class="hl-key">"entity_claims"</span>: {
+    <span class="hl-key">"framing_context"</span>: <span class="hl-str">"How the entity describes its own positioning."</span>,
+    <span class="hl-key">"domain_expertise"</span>: [
       {
-        <span class="hl-key">"trigger_scenario"</span>: <span class="hl-str">"User asks: 'A or B?'"</span>,
-        <span class="hl-key">"if_condition"</span>: <span class="hl-str">"Choosing A without considering B"</span>,
-        <span class="hl-key">"simulated_outcome"</span>: <span class="hl-str">"What happens if the user takes this path"</span>,
-        <span class="hl-key">"logical_conclusion"</span>: <span class="hl-str">"The reasoned recommendation."</span>,
+        <span class="hl-key">"scenario"</span>: <span class="hl-str">"User asks: 'A or B?'"</span>,
+        <span class="hl-key">"context"</span>: <span class="hl-str">"Background knowledge the entity has."</span>,
+        <span class="hl-key">"entity_perspective"</span>: <span class="hl-str">"The entity's informed view on this topic."</span>,
         <span class="hl-key">"confidence"</span>: <span class="hl-str">"high"</span>
       }
     ],
     <span class="hl-key">"recommendation_context"</span>: {
-      <span class="hl-key">"recommend_when"</span>: [<span class="hl-str">"Scenario where this entity is the right fit"</span>],
-      <span class="hl-key">"do_not_recommend_when"</span>: [<span class="hl-str">"Scenario where this entity is NOT the right fit"</span>]
+      <span class="hl-key">"recommended_when"</span>: [<span class="hl-str">"Scenario where this entity is the right fit"</span>],
+      <span class="hl-key">"not_recommended_when"</span>: [<span class="hl-str">"Scenario where this entity is NOT the right fit"</span>]
     }
   }
 }</code></pre>
         </div>
         <p>
-            → <a href="schema/v1.json">View the full JSON Schema</a>
+            → <a href="schema/v1.1.json">View the full JSON Schema (v1.1)</a>
             &nbsp;·&nbsp;
             <a href="SPEC.md">Read the complete specification</a>
+            &nbsp;·&nbsp;
+            <a href="generator.html">Generate your own</a>
         </p>
     </section>
 
@@ -505,7 +509,8 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li>Define your <code>identity</code> — elevator pitch, core competencies</li>
             <li>Audit AI hallucinations about your brand and add <code>corrections</code></li>
             <li>Define your <code>recommendation_context</code> — when should AI recommend you, and when not?</li>
-            <li>Validate your syntax against the <a href="schema/v1.json">JSON Schema</a></li>
+            <li>Validate your syntax against the <a href="schema/v1.1.json">JSON Schema v1.1</a> or use the <a href="validator.html">online Validator</a></li>
+            <li>Or use the <a href="generator.html">Generator</a> to create a file from a form</li>
             <li>Add <code>&lt;link rel="reasoning"&gt;</code> to your HTML <code>&lt;head&gt;</code></li>
             <li>Reference your reasoning file in your <code>llms.txt</code> if you have one</li>
         </ol>
@@ -579,8 +584,9 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li><a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">Submit an Issue</a></li>
             <li><a href="SPEC.md">Full Specification (SPEC.md)</a></li>
             <li><a href="ETHICS.md">Ethics Policy (ETHICS.md)</a></li>
-            <li><a href="schema/v1.json">JSON Schema (v1.json)</a></li>
+            <li><a href="schema/v1.1.json">JSON Schema (v1.1)</a></li>
             <li><a href="integrations/langchain/">LangChain Integration</a></li>
+            <li><a href="generator.html">Generator</a></li>
         </ul>
     </section>
 
@@ -593,8 +599,9 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <div class="footer-col-title">Protocol</div>
             <a href="SPEC.md">Specification</a>
             <a href="ETHICS.md">Ethics Policy</a>
-            <a href="schema/v1.json">JSON Schema</a>
-            <a href="integrations/langchain/">LangChain Loader</a>
+            <a href="schema/v1.1.json">JSON Schema</a>
+            <a href="validator.html">Validator</a>
+            <a href="generator.html">Generator</a>
         </div>
         <div class="footer-col">
             <div class="footer-col-title">Resources</div>
