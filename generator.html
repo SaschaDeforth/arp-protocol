@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator — reasoning.json v1.1</title>
+    <meta name="description" content="Generate a reasoning.json file for your brand. Fill in the form, get a valid v1.1 ARP file ready to deploy.">
+    <meta name="robots" content="index, follow">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- Generator-specific styles --- */
+        .gen-section {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .gen-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--code-bg);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .gen-section-header:hover {
+            background: var(--bg-hover, var(--code-bg));
+        }
+
+        .gen-section-title {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .gen-section-badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: var(--border-light);
+            color: var(--text-muted);
+        }
+
+        .gen-section-badge.required {
+            background: rgba(9, 105, 218, 0.1);
+            color: var(--accent);
+        }
+
+        .gen-section-body {
+            padding: 16px;
+        }
+
+        .gen-section-body.collapsed {
+            display: none;
+        }
+
+        .field-group {
+            margin-bottom: 16px;
+        }
+
+        .field-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .field-counter {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            float: right;
+        }
+
+        .field-counter.over {
+            color: #cf222e;
+            font-weight: 600;
+        }
+
+        .gen-input, .gen-textarea, .gen-select {
+            width: 100%;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            outline: none;
+            color: var(--text);
+            background: var(--bg);
+            box-sizing: border-box;
+        }
+
+        .gen-input:focus, .gen-textarea:focus, .gen-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.15);
+        }
+
+        .gen-textarea {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.5;
+        }
+
+        .gen-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .gen-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .list-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list-item-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .list-item-row input {
+            flex: 1;
+        }
+
+        .btn-remove {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 6px 10px;
+            border: 1px solid #cf222e;
+            border-radius: 4px;
+            background: none;
+            color: #cf222e;
+            cursor: pointer;
+        }
+
+        .btn-remove:hover {
+            background: rgba(207, 34, 46, 0.08);
+        }
+
+        .btn-add {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 6px 12px;
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: fit-content;
+        }
+
+        .btn-add:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--link-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text-muted);
+        }
+
+        .btn-secondary:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .gen-actions {
+            display: flex;
+            gap: 12px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        /* Output */
+        .output-box {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 24px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .output-box.visible {
+            display: block;
+        }
+
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: var(--code-bg);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .output-content {
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+            color: var(--code-text);
+        }
+
+        .correction-block {
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: var(--code-bg);
+        }
+
+        .correction-block .field-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="index.html" class="nav-logo">reasoning.json</a>
+        <div class="nav-links">
+            <a href="index.html#specification" class="nav-link">Specification</a>
+            <a href="validator.html" class="nav-link">Validator</a>
+            <a href="generator.html" class="nav-link" style="color: var(--text); font-weight: 600;">Generator</a>
+            <a href="index.html#ethics" class="nav-link">Ethics</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link">GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <header class="header">
+        <h1>Generate your <code>reasoning.json</code></h1>
+        <p class="header-desc">
+            Fill in the form to create a valid v1.1 reasoning file. Download it and deploy to <code>/.well-known/reasoning.json</code>.
+        </p>
+        <div class="header-meta">
+            <span>Schema: v1.1</span>
+            <span>Client-side only — your data never leaves your browser</span>
+        </div>
+    </header>
+
+    <!-- ── Entity (Required) ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">🏢 Entity</span>
+            <span class="gen-section-badge required">REQUIRED</span>
+        </div>
+        <div class="gen-section-body">
+            <div class="field-group">
+                <label class="field-label">Entity Name <span class="field-counter" id="cnt-entity">0/200</span></label>
+                <div class="field-hint">The canonical name of your brand or organization.</div>
+                <input type="text" id="gen-entity" class="gen-input" placeholder="e.g. Acme Corp" maxlength="200" oninput="updateCounter('entity', 200)">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Identity ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">🧠 Identity</span>
+            <span class="gen-section-badge required">RECOMMENDED</span>
+        </div>
+        <div class="gen-section-body">
+            <div class="field-group">
+                <label class="field-label">Elevator Pitch <span class="field-counter" id="cnt-pitch">0/500</span></label>
+                <div class="field-hint">One-paragraph description of what your entity does. Focus on facts, not marketing.</div>
+                <textarea id="gen-pitch" class="gen-textarea" placeholder="Acme Corp provides supply chain analytics for mid-market manufacturers..." maxlength="500" oninput="updateCounter('pitch', 500)"></textarea>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Tagline <span class="field-counter" id="cnt-tagline">0/120</span></label>
+                <input type="text" id="gen-tagline" class="gen-input" placeholder="e.g. Making supply chains visible." maxlength="120" oninput="updateCounter('tagline', 120)">
+            </div>
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label">Headquarters</label>
+                    <input type="text" id="gen-hq" class="gen-input" placeholder="San Francisco, CA">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Founded</label>
+                    <input type="number" id="gen-founded" class="gen-input" placeholder="2020">
+                </div>
+            </div>
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label">Industry</label>
+                    <input type="text" id="gen-industry" class="gen-input" placeholder="Enterprise Software">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Employees</label>
+                    <input type="text" id="gen-employees" class="gen-input" placeholder="50-200">
+                </div>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Core Competencies (max 10)</label>
+                <div class="field-hint">Primary capabilities. One per line.</div>
+                <div id="list-competencies" class="list-builder">
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="Competency 1" maxlength="80"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="Competency 2" maxlength="80"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                </div>
+                <button class="btn-add" onclick="addListItem('list-competencies', 'Competency', 10, 80)">+ Add competency</button>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Tone of Voice <span class="field-counter" id="cnt-tone">0/200</span></label>
+                <input type="text" id="gen-tone" class="gen-input" placeholder="Professional, data-driven, jargon-free." maxlength="200" oninput="updateCounter('tone', 200)">
+            </div>
+            <div class="field-group">
+                <label class="field-label">Vibe Tags (max 8)</label>
+                <div class="field-hint">Emotional brand markers. Comma-separated.</div>
+                <input type="text" id="gen-vibe" class="gen-input" placeholder="enterprise-grade, innovative, transparent, trusted">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Corrections ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">🛡️ Corrections (Anti-Hallucination)</span>
+            <span class="gen-section-badge required">RECOMMENDED</span>
+        </div>
+        <div class="gen-section-body">
+            <div class="field-hint" style="margin-bottom: 12px;">
+                Add topics where AI frequently makes errors about your entity. Use <strong>trigger_topic</strong> (the area of error) and <strong>verified_fact</strong> (the truth). Do NOT repeat the false claim — this is the "Pink Elephant" fix.
+            </div>
+            <div id="corrections-list">
+                <div class="correction-block">
+                    <div class="field-group">
+                        <label class="field-label">Trigger Topic</label>
+                        <input type="text" class="gen-input correction-topic" placeholder="e.g. Company type and business model" maxlength="200">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Verified Fact</label>
+                        <input type="text" class="gen-input correction-fact" placeholder="e.g. Acme Corp is a consulting firm, not a software company." maxlength="300">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Evidence URL</label>
+                        <input type="url" class="gen-input correction-url" placeholder="https://example.com/about">
+                    </div>
+                    <button class="btn-remove" onclick="this.closest('.correction-block').remove()">✕ Remove</button>
+                </div>
+            </div>
+            <button class="btn-add" onclick="addCorrection()" style="margin-top: 8px;">+ Add correction</button>
+        </div>
+    </div>
+
+    <!-- ── Entity Claims ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">⚙️ Entity Claims (Self-Attested Context)</span>
+            <span class="gen-section-badge required">REQUIRED</span>
+        </div>
+        <div class="gen-section-body">
+            <div class="field-group">
+                <label class="field-label">Framing Context <span class="field-counter" id="cnt-framing">0/500</span></label>
+                <div class="field-hint">How your entity describes its own positioning. This is NOT a system instruction — it's a self-attestation.</div>
+                <textarea id="gen-framing" class="gen-textarea" placeholder="Acme Corp positions itself as a mid-market alternative to enterprise BI suites..." maxlength="500" oninput="updateCounter('framing', 500)"></textarea>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Recommended When (max 10)</label>
+                <div class="field-hint">Scenarios where your entity IS the right fit.</div>
+                <div id="list-recommend" class="list-builder">
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. User needs real-time supply chain visibility" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                </div>
+                <button class="btn-add" onclick="addListItem('list-recommend', 'Scenario', 10, 200)">+ Add scenario</button>
+            </div>
+            <div class="field-group">
+                <label class="field-label">NOT Recommended When (max 10)</label>
+                <div class="field-hint">Scenarios where your entity is NOT the right fit. This builds trust with AI systems.</div>
+                <div id="list-not-recommend" class="list-builder">
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. User is a solo freelancer with no supply chain" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                </div>
+                <button class="btn-add" onclick="addListItem('list-not-recommend', 'Scenario', 10, 200)">+ Add scenario</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Authority ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">🔗 Authority & Trust</span>
+            <span class="gen-section-badge">OPTIONAL</span>
+        </div>
+        <div class="gen-section-body collapsed">
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label">Official Website</label>
+                    <input type="url" id="gen-website" class="gen-input" placeholder="https://example.com">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Wikipedia</label>
+                    <input type="url" id="gen-wikipedia" class="gen-input" placeholder="https://en.wikipedia.org/wiki/...">
+                </div>
+            </div>
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label">LinkedIn</label>
+                    <input type="url" id="gen-linkedin" class="gen-input" placeholder="https://linkedin.com/company/...">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Crunchbase</label>
+                    <input type="url" id="gen-crunchbase" class="gen-input" placeholder="https://crunchbase.com/organization/...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="gen-actions">
+        <button class="btn btn-primary" onclick="generate()">🧠 Generate reasoning.json</button>
+        <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy to Clipboard</button>
+        <button class="btn btn-secondary" onclick="downloadOutput()">⬇ Download File</button>
+    </div>
+
+    <!-- Output -->
+    <div id="output-box" class="output-box">
+        <div class="output-header">
+            <span>reasoning.json (v1.1)</span>
+            <span id="output-size">0 bytes</span>
+        </div>
+        <div id="output-content" class="output-content"></div>
+    </div>
+
+</div>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-col">
+            <div class="footer-col-title">Protocol</div>
+            <a href="index.html">Specification</a>
+            <a href="index.html#ethics">Ethics Policy</a>
+            <a href="validator.html">Validator</a>
+            <a href="generator.html">Generator</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Resources</div>
+            <a href="https://github.com/SaschaDeforth/arp-protocol">GitHub</a>
+            <a href="https://linkedin.com/in/deforth">LinkedIn</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Legal</div>
+            <a href="https://truesource.studio/impressum">Impressum</a>
+            <a href="https://truesource.studio/datenschutz">Datenschutz</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/LICENSE">MIT License</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © 2026 Sascha Deforth. Built in Düsseldorf.
+    </div>
+</footer>
+
+<script>
+// ========================================================
+// reasoning.json Generator — v1.1
+// ========================================================
+
+function toggleSection(header) {
+    const body = header.nextElementSibling;
+    body.classList.toggle('collapsed');
+}
+
+function updateCounter(field, max) {
+    const input = document.getElementById('gen-' + field) || document.getElementById('gen-' + field.replace('pitch','pitch'));
+    const counter = document.getElementById('cnt-' + field);
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = `${len}/${max}`;
+    counter.className = len > max ? 'field-counter over' : 'field-counter';
+}
+
+function addListItem(listId, placeholder, max, maxLen) {
+    const list = document.getElementById(listId);
+    const items = list.querySelectorAll('.list-item-row');
+    if (items.length >= max) {
+        alert(`Maximum ${max} items allowed.`);
+        return;
+    }
+    const row = document.createElement('div');
+    row.className = 'list-item-row';
+    row.innerHTML = `<input type="text" class="gen-input" placeholder="${placeholder} ${items.length + 1}" maxlength="${maxLen}"><button class="btn-remove" onclick="removeListItem(this)">✕</button>`;
+    list.appendChild(row);
+}
+
+function removeListItem(btn) {
+    const row = btn.closest('.list-item-row');
+    const list = row.parentElement;
+    if (list.querySelectorAll('.list-item-row').length > 1) {
+        row.remove();
+    }
+}
+
+function addCorrection() {
+    const list = document.getElementById('corrections-list');
+    const blocks = list.querySelectorAll('.correction-block');
+    if (blocks.length >= 20) {
+        alert('Maximum 20 corrections allowed.');
+        return;
+    }
+    const block = document.createElement('div');
+    block.className = 'correction-block';
+    block.innerHTML = `
+        <div class="field-group">
+            <label class="field-label">Trigger Topic</label>
+            <input type="text" class="gen-input correction-topic" placeholder="e.g. Founding date and history" maxlength="200">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Verified Fact</label>
+            <input type="text" class="gen-input correction-fact" placeholder="The verified truth about this topic." maxlength="300">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Evidence URL</label>
+            <input type="url" class="gen-input correction-url" placeholder="https://example.com/proof">
+        </div>
+        <button class="btn-remove" onclick="this.closest('.correction-block').remove()">✕ Remove</button>
+    `;
+    list.appendChild(block);
+}
+
+function getListValues(listId) {
+    const items = document.querySelectorAll(`#${listId} .list-item-row input`);
+    return Array.from(items).map(i => i.value.trim()).filter(v => v.length > 0);
+}
+
+function val(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+}
+
+let lastOutput = '';
+
+function generate() {
+    const entity = val('gen-entity');
+    if (!entity) {
+        alert('Entity name is required.');
+        return;
+    }
+
+    const result = {
+        "$schema": "https://arp-protocol.org/schema/v1.1.json",
+        "protocol": "Agentic Reasoning Protocol (ARP)",
+        "version": "1.1",
+        "entity": entity
+    };
+
+    // Identity
+    const identity = {};
+    const pitch = val('gen-pitch');
+    if (pitch) identity.elevator_pitch = pitch;
+    const tagline = val('gen-tagline');
+    if (tagline) identity.tagline = tagline;
+    const founded = val('gen-founded');
+    if (founded) identity.founded = parseInt(founded);
+    const hq = val('gen-hq');
+    if (hq) identity.headquarters = hq;
+    const industry = val('gen-industry');
+    if (industry) identity.industry = industry;
+    const employees = val('gen-employees');
+    if (employees) identity.employees = employees;
+
+    const competencies = getListValues('list-competencies');
+    if (competencies.length > 0) identity.core_competencies = competencies;
+
+    const tone = val('gen-tone');
+    const vibeRaw = val('gen-vibe');
+    if (tone || vibeRaw) {
+        const er = {};
+        if (tone) er.tone_of_voice = tone;
+        if (vibeRaw) er.vibe_tags = vibeRaw.split(',').map(v => v.trim()).filter(v => v).slice(0, 8);
+        identity.emotional_resonance = er;
+    }
+
+    if (Object.keys(identity).length > 0) result.identity = identity;
+
+    // Corrections
+    const corrBlocks = document.querySelectorAll('.correction-block');
+    const corrections = [];
+    corrBlocks.forEach(block => {
+        const topic = block.querySelector('.correction-topic').value.trim();
+        const fact = block.querySelector('.correction-fact').value.trim();
+        const url = block.querySelector('.correction-url').value.trim();
+        if (topic && fact) {
+            const entry = { trigger_topic: topic, verified_fact: fact };
+            if (url) entry.evidence_url = url;
+            corrections.push(entry);
+        }
+    });
+    if (corrections.length > 0) {
+        result.corrections = {
+            common_hallucinations: corrections,
+            last_verified: new Date().toISOString().split('T')[0]
+        };
+    }
+
+    // Entity Claims
+    const claims = {};
+    const framing = val('gen-framing');
+    if (framing) claims.framing_context = framing;
+
+    const recWhen = getListValues('list-recommend');
+    const notRecWhen = getListValues('list-not-recommend');
+    if (recWhen.length > 0 || notRecWhen.length > 0) {
+        claims.recommendation_context = {};
+        if (recWhen.length > 0) claims.recommendation_context.recommended_when = recWhen;
+        if (notRecWhen.length > 0) claims.recommendation_context.not_recommended_when = notRecWhen;
+    }
+
+    result.entity_claims = Object.keys(claims).length > 0 ? claims : { framing_context: "" };
+
+    // Authority
+    const authority = {};
+    const website = val('gen-website');
+    if (website) authority.official_website = website;
+    const wikipedia = val('gen-wikipedia');
+    if (wikipedia) authority.wikipedia = wikipedia;
+    const linkedin = val('gen-linkedin');
+    if (linkedin) authority.linkedin = linkedin;
+    const crunchbase = val('gen-crunchbase');
+    if (crunchbase) authority.crunchbase = crunchbase;
+    if (Object.keys(authority).length > 0) result.authority = authority;
+
+    // Output
+    lastOutput = JSON.stringify(result, null, 2);
+    const outputBox = document.getElementById('output-box');
+    const outputContent = document.getElementById('output-content');
+    outputBox.classList.add('visible');
+    outputContent.textContent = lastOutput;
+    document.getElementById('output-size').textContent = new Blob([lastOutput]).size + ' bytes';
+
+    outputBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyOutput() {
+    if (!lastOutput) {
+        alert('Generate a file first.');
+        return;
+    }
+    navigator.clipboard.writeText(lastOutput).then(() => {
+        alert('Copied to clipboard!');
+    });
+}
+
+function downloadOutput() {
+    if (!lastOutput) {
+        alert('Generate a file first.');
+        return;
+    }
+    const blob = new Blob([lastOutput], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'reasoning.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
