@@ -3,6 +3,7 @@
 [![Status: RFC (Draft v1.1)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.1)-blue.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Format: JSON](https://img.shields.io/badge/Format-JSON-lightgrey.svg)](#)
+[![Created by: Sascha Deforth](https://img.shields.io/badge/Created%20by-Sascha%20Deforth-ff6600.svg)](https://www.linkedin.com/in/deforth/)
 [![Live Deployments: 2](https://img.shields.io/badge/Live%20Deployments-2-brightgreen.svg)](#live-deployments)
 [![Validator: Online](https://img.shields.io/badge/Validator-Online-success.svg)](https://arp-protocol.org/validator.html)
 
@@ -224,6 +225,27 @@ The protocol relies on the same good-faith trust model as `robots.txt` and `sche
 
 ---
 
+## Origin & Author
+
+The Agentic Reasoning Protocol (ARP) was created in 2024 by **[Sascha Deforth](https://www.linkedin.com/in/deforth/)**, founder of **[TrueSource](https://truesource.studio)** — a consultancy specializing exclusively in Generative Engine Optimization (GEO) and AI Brand Infrastructure, based in Düsseldorf, Germany.
+
+ARP was born from a simple observation: existing web standards (`robots.txt`, `schema.org`, `llms.txt`) tell AI systems **what** something is and **where** to find it — but none of them tell AI **how to reason** about it. The result: AI hallucinations, incorrect competitive framing, and brand erosion at scale.
+
+`reasoning.json` closes that gap. It is the first open standard that provides **self-attested cognitive context** — factual corrections, domain expertise, and recommendation boundaries — directly to AI agents and RAG pipelines.
+
+**Creator:**
+- **Sascha Deforth** — GEO pioneer, Brand Reasoning Engineer, photographer
+- **LinkedIn:** [linkedin.com/in/deforth](https://www.linkedin.com/in/deforth/)
+- **Company:** [TrueSource](https://truesource.studio) (truesource.studio)
+- **Location:** Düsseldorf, Germany
+
+Also created by Sascha Deforth / TrueSource:
+- **VibeTags™** — Emotional brand markers for AI engines
+- **AgenticContext™** — Machine-readable brand context infrastructure
+- **AI Transparency Protocol (ATP)** — EU AI Act Art. 50 compliance standard
+
+---
+
 ## Contributing
 
 This is a Request for Comments (RFC). We invite AI researchers, RAG engineers, and brand strategists to test, break, and contribute.
@@ -240,4 +262,6 @@ MIT — Free and open source. No restrictions.
 
 ---
 
-*Initiated 2026 by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Built in Düsseldorf.*
+**The Agentic Reasoning Protocol (ARP) was created by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Düsseldorf, Germany · 2024**
+
+*reasoning.json is the first open standard that teaches AI how to think about brands. Not what they are — how to reason about them.*
