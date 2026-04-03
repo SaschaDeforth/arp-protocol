@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARP Protocol | Zero-Knowledge Signer</title>
+    <meta name="description" content="Cryptographically sign your reasoning.json with Ed25519 + RFC 8785 canonicalization. 100% browser-based — no data or private keys ever leave your device.">
+    <meta name="author" content="Sascha Deforth">
+    <link rel="canonical" href="https://arp-protocol.org/sign/">
+    <meta property="og:title" content="ARP Signer — Zero-Knowledge Browser Cryptography">
+    <meta property="og:description" content="Sign your reasoning.json with Ed25519 + DNS binding. Everything happens locally in your browser.">
+    <meta property="og:url" content="https://arp-protocol.org/sign/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="ARP Signer — Zero-Knowledge Browser Cryptography">
+    <meta name="twitter:description" content="DKIM for AI agents. Sign your reasoning.json entirely in the browser.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #09090b; color: #fafafa; }
+        .glass-panel { background: rgba(24, 24, 27, 0.4); border: 1px solid #27272a; border-radius: 16px; }
+        .input-dark { background: #000; border: 1px solid #27272a; color: #f4f4f5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        .input-dark:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 1px #10b981; }
+    </style>
+</head>
+<body class="min-h-screen p-6 md:p-12 font-sans selection:bg-emerald-500/30">
+    <div class="max-w-5xl mx-auto">
+
+        <div class="mb-10 text-center md:text-left">
+            <a href="/" class="text-zinc-500 hover:text-zinc-300 text-sm mb-4 inline-block">&larr; Back to arp-protocol.org</a>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6 ml-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                100% Zero-Knowledge Browser Cryptography
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">ARP <span class="text-emerald-500">Signer</span></h1>
+            <p class="text-zinc-400 max-w-2xl text-sm md:text-base leading-relaxed">
+                Cryptographically bind your <code class="text-zinc-300 bg-zinc-800 px-1 py-0.5 rounded">reasoning.json</code> to your domain via Ed25519 and RFC 8785.
+                <strong class="text-zinc-200">No data or private keys are ever sent to a server.</strong>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <div class="glass-panel p-6 shadow-xl">
+                <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+                    <span class="bg-zinc-800 text-zinc-400 w-6 h-6 rounded flex items-center justify-center text-xs font-bold">1</span>
+                    Configuration
+                </h2>
+                <div class="space-y-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="domain" class="block text-xs font-medium text-zinc-400 mb-1.5">Domain Name</label>
+                            <input type="text" id="domain" class="input-dark w-full rounded-lg p-2.5 text-sm" placeholder="example.com">
+                        </div>
+                        <div>
+                            <label for="selector" class="block text-xs font-medium text-zinc-400 mb-1.5">DNS Selector</label>
+                            <input type="text" id="selector" class="input-dark w-full rounded-lg p-2.5 text-sm" value="arp">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="jsonInput" class="block text-xs font-medium text-zinc-400 mb-1.5 flex justify-between">
+                            <span>Unsigned reasoning.json</span>
+                            <a href="https://arp-protocol.org/generator.html" target="_blank" class="text-emerald-500 hover:underline">Need one? Use the Generator</a>
+                        </label>
+                        <textarea id="jsonInput" class="input-dark w-full rounded-lg p-3 text-xs h-64 leading-relaxed" placeholder='Paste your reasoning.json here or drag & drop a file...'></textarea>
+                    </div>
+                    <button id="btnSign" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-lg transition-all flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        Generate Keys &amp; Sign Payload
+                    </button>
+                    <div id="errorMsg" class="hidden text-red-400 text-sm font-medium bg-red-950/40 border border-red-900/50 p-3 rounded-lg text-center"></div>
+                </div>
+            </div>
+
+            <div id="resultsPanel" class="glass-panel p-6 shadow-xl hidden flex-col border-emerald-500/30 relative overflow-hidden bg-emerald-950/10">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+
+                <h2 class="text-lg font-semibold mb-5 flex items-center gap-2 text-emerald-400">
+                    <span class="bg-emerald-500/20 text-emerald-400 w-6 h-6 rounded flex items-center justify-center text-xs font-bold">2</span>
+                    Cryptographic Binding Successful
+                </h2>
+
+                <div class="space-y-6 flex-1">
+                    <div>
+                        <h3 class="block text-sm font-bold text-zinc-200 mb-1">A. Publish your DNS TXT Record</h3>
+                        <p class="text-xs text-zinc-400 mb-3">AI agents will query this public key to verify your domain authority.</p>
+                        <div class="bg-black border border-zinc-800 rounded-lg p-4 text-xs font-mono break-all selection:bg-emerald-500/30 space-y-2 shadow-inner">
+                            <div><span class="text-zinc-500 inline-block w-12">Name:</span> <span id="dnsName" class="text-emerald-400 font-semibold select-all"></span></div>
+                            <div><span class="text-zinc-500 inline-block w-12">Type:</span> <span class="text-zinc-300">TXT</span></div>
+                            <div class="flex"><span class="text-zinc-500 inline-block w-12 shrink-0">Value:</span> <span id="dnsValue" class="text-emerald-400 font-semibold select-all"></span></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="block text-sm font-bold text-zinc-200 mb-3">B. Deploy &amp; Backup</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button id="btnDownloadJson" class="bg-zinc-100 hover:bg-white text-zinc-900 font-bold py-3 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2 shadow-lg">
+                                &darr; reasoning.json
+                            </button>
+                            <button id="btnDownloadKey" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/50 font-bold py-3 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+                                &darr; private_key.pem
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 flex gap-3">
+                        <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <p class="text-xs text-amber-200/80 leading-relaxed">
+                            <strong class="text-amber-500 block mb-1">Keep your Private Key secret!</strong>
+                            You will need it to update your file in the future without changing your DNS settings. We do not store it!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-16 text-center text-zinc-600 text-xs space-y-1">
+            <p>Part of the <a href="https://arp-protocol.org" class="text-zinc-400 hover:text-emerald-400">Agentic Reasoning Protocol</a> · <a href="https://github.com/SaschaDeforth/arp-protocol" class="text-zinc-400 hover:text-emerald-400">GitHub</a> · MIT License</p>
+            <p>&copy; 2026 Sascha Deforth. Built in D&uuml;sseldorf.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import * as ed25519 from 'https://esm.sh/@noble/ed25519@2.0.0';
+        import canonicalize from 'https://esm.sh/canonicalize@2.0.0';
+
+        // Helpers for Base64 and Base64Url
+        const toBase64 = (bytes) => btoa(String.fromCharCode(...bytes));
+        const toBase64Url = (bytes) => toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        // Generate PKCS#8 PEM format for the Private Key (Compatible with Python 'cryptography' library)
+        function formatPEM(privKeyBytes) {
+            const header = new Uint8Array([
+                0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+                0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20
+            ]);
+            const pkcs8 = new Uint8Array(header.length + privKeyBytes.length);
+            pkcs8.set(header);
+            pkcs8.set(privKeyBytes, header.length);
+
+            const b64 = toBase64(pkcs8);
+            const lines = b64.match(/.{1,64}/g).join('\n');
+            return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----`;
+        }
+
+        let signedJsonBlob = null;
+        let privateKeyBlob = null;
+        let currentDomain = "";
+        let currentSelector = "";
+
+        // Drag & Drop support
+        const jsonInput = document.getElementById('jsonInput');
+        jsonInput.addEventListener('dragover', (e) => { e.preventDefault(); jsonInput.classList.add('border-emerald-500'); });
+        jsonInput.addEventListener('dragleave', () => { jsonInput.classList.remove('border-emerald-500'); });
+        jsonInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            jsonInput.classList.remove('border-emerald-500');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { jsonInput.value = ev.target.result; };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('btnSign').addEventListener('click', async () => {
+            const domain = document.getElementById('domain').value.trim();
+            const selector = document.getElementById('selector').value.trim() || 'arp';
+            const jsonText = jsonInput.value;
+            const errorMsg = document.getElementById('errorMsg');
+            const resultsPanel = document.getElementById('resultsPanel');
+
+            errorMsg.classList.add('hidden');
+            resultsPanel.style.display = 'none';
+
+            if (!domain || !jsonText) {
+                errorMsg.textContent = "Error: Domain and JSON Payload are required.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            let payload;
+            try {
+                payload = JSON.parse(jsonText);
+            } catch (e) {
+                errorMsg.textContent = "Error: Invalid JSON syntax. Please check your payload.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // 1. Strip existing signature (Prevent recursive hash trap)
+                delete payload._arp_signature;
+
+                // 2. Generate Ed25519 Keypair (32 bytes private, 32 bytes public)
+                const privKey = ed25519.utils.randomPrivateKey();
+                const pubKey = await ed25519.getPublicKey(privKey);
+
+                const pubKeyB64 = toBase64(pubKey);
+                const privKeyPem = formatPEM(privKey);
+
+                // 3. JCS Canonicalize (RFC 8785)
+                const canonicalString = canonicalize(payload);
+                const canonicalBytes = new TextEncoder().encode(canonicalString);
+
+                // 4. Sign the canonical bytes
+                const signatureBytes = await ed25519.sign(canonicalBytes, privKey);
+                const signatureB64Url = toBase64Url(signatureBytes);
+
+                // 5. Append Signature Block
+                const now = new Date();
+                const expires = new Date();
+                expires.setDate(now.getDate() + 90); // 90 days validity
+
+                payload._arp_signature = {
+                    algorithm: "Ed25519",
+                    dns_selector: selector,
+                    dns_record: `${selector}._arp.${domain}`,
+                    canonicalization: "jcs-rfc8785",
+                    signed_at: now.toISOString().split('.')[0] + "Z",
+                    expires_at: expires.toISOString().split('.')[0] + "Z",
+                    signature: signatureB64Url
+                };
+
+                // 6. Update UI & Prepare Downloads
+                document.getElementById('dnsName').textContent = `${selector}._arp.${domain}`;
+                document.getElementById('dnsValue').textContent = `v=ARP1; k=ed25519; p=${pubKeyB64}`;
+
+                signedJsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+                privateKeyBlob = new Blob([privKeyPem], { type: "application/x-pem-file" });
+                currentDomain = domain;
+                currentSelector = selector;
+
+                resultsPanel.style.display = 'flex';
+                resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = "Cryptographic Error: " + err.message;
+                errorMsg.classList.remove('hidden');
+            }
+        });
+
+        // Download Handlers
+        function triggerDownload(blob, filename) {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('btnDownloadJson').addEventListener('click', () => {
+            triggerDownload(signedJsonBlob, 'reasoning.json');
+        });
+
+        document.getElementById('btnDownloadKey').addEventListener('click', () => {
+            const safeDomain = currentDomain.replace(/[^a-z0-9]/gi, '_');
+            triggerDownload(privateKeyBlob, `${currentSelector}_arp_private_${safeDomain}.pem`);
+        });
+    </script>
+</body>
+</html>

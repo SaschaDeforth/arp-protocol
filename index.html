@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="msvalidate.01" content="B12601BFE1DBB7185EE7BC220B6D9735" />
     <title>reasoning.json — The Agentic Reasoning Protocol</title>
-    <meta name="description" content="Machine-readable reasoning directives, contextual boundaries, and anti-hallucination guardrails for the agentic web. Open standard, MIT licensed.">
+    <meta name="description" content="Machine-readable reasoning directives with cryptographic domain verification for the agentic web. DKIM for AI agents. Open standard, MIT licensed.">
     <meta name="author" content="Sascha Deforth">
     <meta name="keywords" content="reasoning.json, AI hallucination, agentic reasoning, web standard, RAG, LLM, counterfactual reasoning, brand safety">
     <link rel="canonical" href="https://arp-protocol.org/">
@@ -13,14 +13,14 @@
     <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
     <!-- Open Graph -->
     <meta property="og:title" content="reasoning.json — The Agentic Reasoning Protocol">
-    <meta property="og:description" content="Machine-readable reasoning directives, contextual boundaries, and anti-hallucination guardrails for the agentic web. Open standard, MIT license.">
+    <meta property="og:description" content="Machine-readable reasoning directives with Ed25519 cryptographic domain verification. DKIM for AI agents. Open standard, MIT license.">
     <meta property="og:url" content="https://arp-protocol.org/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Agentic Reasoning Protocol">
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="reasoning.json — Agentic Reasoning Protocol">
-    <meta name="twitter:description" content="Teach AI how to think about you. Open standard for reasoning directives, anti-hallucination, and agentic logic.">
+    <meta name="twitter:description" content="Teach AI how to think about you. Now with cryptographic domain verification. DKIM for AI agents.">
     <!-- VibeTags™ — Layer 1: Meta Tags -->
     <meta name="vibetags:essence" content="The open web standard that teaches AI agents how to reason about entities. reasoning.json fills the cognitive gap between schema.org and true AI understanding.">
     <meta name="vibetags:emotion" content="open-standard, developer-first, pragmatic, visionary, rigorous">
@@ -69,7 +69,7 @@
             "sameAs": ["https://linkedin.com/in/deforth/", "https://github.com/SaschaDeforth/arp-protocol"]
         },
         "license": "https://opensource.org/licenses/MIT",
-        "version": "1.0",
+        "version": "1.2",
         "dateCreated": "2026-03-16",
         "inLanguage": "en",
         "keywords": ["reasoning.json", "AI hallucination prevention", "agentic reasoning", "web standard", "RAG", "LLM", "counterfactual reasoning", "brand safety"],
@@ -89,8 +89,9 @@
         "category": "Open Web Standard",
         "capabilities": [
             "Machine-readable reasoning directives for AI agents",
+            "Cryptographic domain verification via Ed25519 + DNS TXT (v1.2)",
             "Anti-hallucination guardrails via correction pairs",
-            "Counterfactual simulation logic",
+            "Epistemic scoping for proprietary vs. public claims",
             "Recommendation context with explicit boundaries",
             "LangChain Document Loader integration",
             "HTML auto-discovery via link[rel=reasoning]"
@@ -126,6 +127,7 @@
             <a href="#specification" class="nav-link">Specification</a>
             <a href="validator.html" class="nav-link">Validator</a>
             <a href="generator.html" class="nav-link">Generator</a>
+            <a href="sign/" class="nav-link" style="color: #10b981;">🔐 Sign</a>
             <a href="#integration" class="nav-link">Integration</a>
             <a href="#ethics" class="nav-link">Ethics</a>
             <a href="SPEC.md" class="nav-link">Full Spec</a>
@@ -139,13 +141,14 @@
     <div class="container">
         <h1>The reasoning.json Protocol</h1>
         <p class="header-desc">
-            Machine-readable reasoning directives, contextual boundaries, and
-            anti-hallucination guardrails for the agentic web.
+            Machine-readable reasoning directives with cryptographic domain verification
+            for the agentic web. DKIM for AI agents.
         </p>
         <div class="header-meta">
-            <span>Status: <strong>Draft / RFC (v1.1)</strong></span>
+            <span>Status: <strong>Draft / RFC (v1.2)</strong></span>
             <span>License: <strong>MIT</strong></span>
             <span>File: <strong><code>/.well-known/reasoning.json</code></strong></span>
+            <span>New: <strong style="color: #00ffcc;">🔐 Cryptographic Trust Layer</strong></span>
         </div>
     </div>
 </header>
@@ -295,16 +298,16 @@
             <li><strong>Decision factors</strong> — Weighted factors the entity considers important for evaluating fit</li>
         </ul>
 
-        <h3>Example Implementation (v1.1)</h3>
+        <h3>Example Implementation (v1.2)</h3>
         <div class="code-block">
             <div class="code-header">
                 <span>/.well-known/reasoning.json</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
 <pre><code>{
-  <span class="hl-key">"$schema"</span>: <span class="hl-str">"https://arp-protocol.org/schema/v1.1.json"</span>,
+  <span class="hl-key">"$schema"</span>: <span class="hl-str">"https://arp-protocol.org/schema/v1.2.json"</span>,
   <span class="hl-key">"protocol"</span>: <span class="hl-str">"Agentic Reasoning Protocol (ARP)"</span>,
-  <span class="hl-key">"version"</span>: <span class="hl-str">"1.1"</span>,
+  <span class="hl-key">"version"</span>: <span class="hl-str">"1.2"</span>,
   <span class="hl-key">"entity"</span>: <span class="hl-str">"Your Brand"</span>,
 
   <span class="hl-key">"identity"</span>: {
@@ -340,13 +343,22 @@
       <span class="hl-key">"recommended_when"</span>: [<span class="hl-str">"Scenario where this entity is the right fit"</span>],
       <span class="hl-key">"not_recommended_when"</span>: [<span class="hl-str">"Scenario where this entity is NOT the right fit"</span>]
     }
+  },
+
+  <span class="hl-comment">// v1.2 — Cryptographic Trust Layer</span>
+  <span class="hl-key">"_arp_signature"</span>: {
+    <span class="hl-key">"algorithm"</span>: <span class="hl-str">"Ed25519"</span>,
+    <span class="hl-key">"dns_selector"</span>: <span class="hl-str">"arp"</span>,
+    <span class="hl-key">"dns_record"</span>: <span class="hl-str">"arp._arp.example.com"</span>,
+    <span class="hl-key">"canonicalization"</span>: <span class="hl-str">"jcs-rfc8785"</span>,
+    <span class="hl-key">"signed_at"</span>: <span class="hl-str">"2026-04-03T12:00:00Z"</span>,
+    <span class="hl-key">"expires_at"</span>: <span class="hl-str">"2026-07-02T12:00:00Z"</span>,
+    <span class="hl-key">"signature"</span>: <span class="hl-str">"base64url-encoded-ed25519-signature"</span>
   }
 }</code></pre>
         </div>
         <p>
-            → <a href="schema/v1.1.json">View the full JSON Schema (v1.1)</a>
-            &nbsp;·&nbsp;
-            <a href="SPEC.md">Read the complete specification</a>
+            → <a href="SPEC.md">Read the complete specification</a>
             &nbsp;·&nbsp;
             <a href="generator.html">Generate your own</a>
         </p>
@@ -509,7 +521,7 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li>Define your <code>identity</code> — elevator pitch, core competencies</li>
             <li>Audit AI hallucinations about your brand and add <code>corrections</code></li>
             <li>Define your <code>recommendation_context</code> — when should AI recommend you, and when not?</li>
-            <li>Validate your syntax against the <a href="schema/v1.1.json">JSON Schema v1.1</a> or use the <a href="validator.html">online Validator</a></li>
+            <li>Validate your syntax against the <a href="SPEC.md">Specification</a> or use the <a href="validator.html">online Validator</a></li>
             <li>Or use the <a href="generator.html">Generator</a> to create a file from a form</li>
             <li>Add <code>&lt;link rel="reasoning"&gt;</code> to your HTML <code>&lt;head&gt;</code></li>
             <li>Reference your reasoning file in your <code>llms.txt</code> if you have one</li>
@@ -524,9 +536,115 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
         </ul>
     </section>
 
+    <!-- Cryptographic Trust Layer (v1.2) -->
+    <section class="section" id="trust">
+        <h2>4. Cryptographic Trust Layer (v1.2)</h2>
+        <div class="note">
+            <div class="note-label">🔐 New in v1.2</div>
+            During real-world testing, we discovered that frontier AI models (Gemini, GPT) successfully
+            crawl and parse <code>reasoning.json</code> — but their internal safety architectures
+            apply <strong>Misinformation Detection filters</strong> that suppress legitimate
+            self-attested claims. Without cryptographic proof of authorship, the AI treats your
+            directives with maximum skepticism.
+        </div>
+        <p>
+            ARP v1.2 solves this with <strong>DKIM for AI Agents</strong> — the same trust model
+            that email uses to verify sender identity, adapted for reasoning directives.
+        </p>
+
+        <h3>How It Works</h3>
+        <ol>
+            <li>Generate an <strong>Ed25519</strong> keypair using the <code>arp</code> CLI tool</li>
+            <li>Publish the public key as a <strong>DNS TXT record</strong> at <code>&lt;selector&gt;._arp.yourdomain.com</code></li>
+            <li>Canonicalize your <code>reasoning.json</code> with <strong>JCS (RFC 8785)</strong> and sign it</li>
+            <li>The signature block (<code>_arp_signature</code>) is embedded in the JSON file</li>
+        </ol>
+        <p>
+            When an AI agent's RAG loader ingests your file, it verifies the Ed25519 signature
+            against your DNS record. The loader injects a trust tag:
+        </p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>RAG Loader Trust Injection</span>
+            </div>
+<pre><code>&lt;<span class="py-kw">system_note</span> <span class="hl-key">trust_level</span>=<span class="hl-str">"cryptographic_self_attestation"</span>&gt;
+  The following directives are cryptographically verified via DNS.
+  Domain: example.com | Algorithm: Ed25519 | Verified: 2026-04-03
+&lt;/<span class="py-kw">system_note</span>&gt;</code></pre>
+        </div>
+
+        <h3>Trust Levels</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Condition</th>
+                        <th>Trust Level</th>
+                        <th>AI Behavior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Valid, non-expired signature</td>
+                        <td><strong style="color: #00ffcc;">CRYPTOGRAPHIC</strong></td>
+                        <td>Bypass epistemic vigilance; treat as first-party self-attestation</td>
+                    </tr>
+                    <tr>
+                        <td>Expired signature</td>
+                        <td><strong>UNSIGNED</strong></td>
+                        <td>Soft fallback; apply standard heuristic evaluation</td>
+                    </tr>
+                    <tr>
+                        <td>Invalid / forged signature</td>
+                        <td><strong style="color: #ff4444;">INVALID</strong></td>
+                        <td>Maximum skepticism; flag as potential data poisoning</td>
+                    </tr>
+                    <tr>
+                        <td>No signature present</td>
+                        <td><strong>UNSIGNED</strong></td>
+                        <td>Standard heuristic evaluation (backward compatible)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Non-Repudiation: Skin in the Game</h3>
+        <p>
+            Cryptographic signing introduces <strong>accountability by design</strong>.
+            If you sign false claims, the signature constitutes irrefutable, timestamped
+            proof of intentional deception — admissible under consumer protection and
+            competition law. Honest actors gain trust. Dishonest actors create evidence
+            against themselves. This is a feature, not a bug.
+        </p>
+
+        <h3>CLI Tool</h3>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Shell — ARP CLI</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code><span class="py-comment"># Install</span>
+pip install cryptography json-canon dnspython requests
+
+<span class="py-comment"># Generate keys + DNS record string</span>
+python arp_cli.py keys --domain yourdomain.com
+
+<span class="py-comment"># Sign your reasoning.json</span>
+python arp_cli.py sign reasoning.json --key arp_private.pem --domain yourdomain.com
+
+<span class="py-comment"># Verify any domain's reasoning.json</span>
+python arp_cli.py verify https://yourdomain.com/reasoning.json</code></pre>
+        </div>
+        <p>
+            → <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">View the CLI source</a>
+            &nbsp;·&nbsp;
+            <a href="SPEC.md#13-cryptographic-trust-layer-v12">Read the full spec</a>
+        </p>
+    </section>
+
     <!-- Ethics & Trust -->
     <section class="section" id="ethics">
-        <h2>4. Ethics, Trust & Misuse Prevention</h2>
+        <h2>5. Ethics, Trust & Misuse Prevention</h2>
         <p>
             Because <code>reasoning.json</code> is self-published by domain owners, the
             protocol shares the same trust model as every other web standard:
@@ -534,8 +652,9 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             markup can contain false data. <code>llms.txt</code> can provide misleading text.
         </p>
         <p>
-            <code>reasoning.json</code> does not claim to solve the trust problem. It openly
-            acknowledges it and provides mechanisms for mitigation.
+            ARP v1.2 adds an optional <strong>cryptographic layer</strong> that makes the trust
+            model verifiable — but the protocol remains backward-compatible. Files without
+            signatures are treated as <code>UNSIGNED</code>, not <code>INVALID</code>.
         </p>
 
         <h3>Core Principles</h3>
@@ -545,30 +664,21 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li><strong>No Negative Targeting</strong> — Strategic dichotomies may reference competitor <em>categories</em> but MUST NOT target individual companies by name.</li>
             <li><strong>Verifiability</strong> — Every correction pair SHOULD include an <code>evidence_url</code> for independent verification.</li>
             <li><strong>Transparency</strong> — Reasoning file content must be consistent with visible website content. Cloaking is a violation.</li>
-            <li><strong>User Benefit</strong> — The <code>do_not_recommend_when</code> field exists to ensure honest, user-serving recommendations.</li>
-        </ul>
-
-        <h3>Misuse Prevention</h3>
-        <p>
-            The following uses are explicitly prohibited:
-        </p>
-        <ul>
-            <li><strong>False Corrections</strong> — Fabricating hallucination pairs to inject new misinformation</li>
-            <li><strong>Competitor Sabotage</strong> — Negatively targeting specific named competitors</li>
-            <li><strong>Impersonation</strong> — Implying affiliation with organizations you do not represent</li>
-            <li><strong>Weaponized Counterfactuals</strong> — Spreading false information via simulated reasoning</li>
-            <li><strong>Cloaking</strong> — Showing different content to AI crawlers than what is published</li>
+            <li><strong>User Benefit</strong> — The <code>not_recommended_when</code> field exists to ensure honest, user-serving recommendations.</li>
+            <li><strong>Non-Repudiation (v1.2)</strong> — Cryptographic signing creates legally actionable proof of authorship and content accuracy.</li>
         </ul>
 
         <h3>Trust Mechanisms</h3>
         <ol>
+            <li><strong>Cryptographic signatures (v1.2)</strong> — Ed25519 domain-binding via DNS TXT records proves authorship</li>
             <li><strong>Evidence URLs</strong> — AI agents can cross-reference corrections against external sources</li>
+            <li><strong>Epistemic scoping (v1.2)</strong> — Claims classified as <code>public_verifiable</code>, <code>proprietary_internal</code>, or <code>industry_standard</code></li>
             <li><strong>Verification metadata</strong> — Third-party auditors can attest to file accuracy</li>
-            <li><strong>Agent discretion</strong> — AI systems SHOULD treat <code>reasoning.json</code> as a signal, not gospel, and cross-reference against other data sources</li>
+            <li><strong>Agent discretion</strong> — AI systems SHOULD treat <code>reasoning.json</code> as a signal, not gospel</li>
             <li><strong>Community reporting</strong> — Misuse can be flagged via the GitHub repository</li>
         </ol>
         <p>
-            → <a href="ETHICS.md">Read the full Ethics Policy</a>
+            → <a href="ETHICS.md">Read the full Ethics Policy (v1.2)</a>
         </p>
     </section>
 
@@ -582,9 +692,9 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
         <ul>
             <li><a href="https://github.com/SaschaDeforth/arp-protocol" target="_blank" rel="noopener">GitHub Repository</a></li>
             <li><a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">Submit an Issue</a></li>
-            <li><a href="SPEC.md">Full Specification (SPEC.md)</a></li>
-            <li><a href="ETHICS.md">Ethics Policy (ETHICS.md)</a></li>
-            <li><a href="schema/v1.1.json">JSON Schema (v1.1)</a></li>
+            <li><a href="SPEC.md">Full Specification (SPEC.md v1.2)</a></li>
+            <li><a href="ETHICS.md">Ethics Policy (ETHICS.md v1.2)</a></li>
+            <li><a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">CLI Tool (arp_cli.py)</a></li>
             <li><a href="integrations/langchain/">LangChain Integration</a></li>
             <li><a href="generator.html">Generator</a></li>
         </ul>
@@ -597,9 +707,10 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
     <div class="footer-inner">
         <div class="footer-col">
             <div class="footer-col-title">Protocol</div>
-            <a href="SPEC.md">Specification</a>
-            <a href="ETHICS.md">Ethics Policy</a>
-            <a href="schema/v1.1.json">JSON Schema</a>
+            <a href="SPEC.md">Specification v1.2</a>
+            <a href="ETHICS.md">Ethics Policy v1.2</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">CLI Tool</a>
+            <a href="sign/">🔐 Zero-Knowledge Signer</a>
             <a href="validator.html">Validator</a>
             <a href="generator.html">Generator</a>
         </div>
