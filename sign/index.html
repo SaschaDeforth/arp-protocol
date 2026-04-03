@@ -121,7 +121,12 @@
 
     <script type="module">
         import * as ed25519 from 'https://esm.sh/@noble/ed25519@2.0.0';
+        import { sha512 } from 'https://esm.sh/@noble/hashes@1.3.3/sha512';
         import canonicalize from 'https://esm.sh/canonicalize@2.0.0';
+
+        // CRITICAL: @noble/ed25519 v2 externalized SHA-512 for tree-shaking
+        // Without this, sign/verify throws "etc.sha512Sync not set"
+        ed25519.etc.sha512Sync = (...m) => sha512(ed25519.etc.concatBytes(...m));
 
         // Helpers for Base64 and Base64Url
         const toBase64 = (bytes) => btoa(String.fromCharCode(...bytes));
