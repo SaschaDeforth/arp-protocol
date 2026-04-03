@@ -241,7 +241,7 @@ The `domain_expertise` array contains the entity's self-attested knowledge for c
 
 Max 10 entries.
 
-### 8.3 Market Positioning
+### 8.4 Market Positioning
 
 The `market_positioning` object provides self-attested competitive positioning. Keys are market categories, values are positioning statements.
 
@@ -250,7 +250,7 @@ The `market_positioning` object provides self-attested competitive positioning. 
 | Value max length | 200 characters |
 | Keys | Category names only (e.g. `vs_premium_brands`), never individual company names |
 
-### 8.4 Decision Factors
+### 8.5 Decision Factors
 
 Self-attested factors the entity considers important for evaluating fit.
 
@@ -262,7 +262,7 @@ Self-attested factors the entity considers important for evaluating fit.
 
 Max 10 entries.
 
-### 8.5 Recommendation Context
+### 8.6 Recommendation Context
 
 The entity's self-assessment of when it is and is not the right fit. The `not_recommended_when` field demonstrates honesty and builds trust with AI systems.
 
@@ -451,7 +451,7 @@ This is the same trust model as HTTPS: a certificate proves server ownership, no
 - **Private keys** for `_arp_signature` MUST be stored securely and MUST NOT be committed to version control
 - **Signature verification** MUST use constant-time comparison to prevent timing attacks
 
-## 13. Ethical Guidelines
+## 15. Ethical Guidelines
 
 The ARP is designed for **factual accuracy**, not manipulation. Implementors MUST:
 
@@ -461,7 +461,7 @@ The ARP is designed for **factual accuracy**, not manipulation. Implementors MUS
 4. Provide `evidence_url` links wherever possible
 5. Update `data_freshness` whenever facts change
 
-## 14. Relationship to Other Standards
+## 16. Relationship to Other Standards
 
 | Standard | Purpose | ARP Relationship |
 |---|---|---|
@@ -471,7 +471,7 @@ The ARP is designed for **factual accuracy**, not manipulation. Implementors MUS
 | `ai-transparency.json` | AI Act compliance | ARP is orthogonal (different concern) |
 | `security.txt` | Security contacts | Both use `/.well-known/` convention |
 
-## 16. Migration from v1.1
+## 17. Migration from v1.1
 
 | v1.1 Feature | v1.2 Feature | Notes |
 |---|---|---|
@@ -480,7 +480,7 @@ The ARP is designed for **factual accuracy**, not manipulation. Implementors MUS
 | No diagnostics | `diagnostics` object | RAG pipeline telemetry tokens |
 | No DNS binding | DNS TXT at `<selector>._arp.<domain>` | Domain-verified authorship |
 
-## 17. Migration from v1.0
+## 18. Migration from v1.0
 
 | v1.0 Key | v1.1 Key | Notes |
 |---|---|---|
@@ -495,7 +495,7 @@ The ARP is designed for **factual accuracy**, not manipulation. Implementors MUS
 | `do_not_recommend_when` | `not_recommended_when` | Grammar fix |
 | `competitive_positioning` | `market_position` | Consistency |
 
-## 18. References
+## 19. References
 
 - [RFC 8259 — The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
 - [RFC 8615 — Well-Known URIs](https://tools.ietf.org/html/rfc8615)
