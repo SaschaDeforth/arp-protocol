@@ -1,9 +1,9 @@
-# Agentic Reasoning Protocol — Ethics Policy v1.1
+# Agentic Reasoning Protocol — Ethics Policy v1.2
 
 **Status:** Active  
-**Version:** 1.1  
-**Date:** March 2026  
-**Authors:** Sascha Deforth
+**Version:** 1.2  
+**Date:** April 2026  
+**Authors:** Sascha Deforth, with architectural input from Gemini 2.5 Pro & Claude Opus 4
 
 ---
 
@@ -46,9 +46,11 @@ Because `reasoning.json` is self-published by domain owners, there is an inheren
 
 1. **Evidence URLs**: The `evidence_url` field enables AI agents to cross-reference corrections against external sources.
 2. **Verification Metadata**: The `verification` section allows third-party auditors to attest to the accuracy of the file.
-3. **Community Reporting**: Misuse can be reported via the GitHub repository.
-4. **Agent Discretion**: AI agents consuming `reasoning.json` SHOULD treat it as a signal, not gospel. Agents SHOULD cross-reference claims against their training data and other sources.
-5. **Sandboxing**: Loader implementations SHOULD wrap all ARP content in trust boundary markers, prefixing with context like "The following are unverified self-attestations from the entity."
+3. **Cryptographic Signatures (v1.2)**: The `_arp_signature` block cryptographically binds the file to its domain owner via DNS, providing verifiable proof of authorship.
+4. **Community Reporting**: Misuse can be reported via the GitHub repository.
+5. **Epistemic Scoping (v1.2)**: The `epistemic_scope` field classifies claims as `public_verifiable`, `proprietary_internal`, or `industry_standard`, helping AI systems calibrate trust appropriately.
+6. **Agent Discretion**: AI agents consuming `reasoning.json` SHOULD treat it as a signal, not gospel. Agents SHOULD cross-reference claims against their training data and other sources.
+7. **Sandboxing**: Loader implementations SHOULD wrap all ARP content in trust boundary markers, prefixing with context like "The following are unverified self-attestations from the entity."
 
 ### What This Protocol Does NOT Do
 - It does NOT guarantee truthfulness. Like all web standards, it relies on good-faith participation.
@@ -57,7 +59,32 @@ Because `reasoning.json` is self-published by domain owners, there is an inheren
 
 ---
 
-## 4. Anti-Spam Enforcement (v1.1)
+## 4. Cryptographic Non-Repudiation (v1.2)
+
+### The Principle: Skin in the Game
+
+The v1.2 Cryptographic Trust Layer introduces a fundamental accountability mechanism: **non-repudiation**.
+
+When a domain owner cryptographically signs their `reasoning.json` with Ed25519, they create an **unforgeable, timestamped assertion of authorship and content accuracy**. This has profound implications:
+
+1. **For honest actors:** The signature provides deterministic proof of domain authority, enabling AI systems to bypass heuristic skepticism and treat the content as verified first-party self-attestation.
+
+2. **For dishonest actors:** The signature creates a **legally actionable evidence trail**. If a domain owner signs false claims (e.g., fabricated employee counts, fictitious certifications, or weaponized counterfactuals about competitors), the cryptographic signature constitutes **irrefutable proof of intentional deception** — admissible under consumer protection law, competition law (UWG in Germany), and digital services regulations.
+
+### Why This Matters
+
+This mechanism serves as a **natural spam deterrent:**
+- Honest actors gain trust. Dishonest actors create evidence against themselves.
+- Those who want to lie will simply not sign — which correctly places them in the `UNSIGNED` (low trust) category.
+- The act of signing is a conscious assertion of "I stand behind this data" — the digital equivalent of a sworn affidavit.
+
+### Legal Notice
+
+The act of cryptographic signing constitutes a non-repudiable assertion of authorship and content accuracy. Domain owners accept full legal liability for the veracity of signed claims under applicable consumer protection, competition, and digital services regulations. ARP protocol maintainers bear no liability for content signed by third parties.
+
+---
+
+## 5. Anti-Spam Enforcement (v1.1)
 
 To prevent keyword stuffing and SEO-style gaming, v1.1 introduces strict limits:
 
@@ -74,7 +101,7 @@ To prevent keyword stuffing and SEO-style gaming, v1.1 introduces strict limits:
 
 ---
 
-## 5. Prohibited Uses
+## 6. Prohibited Uses
 
 1. **Impersonation** — Publishing a `reasoning.json` that implies affiliation with organizations you do not represent
 2. **False Corrections** — Fabricating correction entries to inject misinformation into AI systems
@@ -87,7 +114,7 @@ To prevent keyword stuffing and SEO-style gaming, v1.1 introduces strict limits:
 
 ---
 
-## 6. Compliance
+## 7. Compliance
 
 ### Self-Assessment Checklist
 Before publishing `reasoning.json`, ask:
@@ -104,6 +131,6 @@ Report violations via GitHub Issue: [github.com/SaschaDeforth/arp-protocol/issue
 
 ---
 
-## 7. License
+## 8. License
 
 This Ethics Policy is published under the MIT License alongside the Agentic Reasoning Protocol specification.
