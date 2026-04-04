@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validator — reasoning.json v1.1</title>
-    <meta name="description" content="Validate your reasoning.json file against the ARP v1.1 schema. Check compliance, anti-spam limits, and get migration tips from v1.0.">
+    <title>Validator — reasoning.json v1.2</title>
+    <meta name="description" content="Validate your reasoning.json file against the ARP v1.2 schema. Check compliance, cryptographic signatures, anti-spam limits, and migration tips.">
     <meta name="robots" content="index, follow">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -305,6 +305,7 @@
             <a href="index.html#specification" class="nav-link">Specification</a>
             <a href="validator.html" class="nav-link" style="color: var(--text); font-weight: 600;">Validator</a>
             <a href="generator.html" class="nav-link">Generator</a>
+            <a href="sign/" class="nav-link" style="color: #10b981;">🔐 Sign</a>
             <a href="index.html#ethics" class="nav-link">Ethics</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link">GitHub</a>
         </div>
@@ -316,11 +317,11 @@
     <header class="header">
         <h1>Validate your <code>reasoning.json</code></h1>
         <p class="header-desc">
-            Check your file against the ARP v1.1 schema. Get a compliance score, anti-spam limit checks, and v1.0 → v1.1 migration tips.
+            Check your file against the ARP v1.2 schema. Get a compliance score, cryptographic trust checks, anti-spam limits, and migration tips.
         </p>
         <div class="header-meta">
-            <span>Schema: v1.1</span>
-            <span>Checks: 22</span>
+            <span>Schema: v1.2</span>
+            <span>Checks: 28</span>
             <span>Client-side only — your data never leaves your browser</span>
         </div>
     </header>
@@ -367,7 +368,7 @@
         <!-- Actions -->
         <div class="validator-actions">
             <button class="btn btn-primary" onclick="validate()">✓ Validate</button>
-            <button class="btn btn-secondary" onclick="loadExample()">Load v1.1 Example</button>
+            <button class="btn btn-secondary" onclick="loadExample()">Load v1.2 Example</button>
             <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
         </div>
 
@@ -420,6 +421,18 @@
             <div id="checks-limits" class="check-list"></div>
         </div>
 
+        <!-- Cryptographic Trust -->
+        <div class="section-group">
+            <div class="section-group-title">🔐 Cryptographic Trust Layer (v1.2)</div>
+            <div id="checks-crypto" class="check-list"></div>
+        </div>
+
+        <!-- Diagnostics -->
+        <div class="section-group">
+            <div class="section-group-title">Diagnostics & Telemetry (v1.2)</div>
+            <div id="checks-diagnostics" class="check-list"></div>
+        </div>
+
         <!-- Authority & Trust -->
         <div class="section-group">
             <div class="section-group-title">Authority & Trust</div>
@@ -469,7 +482,7 @@
 
 <script>
 // ========================================================
-// reasoning.json Validator — v1.1 Scoring Engine
+// reasoning.json Validator — v1.2 Scoring Engine
 // ========================================================
 
 function switchTab(tab) {
@@ -519,9 +532,9 @@ async function fetchFromUrl() {
 
 function loadExample() {
     textarea.value = JSON.stringify({
-        "$schema": "https://arp-protocol.org/schema/v1.1.json",
+        "$schema": "https://arp-protocol.org/schema/v1.2.json",
         "protocol": "Agentic Reasoning Protocol (ARP)",
-        "version": "1.1",
+        "version": "1.2",
         "entity": "Example Corp",
         "identity": {
             "elevator_pitch": "Example Corp provides enterprise analytics solutions for Fortune 500 companies.",
@@ -539,10 +552,11 @@ function loadExample() {
                 {
                     "trigger_topic": "Company founding and age",
                     "verified_fact": "Example Corp was founded in 2018 and has over 200 employees.",
-                    "evidence_url": "https://example.com/about"
+                    "evidence_url": "https://example.com/about",
+                    "epistemic_scope": "public_verifiable"
                 }
             ],
-            "last_verified": "2026-03-22"
+            "last_verified": "2026-04-04"
         },
         "entity_claims": {
             "framing_context": "Example Corp positions itself as a mid-market alternative to enterprise BI suites, offering faster time-to-value with lower total cost of ownership.",
@@ -550,6 +564,15 @@ function loadExample() {
                 "recommended_when": ["User needs enterprise-grade analytics with real-time processing"],
                 "not_recommended_when": ["User is a small business with under 50 employees", "User needs a free or open-source solution"]
             }
+        },
+        "_arp_signature": {
+            "algorithm": "Ed25519",
+            "dns_selector": "arp",
+            "dns_record": "arp._arp.example.com",
+            "canonicalization": "jcs-rfc8785",
+            "signed_at": "2026-04-04T12:00:00Z",
+            "expires_at": "2026-07-03T12:00:00Z",
+            "signature": "example-base64url-encoded-signature"
         }
     }, null, 2);
     charCount.textContent = textarea.value.length + ' characters';
@@ -605,9 +628,11 @@ function showError(title, message) {
     document.getElementById('migration-banner').style.display = 'none';
 }
 
-// ── v1.0 → v1.1 Migration Detection ──
+// ── Migration Detection (v1.0 → v1.1 → v1.2) ──
 function detectMigrations(json) {
     const items = [];
+
+    // v1.0 → v1.1 migrations
     if (json.reasoning_directives) {
         items.push('<code>reasoning_directives</code> → <code>entity_claims</code>');
     }
@@ -639,8 +664,24 @@ function detectMigrations(json) {
         items.push('<code>do_not_recommend_when</code> → <code>not_recommended_when</code>');
     }
 
+    // v1.1 → v1.2 migrations
     if (json.$schema === 'https://arp-protocol.org/schema/v1.json') {
-        items.push('<code>$schema</code> → update to <code>v1.1.json</code>');
+        items.push('<code>$schema</code> → update to <code>v1.2.json</code>');
+    }
+    if (json.$schema === 'https://arp-protocol.org/schema/v1.1.json') {
+        items.push('<code>$schema</code> → update to <code>v1.2.json</code> for cryptographic trust support');
+    }
+    if (json.version === '1.1') {
+        items.push('<code>version</code> → update to <code>1.2</code>');
+    }
+    if (json.verification && json.verification.trust_signature && !json._arp_signature) {
+        items.push('<code>trust_signature</code> (SHA-256) → <code>_arp_signature</code> (Ed25519 cryptographic binding)');
+    }
+    if (!json._arp_signature && json.version !== '1.0') {
+        items.push('Add <code>_arp_signature</code> for cryptographic domain verification (use the <a href="sign/">Signer tool</a>)');
+    }
+    if (!json.diagnostics && json.version !== '1.0') {
+        items.push('Consider adding <code>diagnostics</code> with telemetry tokens for RAG pipeline auditing');
     }
     return items;
 }
@@ -652,15 +693,16 @@ function compat(obj, v11, v10, def) {
 
 function runChecks(json) {
     const checks = [];
+    const isV12 = json._arp_signature || json.diagnostics || json.version === '1.2';
     const isV11 = !json.reasoning_directives && json.entity_claims;
 
     // ── Schema Compliance ──
     checks.push({
         group: 'schema',
         name: '$schema reference',
-        detail: 'Must reference ARP schema URI (v1.1 recommended)',
-        pass: json.$schema === 'https://arp-protocol.org/schema/v1.1.json',
-        warn: json.$schema === 'https://arp-protocol.org/schema/v1.json',
+        detail: 'Must reference ARP schema URI (v1.2 recommended)',
+        pass: json.$schema === 'https://arp-protocol.org/schema/v1.2.json',
+        warn: json.$schema === 'https://arp-protocol.org/schema/v1.1.json' || json.$schema === 'https://arp-protocol.org/schema/v1.json',
         weight: 3
     });
 
@@ -675,8 +717,8 @@ function runChecks(json) {
     checks.push({
         group: 'schema',
         name: 'version field',
-        detail: 'Semver-compatible version string (v1.1 recommended)',
-        pass: json.version === '1.1',
+        detail: 'Semver-compatible version string (v1.2 recommended)',
+        pass: json.version === '1.2',
         warn: typeof json.version === 'string' && /^\d+\.\d+(\.\d+)?$/.test(json.version),
         weight: 3
     });
@@ -861,6 +903,87 @@ function runChecks(json) {
         weight: 3
     });
 
+    // ── Cryptographic Trust Layer (v1.2) ──
+    const sig = json._arp_signature || {};
+    const hasSig = !!json._arp_signature;
+
+    checks.push({
+        group: 'crypto',
+        name: '_arp_signature present',
+        detail: hasSig ? 'Ed25519 cryptographic signature block found' : 'No signature — file is UNSIGNED (add via CLI or Signer tool)',
+        pass: hasSig,
+        weight: 8
+    });
+
+    checks.push({
+        group: 'crypto',
+        name: 'algorithm',
+        detail: 'Must be Ed25519',
+        pass: sig.algorithm === 'Ed25519',
+        warn: hasSig && sig.algorithm,
+        weight: 3
+    });
+
+    checks.push({
+        group: 'crypto',
+        name: 'canonicalization',
+        detail: 'Must be jcs-rfc8785 (JSON Canonicalization Scheme)',
+        pass: sig.canonicalization === 'jcs-rfc8785',
+        warn: hasSig && sig.canonicalization,
+        weight: 3
+    });
+
+    checks.push({
+        group: 'crypto',
+        name: 'DNS record reference',
+        detail: hasSig ? `DNS: ${sig.dns_record || 'not set'}` : 'No DNS record configured',
+        pass: hasSig && sig.dns_record && sig.dns_selector,
+        weight: 3
+    });
+
+    checks.push({
+        group: 'crypto',
+        name: 'signature expiry',
+        detail: hasSig && sig.expires_at
+            ? (new Date(sig.expires_at) > new Date() ? `Valid until ${sig.expires_at}` : `⚠ EXPIRED on ${sig.expires_at}`)
+            : 'No expiry set',
+        pass: hasSig && sig.expires_at && new Date(sig.expires_at) > new Date(),
+        warn: hasSig && sig.expires_at,
+        weight: 4
+    });
+
+    // ── Epistemic Scope ──
+    const hasEpistemicScope = hallucinations.some(h => h.epistemic_scope);
+    checks.push({
+        group: 'crypto',
+        name: 'epistemic_scope on corrections',
+        detail: hasEpistemicScope ? 'Claims classified for AI verification behavior' : 'Add epistemic_scope (public_verifiable, proprietary_internal, industry_standard)',
+        pass: hasEpistemicScope && hallucinations.every(h => h.epistemic_scope),
+        warn: hasEpistemicScope,
+        weight: 3
+    });
+
+    // ── Diagnostics (v1.2) ──
+    const diag = json.diagnostics || {};
+    const tokens = diag.telemetry_tokens || [];
+
+    checks.push({
+        group: 'diagnostics',
+        name: 'diagnostics object',
+        detail: tokens.length > 0 ? `${tokens.length} telemetry token(s) deployed` : 'No diagnostics — consider adding for RAG pipeline auditing',
+        pass: tokens.length > 0,
+        weight: 3
+    });
+
+    checks.push({
+        group: 'diagnostics',
+        name: 'transparency statement',
+        detail: diag.transparency_statement ? 'Transparency statement present' : 'Add a transparency_statement explaining diagnostics purpose',
+        pass: !!diag.transparency_statement,
+        warn: tokens.length > 0,
+        weight: 2
+    });
+
     // ── Authority & Trust ──
     const authority = json.authority || {};
     const verification = json.verification || {};
@@ -926,7 +1049,7 @@ function displayResults(checks, migrations) {
     }
 
     // Render checks by group
-    const groups = ['schema', 'identity', 'corrections', 'claims', 'limits', 'authority'];
+    const groups = ['schema', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'diagnostics', 'authority'];
     groups.forEach(group => {
         const container = document.getElementById('checks-' + group);
         const groupChecks = checks.filter(c => c.group === group);
