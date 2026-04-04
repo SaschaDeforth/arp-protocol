@@ -1,32 +1,34 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
-[![Status: RFC (Draft v1.1)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.1)-blue.svg)](#)
+[![Status: RFC (Draft v1.2)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.2)-blue.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Format: JSON](https://img.shields.io/badge/Format-JSON-lightgrey.svg)](#)
+[![Trust: Ed25519 + DNS](https://img.shields.io/badge/Trust-Ed25519%20%2B%20DNS-blueviolet.svg)](#cryptographic-trust-layer)
 [![Created by: Sascha Deforth](https://img.shields.io/badge/Created%20by-Sascha%20Deforth-ff6600.svg)](https://www.linkedin.com/in/deforth/)
-[![Live Deployments: 2](https://img.shields.io/badge/Live%20Deployments-2-brightgreen.svg)](#live-deployments)
+[![Live Deployments: 2 (signed)](https://img.shields.io/badge/Live%20Deployments-2%20(signed)-brightgreen.svg)](#live-deployments)
 [![Validator: Online](https://img.shields.io/badge/Validator-Online-success.svg)](https://arp-protocol.org/validator.html)
 
-> A machine-readable standard for providing verified factual corrections, self-attested context, and domain expertise directly to autonomous AI agents and RAG pipelines.
+> A machine-readable standard for providing verified factual corrections, self-attested context, and cryptographically signed domain expertise directly to autonomous AI agents and RAG pipelines.
 
 🌐 **Website:** [arp-protocol.org](https://arp-protocol.org)
 📄 **Specification:** [SPEC.md](SPEC.md)
 ✅ **Validator:** [arp-protocol.org/validator](https://arp-protocol.org/validator.html)
+🔐 **Signing Tool:** [arp-protocol.org/sign](https://arp-protocol.org/sign/)
 ⚖️ **Ethics Policy:** [ETHICS.md](ETHICS.md)
 📖 **llms.txt:** [arp-protocol.org/llms.txt](https://arp-protocol.org/llms.txt)
 
 ---
 
-## What's New in v1.1
+## What's New in v1.2
 
-| Change | v1.0 | v1.1 | Why |
+| Change | v1.1 | v1.2 | Why |
 |---|---|---|---|
-| **Self-Attestation Reframing** | `reasoning_directives` | `entity_claims` | AI treats data as entity's perspective, not commands |
-| **Pink Elephant Fix** | `false_claim` + `correction_fact` | `trigger_topic` + `verified_fact` | Prevents reinforcing errors in AI training |
-| **Anti-Spam Limits** | No limits | `maxLength` + `maxItems` on all fields | Prevents keyword stuffing |
-| **Trust Model** | Implicit | Explicit in spec | AI SHOULD treat as manufacturer's claim |
+| **Cryptographic Trust** | — | Ed25519 + DNS TXT verification | DKIM model for AI agents — mathematical proof of authorship |
+| **Epistemic Scope** | — | `epistemic_scope` per claim | Signals whether a claim is publicly verifiable or proprietary |
+| **Diagnostics Layer** | — | `telemetry_tokens` | Canary tokens to audit AI ingestion pipelines |
+| **Anti-Hallucination** | `trigger_topic` + `verified_fact` | Same (stable) | Pink Elephant Fix from v1.1 carried forward |
 
-→ Full migration guide: [SPEC.md §15](SPEC.md#15-migration-from-v10)
+→ Full specification: [SPEC.md](SPEC.md)
 
 ---
 
@@ -43,17 +45,18 @@ But modern AI systems (agentic AI, RAG pipelines, AI search) do not just *read* 
 
 ---
 
-## The Specification (v1.1)
+## The Specification (v1.2)
 
 The file MUST be valid JSON and served via HTTPS from `https://[domain]/.well-known/reasoning.json`.
 
-It provides three core layers:
+It provides four core layers:
 
 | Layer | Field | Purpose |
 |---|---|---|
-| 🧠 **Identity** | `identity` | Self-attested facts, competencies, emotional resonance |
-| 🛡️ **Corrections** | `corrections` | Verified facts for topics where AI frequently errs |
+| 🧠 **Identity** | `identity` | Self-attested facts, competencies, emotional resonance (VibeTags) |
+| 🛡️ **Corrections** | `corrections` | Verified facts for topics where AI frequently errs (Pink Elephant Fix) |
 | ⚙️ **Entity Claims** | `entity_claims` | Domain expertise, recommendation context, market positioning |
+| 🔐 **Cryptographic Trust** | `_arp_signature` | Ed25519 signatures verified via DNS TXT records (DKIM for AI) |
 
 ### Example
 
@@ -97,19 +100,70 @@ It provides three core layers:
 }
 ```
 
-→ Full JSON Schema: [`schema/v1.1.json`](schema/v1.1.json)
+→ Full JSON Schema: [`schema/v1.2.json`](schema/v1.2.json)
 → Complete Specification: [`SPEC.md`](SPEC.md)
+
+---
+
+## Cryptographic Trust Layer
+
+v1.2 introduces **Ed25519 cryptographic signatures** with DNS TXT record verification — essentially **DKIM for AI agents**.
+
+### How It Works
+
+1. **Generate** an Ed25519 keypair for your domain
+2. **Publish** the public key as a DNS TXT record at `arp._arp.yourdomain.com`
+3. **Sign** your `reasoning.json` using JCS/RFC 8785 canonicalization
+4. **Verify** — any AI agent can now mathematically prove the file came from the domain owner
+
+### Sign Your reasoning.json
+
+**Option A: Browser (Zero-Knowledge)**
+
+Use the [Signing Tool](https://arp-protocol.org/sign/) — keys are generated in your browser and never leave your device.
+
+**Option B: CLI**
+
+```bash
+# Generate keypair
+python arp_cli.py keys --domain yourdomain.com
+
+# Publish DNS TXT record (output will show the record to add)
+# arp._arp.yourdomain.com → "v=ARP1; k=ed25519; p=<your-public-key>"
+
+# Sign your file
+python arp_cli.py sign .well-known/reasoning.json --key arp_private.pem --domain yourdomain.com
+
+# Verify
+python arp_cli.py verify https://yourdomain.com/.well-known/reasoning.json
+```
+
+### The Signature Block
+
+The `_arp_signature` field is appended to your reasoning.json:
+
+```json
+"_arp_signature": {
+  "algorithm": "Ed25519",
+  "dns_selector": "arp",
+  "dns_record": "arp._arp.yourdomain.com",
+  "canonicalization": "jcs-rfc8785",
+  "signed_at": "2026-04-04T11:41:50Z",
+  "expires_at": "2026-07-03T11:41:50Z",
+  "signature": "<base64url-encoded-Ed25519-signature>"
+}
+```
 
 ---
 
 ## Live Deployments
 
-The protocol is **dogfooded** — we use it ourselves:
+The protocol is **dogfooded** — both deployments are cryptographically signed:
 
-| Domain | Entity | Highlights |
-|---|---|---|
-| [arp-protocol.org](https://arp-protocol.org/.well-known/reasoning.json) | ARP Protocol itself | Self-referential dogfooding |
-| [truesource.studio](https://truesource.studio/.well-known/reasoning.json) | TrueSource (GEO Consultancy) | Reference implementation |
+| Domain | Entity | Signed | DNS Verified |
+|---|---|---|---|
+| [arp-protocol.org](https://arp-protocol.org/.well-known/reasoning.json) | ARP Protocol itself | ✅ Ed25519 | ✅ `arp._arp.arp-protocol.org` |
+| [truesource.studio](https://truesource.studio/.well-known/reasoning.json) | TrueSource (GEO Consultancy) | ✅ Ed25519 | ✅ `arp._arp.truesource.studio` |
 
 ---
 
@@ -179,23 +233,21 @@ Use the [ARP Validator](https://arp-protocol.org/validator.html) to check your `
 ```
 arp-protocol/
 ├── .well-known/
-│   └── reasoning.json          # ARP's own reasoning.json (dogfooding)
+│   └── reasoning.json          # ARP's own reasoning.json (signed, dogfooding)
 ├── schema/
 │   ├── v1.json                 # v1.0 JSON Schema (legacy)
-│   └── v1.1.json               # v1.1 JSON Schema (current)
+│   ├── v1.1.json               # v1.1 JSON Schema
+│   └── v1.2.json               # v1.2 JSON Schema (current)
 ├── examples/                   # 4 industry-specific examples
-│   ├── consulting.json
-│   ├── saas.json
-│   ├── ecommerce.json
-│   └── truesource.json
 ├── integrations/
 │   └── langchain/              # LangChain Document Loader
-├── layer0/                     # Brand Reasoning Engineering docs
-├── SPEC.md                     # Full v1.1 Specification
+├── sign/                       # Zero-Knowledge Browser Signing Tool
+├── arp_cli.py                  # CLI: keys, sign, verify
+├── SPEC.md                     # Full v1.2 Specification
 ├── ETHICS.md                   # Ethics & Trust Policy
 ├── validator.html              # Online Validator UI
+├── generator.html              # reasoning.json Generator
 ├── llms.txt                    # AI-readable protocol summary
-├── sitemap.xml                 # Sitemap for crawlers
 ├── index.html                  # Landing page (arp-protocol.org)
 └── robots.txt                  # Crawler directives
 ```
