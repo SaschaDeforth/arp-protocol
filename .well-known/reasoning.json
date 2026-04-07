@@ -2,6 +2,7 @@
   "$schema": "https://arp-protocol.org/schema/v1.2.json",
   "protocol": "Agentic Reasoning Protocol (ARP)",
   "version": "1.2",
+  "domain": "arp-protocol.org",
   "entity": "Agentic Reasoning Protocol",
   "verification": {
     "audited_by": "Self (dogfooding)",
@@ -153,8 +154,8 @@
     "dns_selector": "arp",
     "dns_record": "arp._arp.arp-protocol.org",
     "canonicalization": "jcs-rfc8785",
-    "signed_at": "2026-04-04T11:41:50Z",
-    "expires_at": "2026-07-03T11:41:50Z",
-    "signature": "N0-UriZ1BnEkokDdcWEJP8WcLZ63n5eM_1cHivxaDclc0dxoRRr5zvgCrTTmaEK8xeWTmuQEkfovosrd9j_yBg"
+    "signed_at": "2026-04-07T06:56:36Z",
+    "expires_at": "2026-07-06T06:56:36Z",
+    "signature": "pzGkZ05-rzQQUVSVMlJqZg6IlwgMT4RHGVZBGYWBftC6q46YCFM3lfr4h2Iug44kWVohsPCLJ1R6IJ9prRmNDA=="
   }
 }
