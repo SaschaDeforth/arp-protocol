@@ -4,7 +4,7 @@
   "title": "Agentic Reasoning Protocol (ARP) v1.2",
   "description": "A machine-readable protocol with cryptographic domain verification that provides self-attested entity context, verified factual corrections, and domain expertise to AI agents and RAG pipelines. v1.2 adds Ed25519 signatures, epistemic scoping, and RAG pipeline diagnostics.",
   "type": "object",
-  "required": ["$schema", "protocol", "version", "entity", "entity_claims"],
+  "required": ["$schema", "protocol", "version", "domain", "entity", "entity_claims"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -25,6 +25,12 @@
       "type": "string",
       "description": "Protocol version. MUST be semver-compatible.",
       "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "domain": {
+      "type": "string",
+      "description": "REQUIRED. The fully qualified domain name that is authoritative for these entity claims. Verifiers MUST confirm this matches the retrieval domain to prevent cross-domain replay attacks.",
+      "maxLength": 253,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9.-]+[a-zA-Z0-9]$"
     },
     "entity": {
       "type": "string",
@@ -469,8 +475,8 @@
     },
     "_arp_signature": {
       "type": "object",
-      "description": "Cryptographic Trust Layer (v1.2). Ed25519 signature for domain-verified authorship. The signature covers the JCS-canonicalized (RFC 8785) file content excluding this _arp_signature block. Verification: query DNS TXT at <dns_selector>._arp.<domain> for the public key.",
-      "required": ["algorithm", "dns_selector", "dns_record", "canonicalization", "signed_at", "expires_at", "signature"],
+      "description": "Cryptographic Trust Layer (v1.2). Ed25519 signature for domain-verified authorship. The signature covers the JCS-canonicalized (RFC 8785) payload with ONLY the 'signature' field excluded from the _arp_signature block — all other signature metadata (algorithm, dns_selector, canonicalization, signed_at, expires_at) IS included in the signed data. This prevents zombie payload attacks where an attacker modifies unauthenticated metadata. Verification: query DNS TXT at <dns_selector>._arp.<retrieval_domain> for the public key.",
+      "required": ["algorithm", "dns_selector", "canonicalization", "signed_at", "expires_at", "signature"],
       "properties": {
         "algorithm": {
           "type": "string",
@@ -481,11 +487,6 @@
           "type": "string",
           "description": "Selector prefix for DNS TXT lookup. Default: 'arp'.",
           "maxLength": 50
-        },
-        "dns_record": {
-          "type": "string",
-          "description": "Full DNS record name (e.g. 'arp._arp.example.com').",
-          "maxLength": 253
         },
         "canonicalization": {
           "type": "string",
@@ -504,7 +505,7 @@
         },
         "signature": {
           "type": "string",
-          "description": "Base64url-encoded Ed25519 signature of the JCS-canonicalized file content (excluding _arp_signature)."
+          "description": "Base64url-encoded Ed25519 signature. This is the ONLY field excluded from JCS canonicalization before signing."
         }
       }
     }

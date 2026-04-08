@@ -23,7 +23,7 @@
 
 | Change | v1.1 | v1.2 | Why |
 |---|---|---|---|
-| **Cryptographic Trust** | — | Ed25519 + DNS TXT verification | DKIM model for AI agents — mathematical proof of authorship |
+| **Cryptographic Trust** | — | Ed25519 + DNS TXT verification | DKIM-inspired model — enabling cryptographic proof of authorship |
 | **Epistemic Scope** | — | `epistemic_scope` per claim | Signals whether a claim is publicly verifiable or proprietary |
 | **Diagnostics Layer** | — | `telemetry_tokens` | Canary tokens to audit AI ingestion pipelines |
 | **Anti-Hallucination** | `trigger_topic` + `verified_fact` | Same (stable) | Pink Elephant Fix from v1.1 carried forward |
@@ -41,7 +41,7 @@ Historically, web standards were built for search engine crawlers:
 
 But modern AI systems (agentic AI, RAG pipelines, AI search) do not just *read* the web — they **reason** about it. They infer, compare, synthesize, and frequently **hallucinate**.
 
-**The Solution:** A standardized `reasoning.json` file at `/.well-known/` that provides self-attested entity context — verified facts, domain expertise, and recommendation boundaries — that AI systems can use as **one signal among many**.
+**A Proposed Standard:** A `reasoning.json` file at `/.well-known/` that provides self-attested entity context — verified facts, domain expertise, and recommendation boundaries — that AI systems can use as **one signal among many**.
 
 ---
 
@@ -56,7 +56,7 @@ It provides four core layers:
 | 🧠 **Identity** | `identity` | Self-attested facts, competencies, emotional resonance (VibeTags) |
 | 🛡️ **Corrections** | `corrections` | Verified facts for topics where AI frequently errs (Pink Elephant Fix) |
 | ⚙️ **Entity Claims** | `entity_claims` | Domain expertise, recommendation context, market positioning |
-| 🔐 **Cryptographic Trust** | `_arp_signature` | Ed25519 signatures verified via DNS TXT records (DKIM for AI) |
+| 🔐 **Cryptographic Trust** | `_arp_signature` | Ed25519 signatures verified via DNS TXT records (DKIM-inspired model) |
 
 ### Example
 
@@ -107,7 +107,7 @@ It provides four core layers:
 
 ## Cryptographic Trust Layer
 
-v1.2 introduces **Ed25519 cryptographic signatures** with DNS TXT record verification — essentially **DKIM for AI agents**.
+v1.2 introduces **Ed25519 cryptographic signatures** with DNS TXT record verification — applying the **DKIM model to AI agent verification**. This approach works when adopted by consuming AI platforms.
 
 ### How It Works
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="msvalidate.01" content="B12601BFE1DBB7185EE7BC220B6D9735" />
     <title>reasoning.json — The Agentic Reasoning Protocol</title>
-    <meta name="description" content="Machine-readable reasoning directives with cryptographic domain verification for the agentic web. DKIM for AI agents. Open standard, MIT licensed.">
+    <meta name="description" content="Machine-readable reasoning directives with cryptographic domain verification for the agentic web. A DKIM-inspired trust model for AI agents. Open standard, MIT licensed.">
     <meta name="author" content="Sascha Deforth">
     <meta name="keywords" content="reasoning.json, AI hallucination, agentic reasoning, web standard, RAG, LLM, counterfactual reasoning, brand safety">
     <link rel="canonical" href="https://arp-protocol.org/">
@@ -18,7 +18,7 @@
     <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
     <!-- Open Graph -->
     <meta property="og:title" content="reasoning.json — The Agentic Reasoning Protocol">
-    <meta property="og:description" content="Machine-readable reasoning directives with Ed25519 cryptographic domain verification. DKIM for AI agents. Open standard, MIT license.">
+    <meta property="og:description" content="Machine-readable reasoning directives with Ed25519 cryptographic domain verification. A DKIM-inspired trust model for AI agents. Open standard, MIT license.">
     <meta property="og:url" content="https://arp-protocol.org/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://arp-protocol.org/og-image.png">
@@ -28,7 +28,7 @@
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="reasoning.json — Agentic Reasoning Protocol">
-    <meta name="twitter:description" content="Teach AI how to think about you. Now with cryptographic domain verification. DKIM for AI agents.">
+    <meta name="twitter:description" content="Teach AI how to think about you. Now with cryptographic domain verification. Proposing DKIM-style verification for AI agents.">
     <meta name="twitter:image" content="https://arp-protocol.org/og-image.png">
     <!-- VibeTags™ — Layer 1: Meta Tags -->
     <meta name="vibetags:essence" content="The open web standard that teaches AI agents how to reason about entities. reasoning.json fills the cognitive gap between schema.org and true AI understanding.">
@@ -151,7 +151,7 @@
         <h1>The reasoning.json Protocol</h1>
         <p class="header-desc">
             Machine-readable reasoning directives with cryptographic domain verification
-            for the agentic web. DKIM for AI agents.
+            for the agentic web. Inspired by DKIM for email.
         </p>
         <div class="header-meta">
             <span>Status: <strong>Draft / RFC (v1.2)</strong></span>
@@ -557,8 +557,9 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             directives with maximum skepticism.
         </div>
         <p>
-            ARP v1.2 solves this with <strong>DKIM for AI Agents</strong> — the same trust model
+            ARP v1.2 proposes a solution inspired by <strong>DKIM for email</strong> — applying the same trust model
             that email uses to verify sender identity, adapted for reasoning directives.
+            This approach is effective when adopted by consuming AI platforms.
         </p>
 
         <h3>How It Works</h3>

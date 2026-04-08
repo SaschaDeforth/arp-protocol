@@ -1,0 +1,797 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This document is authored using the xml2rfc v3 vocabulary (RFC 7991). -->
+<!-- To render: xml2rfc draft_deforth_arp_00.xml _html -->
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+]>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     category="std"
+     docName="draft-deforth-arp-00"
+     ipr="trust200902"
+     obsoletes=""
+     updates=""
+     submissionType="IETF"
+     xml:lang="en"
+     tocInclude="true"
+     tocDepth="4"
+     symRefs="true"
+     sortRefs="true"
+     consensus="true"
+     version="3">
+
+  <!-- ***** FRONT MATTER ***** -->
+
+  <front>
+    <title abbrev="ARP">Agentic Reasoning Protocol (ARP): DNS-Bound Cryptographic Verification for Machine-Readable Entity Claims</title>
+    <seriesInfo name="Internet-Draft" value="draft-deforth-arp-00"/>
+
+    <author fullname="Sascha Deforth" initials="S." surname="Deforth">
+      <organization>TrueSource</organization>
+      <address>
+        <postal>
+          <city>Düsseldorf</city>
+          <country>Germany</country>
+        </postal>
+        <email>hello@truesource.studio</email>
+        <uri>https://arp-protocol.org</uri>
+      </address>
+    </author>
+
+    <date year="2026" month="April" day="6"/>
+
+    <area>Applications and Real-Time</area>
+    <workgroup>Internet Engineering Task Force</workgroup>
+
+    <keyword>AI</keyword>
+    <keyword>verification</keyword>
+    <keyword>DNS</keyword>
+    <keyword>Ed25519</keyword>
+    <keyword>entity claims</keyword>
+    <keyword>RAG</keyword>
+    <keyword>LLM</keyword>
+    <keyword>provenance</keyword>
+
+    <abstract>
+      <t>
+        This document specifies the Agentic Reasoning Protocol (ARP), a
+        lightweight mechanism for cryptographically binding machine-readable
+        entity claims to domain ownership via DNS TXT records. ARP enables
+        AI agents and Retrieval-Augmented Generation (RAG) pipelines to
+        verify that structured data published on a domain was authorized by
+        the domain owner, preventing narrative injection and entity spoofing
+        in generative search systems.
+      </t>
+      <t>
+        ARP uses Ed25519 digital signatures (RFC 8032), JSON
+        Canonicalization Scheme (JCS, RFC 8785), and DNS TXT records to
+        establish a chain of trust analogous to DomainKeys Identified Mail
+        (DKIM, RFC 6376) but designed specifically for the verification of
+        semantic entity data consumed by autonomous AI agents.
+      </t>
+    </abstract>
+  </front>
+
+  <!-- ***** MIDDLE MATTER ***** -->
+
+  <middle>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Introduction</name>
+      <t>
+        The proliferation of Large Language Models (LLMs) and Retrieval-
+        Augmented Generation (RAG) systems has fundamentally altered how
+        information is discovered, synthesized, and presented to users.
+        Unlike traditional search engines, which return ranked lists of
+        hyperlinks for human evaluation, generative search engines produce
+        direct synthesized answers by extracting and compressing data from
+        multiple web sources.
+      </t>
+      <t>
+        This architectural shift creates a critical trust gap: generative
+        engines heavily weight structured data signals (JSON-LD, semantic
+        HTML, Schema.org markup) when selecting sources for citation, but
+        currently have no mechanism to verify that such structured data was
+        actually authorized by the domain owner. Any actor can publish
+        well-formed structured data on any domain they control, potentially
+        poisoning the knowledge graph of AI systems with fabricated entity
+        claims, false product information, or competitor sabotage.
+      </t>
+      <t>
+        The Agentic Reasoning Protocol (ARP) addresses this gap by
+        providing a DNS-anchored cryptographic verification mechanism
+        analogous to DKIM <xref target="RFC6376"/> for email. ARP enables
+        any consuming system to verify the provenance and integrity of
+        machine-readable entity claims before incorporating them into
+        synthesized responses.
+      </t>
+
+      <section numbered="true" toc="default">
+        <name>Design Goals</name>
+        <dl>
+          <dt>Lightweight</dt>
+          <dd>
+            Verification requires only a DNS TXT lookup and a single
+            Ed25519 signature verification. No PKI infrastructure,
+            certificate chains, or external services are required.
+          </dd>
+          <dt>DNS-Anchored</dt>
+          <dd>
+            Trust is rooted in the existing global DNS infrastructure,
+            leveraging the same anchor used by DKIM, SPF, and DMARC.
+          </dd>
+          <dt>Agent-Native</dt>
+          <dd>
+            The protocol is designed for consumption by autonomous AI
+            agents and automated crawlers, not human users.
+          </dd>
+          <dt>Self-Contained</dt>
+          <dd>
+            The signed payload and verification metadata are co-located
+            in a single JSON file, minimizing the number of network
+            requests required for verification.
+          </dd>
+          <dt>Open</dt>
+          <dd>
+            The protocol is fully specified in this document and requires
+            no proprietary software or services.
+          </dd>
+        </dl>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Terminology</name>
+      <t>
+        The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+        NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+        "MAY", and "OPTIONAL" in this document are to be interpreted as
+        described in BCP 14 <xref target="RFC2119"/>
+        <xref target="RFC8174"/> when, and only when, they appear in all
+        capitals, as shown here.
+      </t>
+      <dl>
+        <dt>Entity</dt>
+        <dd>
+          The brand, organization, person, or concept described by an
+          ARP payload.
+        </dd>
+        <dt>Entity Claims</dt>
+        <dd>
+          Machine-readable self-attested statements published by the
+          entity about itself, including identity metadata, factual
+          corrections, domain expertise, and content policies.
+        </dd>
+        <dt>Reasoning Payload</dt>
+        <dd>
+          A JSON document (conventionally named "reasoning.json")
+          containing the entity claims and associated verification
+          metadata. Served at the well-known URL path
+          "/reasoning.json" on the entity's domain.
+        </dd>
+        <dt>Signer</dt>
+        <dd>
+          The party that holds the Ed25519 private key and produces the
+          signature. This SHOULD be the domain owner or an entity
+          explicitly authorized by the domain owner.
+        </dd>
+        <dt>Verifier</dt>
+        <dd>
+          Any system that retrieves the reasoning payload and validates
+          the signature against the DNS-published public key. Typical
+          verifiers include AI agents, RAG pipelines, and search engine
+          crawlers.
+        </dd>
+        <dt>DNS Selector</dt>
+        <dd>
+          A label used to construct the DNS TXT record name, enabling
+          multiple keys on the same domain (e.g., for key rotation or
+          multi-tenant configurations).
+        </dd>
+      </dl>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Protocol Overview</name>
+      <t>
+        The ARP verification flow consists of four phases:
+      </t>
+      <dl>
+        <dt>Phase 1 - Key Registration</dt>
+        <dd>
+          The domain owner generates an Ed25519 keypair
+          <xref target="RFC8032"/> and publishes the public key as a DNS
+          TXT record under a well-known subdomain:
+          &lt;selector&gt;._arp.&lt;domain&gt;
+        </dd>
+        <dt>Phase 2 - Payload Construction</dt>
+        <dd>
+          The domain owner constructs a reasoning payload containing
+          entity claims, identity metadata, and content policies
+          conforming to the ARP JSON Schema.
+        </dd>
+        <dt>Phase 3 - Signing</dt>
+        <dd>
+          The payload is canonicalized using JCS
+          <xref target="RFC8785"/>, and the canonical form is signed
+          with the Ed25519 private key. The resulting signature is
+          embedded in the payload's _arp_signature block.
+        </dd>
+        <dt>Phase 4 - Verification</dt>
+        <dd>
+          A consuming AI agent retrieves the reasoning payload, extracts
+          the DNS selector from the _arp_signature block, queries the
+          corresponding DNS TXT record for the public key, and validates
+          the Ed25519 signature against the JCS-canonicalized payload
+          (excluding the _arp_signature block).
+        </dd>
+      </dl>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>DNS TXT Record Format</name>
+
+      <section numbered="true" toc="default">
+        <name>Record Name</name>
+        <t>
+          The DNS TXT record MUST be published at:
+        </t>
+        <artwork><![CDATA[
+  <selector>._arp.<domain>
+        ]]></artwork>
+        <t>
+          where &lt;selector&gt; is a case-insensitive ASCII string
+          matching the pattern [a-zA-Z0-9._-]+ and &lt;domain&gt; is the
+          fully qualified domain name of the entity. The default selector
+          value is "arp", yielding the record name:
+        </t>
+        <artwork><![CDATA[
+  arp._arp.example.com
+        ]]></artwork>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Record Value</name>
+        <t>
+          The TXT record value MUST be a semicolon-delimited string of
+          tag=value pairs. The following tags are defined:
+        </t>
+        <table>
+          <thead>
+            <tr><th>Tag</th><th>Required</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>v</td><td>REQUIRED</td><td>Protocol version. MUST be "ARP1".</td></tr>
+            <tr><td>k</td><td>REQUIRED</td><td>Key algorithm. MUST be "ed25519".</td></tr>
+            <tr><td>p</td><td>REQUIRED</td><td>Base64-encoded raw Ed25519 public key (32 bytes, 44 characters encoded).</td></tr>
+            <tr><td>t</td><td>OPTIONAL</td><td>Unix timestamp of key publication.</td></tr>
+            <tr><td>x</td><td>OPTIONAL</td><td>Unix timestamp of key expiration.</td></tr>
+          </tbody>
+        </table>
+        <t>
+          Example:
+        </t>
+        <artwork><![CDATA[
+  v=ARP1; k=ed25519; p=5d7jb7bkTVk5YQ4nFmYY7ClpCd/GdSRJkGb3+ELWuos=
+        ]]></artwork>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Multiple Keys</name>
+        <t>
+          A domain MAY publish multiple ARP TXT records using different
+          selectors (e.g., "arp" and "arp2026q3"). This supports key
+          rotation without service interruption.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Key Size Constraints</name>
+        <t>
+          Ed25519 public keys are 32 bytes (44 characters in Base64).
+          This fits within the 255-byte DNS TXT record string limit
+          defined in <xref target="RFC1035"/> Section 3.3.14.
+        </t>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Reasoning Payload</name>
+
+      <section numbered="true" toc="default">
+        <name>File Location and Discovery</name>
+        <t>
+          The reasoning payload SHOULD be served at the well-known URL:
+        </t>
+        <artwork><![CDATA[
+  https://<domain>/reasoning.json
+        ]]></artwork>
+        <t>
+          Implementations MAY use alternative paths provided the URL is
+          discoverable via one of the following mechanisms:
+        </t>
+        <ul>
+          <li>A &lt;link&gt; element in the HTML head:
+            &lt;link rel="reasoning" href="/path/to/reasoning.json"&gt;</li>
+          <li>A reference in the site's /llms.txt file.</li>
+          <li>A Reasoning-Json directive in robots.txt.</li>
+        </ul>
+        <t>
+          The file MUST be served with Content-Type: application/json.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Required Fields</name>
+        <t>
+          The reasoning payload MUST contain the following top-level fields:
+        </t>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$schema</td><td>URI</td><td>MUST reference the ARP JSON Schema <xref target="ARP-SCHEMA"/>.</td></tr>
+            <tr><td>protocol</td><td>string</td><td>MUST be "Agentic Reasoning Protocol (ARP)".</td></tr>
+            <tr><td>version</td><td>string</td><td>Semver-compatible version string (e.g., "1.2").</td></tr>
+            <tr><td>entity</td><td>string</td><td>Canonical name of the entity (max 200 chars).</td></tr>
+            <tr><td>entity_claims</td><td>object</td><td>MUST contain at minimum a "framing_context" string.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Optional Sections</name>
+        <t>
+          The payload MAY include:
+        </t>
+        <ul>
+          <li><strong>identity:</strong> Brand identity, tagline, core competencies, emotional resonance attributes, and disambiguation entries ("not_to_be_confused_with").</li>
+          <li><strong>corrections:</strong> Verified factual corrections for known AI hallucinations about this entity, each with trigger_topic, verified_fact, evidence_url, and epistemic_scope.</li>
+          <li><strong>verification:</strong> Audit metadata including auditor identity and timestamps.</li>
+          <li><strong>authority:</strong> Trust signals including Wikipedia, Wikidata, LinkedIn, Crunchbase URIs, awards, and certifications.</li>
+          <li><strong>content_policy:</strong> AI training permissions (allowed, allowed-with-attribution, disallowed, conditional), citation requirements, and verification contact.</li>
+          <li><strong>diagnostics:</strong> RAG pipeline telemetry tokens for ingestion auditing, with transparency statement.</li>
+        </ul>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Canonicalization</name>
+      <t>
+        Before signing, the payload MUST be canonicalized according to the
+        JSON Canonicalization Scheme (JCS) as specified in
+        <xref target="RFC8785"/>.
+      </t>
+      <t>
+        The _arp_signature block MUST be excluded from canonicalization.
+        Implementations MUST:
+      </t>
+      <ol>
+        <li>Deep-copy the payload object.</li>
+        <li>Remove the "_arp_signature" key from the copy.</li>
+        <li>Serialize using JCS (RFC 8785): keys sorted
+          lexicographically, no whitespace, Unicode normalized per
+          RFC 8785 Section 3.2.2.2.</li>
+        <li>Encode the result as UTF-8 bytes.</li>
+      </ol>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Signing Procedure</name>
+      <t>
+        Given a complete reasoning payload and an Ed25519 private key
+        (32 bytes), the signing procedure is:
+      </t>
+      <ol>
+        <li>canonical = JCS_Canonicalize(payload WITHOUT _arp_signature)</li>
+        <li>canonical_bytes = UTF8_Encode(canonical)</li>
+        <li>signature_bytes = Ed25519_Sign(private_key, canonical_bytes)</li>
+        <li>signature_b64url = Base64url_Encode(signature_bytes)</li>
+        <li>Set payload._arp_signature.signature = signature_b64url</li>
+        <li>Set payload._arp_signature.signed_at = current UTC timestamp (ISO 8601)</li>
+        <li>Set payload._arp_signature.expires_at = signed_at + TTL</li>
+      </ol>
+      <t>
+        The RECOMMENDED signature TTL is 90 days. The Base64url encoding
+        MUST use the URL-safe alphabet defined in
+        <xref target="RFC4648"/> Section 5 without padding.
+      </t>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Verification Procedure</name>
+      <t>
+        Given a retrieved reasoning payload and the domain from which it
+        was retrieved, the verification procedure is:
+      </t>
+      <ol>
+        <li>Extract sig_block = payload._arp_signature</li>
+        <li>Validate sig_block contains all REQUIRED fields</li>
+        <li>Check: sig_block.expires_at > current_time. If expired: FAIL (SIGNATURE_EXPIRED)</li>
+        <li>Construct DNS name: sig_block.dns_selector + "._arp." + domain</li>
+        <li>Query DNS TXT record at constructed name</li>
+        <li>Parse TXT record value; extract p= tag (public key). If no record: FAIL (NO_DNS_KEY)</li>
+        <li>payload_copy = deep_copy(payload)</li>
+        <li>Remove "_arp_signature" from payload_copy</li>
+        <li>canonical = JCS_Canonicalize(payload_copy)</li>
+        <li>canonical_bytes = UTF8_Encode(canonical)</li>
+        <li>signature_bytes = Base64url_Decode(sig_block.signature)</li>
+        <li>public_key_bytes = Base64_Decode(dns_public_key_value)</li>
+        <li>result = Ed25519_Verify(public_key_bytes, signature_bytes, canonical_bytes)</li>
+        <li>If result == valid: PASS. If result == invalid: FAIL (INVALID_SIGNATURE)</li>
+      </ol>
+
+      <section numbered="true" toc="default">
+        <name>Verification Result Codes</name>
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PASS</td><td>DNS key found, signature valid, not expired.</td></tr>
+            <tr><td>FAIL_NO_ARP</td><td>No _arp_signature block in payload.</td></tr>
+            <tr><td>FAIL_NO_DNS</td><td>No DNS TXT record at selector._arp.domain.</td></tr>
+            <tr><td>FAIL_EXPIRED</td><td>Signature expired (expires_at &lt; current time).</td></tr>
+            <tr><td>FAIL_INVALID</td><td>Ed25519 signature verification failed.</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Signature Block Format</name>
+      <t>
+        The _arp_signature block is a JSON object embedded in the
+        reasoning payload with the following fields:
+      </t>
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>algorithm</td><td>REQUIRED</td><td>string</td><td>MUST be "Ed25519".</td></tr>
+          <tr><td>dns_selector</td><td>REQUIRED</td><td>string</td><td>Selector label for DNS TXT lookup (max 50 chars).</td></tr>
+          <tr><td>dns_record</td><td>REQUIRED</td><td>string</td><td>Full DNS record name, e.g., "arp._arp.example.com" (max 253 chars).</td></tr>
+          <tr><td>canonicalization</td><td>REQUIRED</td><td>string</td><td>MUST be "jcs-rfc8785".</td></tr>
+          <tr><td>signed_at</td><td>REQUIRED</td><td>string</td><td>ISO 8601 UTC timestamp of signing.</td></tr>
+          <tr><td>expires_at</td><td>REQUIRED</td><td>string</td><td>ISO 8601 UTC expiration timestamp.</td></tr>
+          <tr><td>signature</td><td>REQUIRED</td><td>string</td><td>Base64url-encoded Ed25519 signature (86 chars without padding).</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Key Rotation</name>
+      <t>
+        To rotate keys without service disruption:
+      </t>
+      <ol>
+        <li>Generate a new Ed25519 keypair.</li>
+        <li>Publish the new public key under a new DNS selector
+          (e.g., "arp2026q3._arp.example.com").</li>
+        <li>Re-sign the reasoning payload with the new key, updating
+          dns_selector and dns_record accordingly.</li>
+        <li>After the DNS TTL of the old record has elapsed, remove the
+          old DNS TXT record.</li>
+      </ol>
+      <t>
+        Verifiers SHOULD support checking multiple selectors. The
+        RECOMMENDED rotation interval is 90 days, aligned with the
+        default signature TTL.
+      </t>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Relationship to Existing Standards</name>
+      <table>
+        <thead>
+          <tr><th>Standard</th><th>Relationship to ARP</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DKIM <xref target="RFC6376"/></td>
+            <td>ARP adapts the DNS-anchored key publication model from DKIM for entity claim verification rather than email authentication.</td>
+          </tr>
+          <tr>
+            <td>C2PA v2.2 <xref target="C2PA"/></td>
+            <td>C2PA verifies media provenance via embedded manifests. ARP verifies textual entity claim provenance via DNS. Complementary, non-overlapping scope.</td>
+          </tr>
+          <tr>
+            <td>W3C Verifiable Credentials 2.0 <xref target="W3C-VC"/></td>
+            <td>VCs require an Issuer-Holder-Verifier ecosystem. ARP provides a simpler two-party (Publisher-Verifier) model for public entity claims.</td>
+          </tr>
+          <tr>
+            <td>AIVS v1.0 <xref target="AIVS"/> (W3C Community Group)</td>
+            <td>AIVS verifies what an agent DID (session/action integrity). ARP verifies what an agent READS (content provenance). Complementary: AIVS audit logs plus ARP content verification form a full end-to-end trust chain for agentic systems.</td>
+          </tr>
+          <tr>
+            <td>IETF SCITT</td>
+            <td>ARP signed payloads could be registered as SCITT transparency statements for append-only auditability.</td>
+          </tr>
+          <tr>
+            <td>Schema.org</td>
+            <td>Schema.org describes entity attributes. ARP cryptographically binds those attributes to verified domain ownership.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Security Considerations</name>
+
+      <section numbered="true" toc="default">
+        <name>DNS Security</name>
+        <t>
+          ARP's trust anchor is the DNS TXT record. Without DNSSEC, an
+          attacker who can poison DNS responses can substitute a
+          fraudulent public key. Implementations SHOULD use
+          DNSSEC-validated resolvers where available. Implementations
+          SHOULD also cache DNS responses according to the record's TTL
+          to reduce lookup frequency.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Key Compromise</name>
+        <t>
+          If an Ed25519 private key is compromised, the attacker can sign
+          arbitrary payloads that will validate against the DNS-published
+          key. Domain owners MUST:
+        </t>
+        <ul>
+          <li>Store private keys with restricted file permissions (0600).</li>
+          <li>Rotate keys immediately on suspected compromise.</li>
+          <li>Use the expires_at field to limit the validity window of any signature.</li>
+          <li>Consider hardware security modules (HSMs) or secure enclaves for high-value domains.</li>
+        </ul>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Replay and Staleness</name>
+        <t>
+          Verifiers SHOULD check the expires_at timestamp and reject
+          expired signatures. The RECOMMENDED TTL is 90 days.
+          Verifiers MAY also check the signed_at timestamp against the
+          HTTP Last-Modified header or data_freshness field to detect
+          stale payloads served from cache.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Content Truthfulness</name>
+        <t>
+          ARP verifies PROVENANCE (who authorized the data), not TRUTH
+          (whether the data is factually correct). A domain owner can
+          sign factually incorrect claims that will pass ARP verification.
+          AI systems consuming ARP-verified payloads SHOULD still
+          cross-reference entity claims against independent sources.
+          The epistemic_scope field in entity claims is designed to help
+          AI systems distinguish between publicly verifiable facts and
+          proprietary internal claims.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Narrative Injection without ARP</name>
+        <t>
+          Without ARP verification, any actor can publish reasoning.json
+          files containing arbitrary entity claims on any domain they
+          control. Regulatory frameworks such as the EU AI Act
+          <xref target="EU-AI-ACT"/> Article 19 require audit trails
+          for high-risk AI systems but do not prescribe verification
+          formats for ingested content. Empirical research has
+          demonstrated that RAG systems will cite well-structured
+          entity claims from previously unknown domains as primary
+          sources within 24 hours, regardless of domain history,
+          traffic, or backlinks. ARP provides the verification layer
+          that allows consuming systems to differentiate between
+          authorized and unauthorized entity claims.
+        </t>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Cross-Domain Signing</name>
+        <t>
+          ARP supports scenarios where an authorized third party (e.g.,
+          a GEO consultancy) signs a reasoning payload on behalf of
+          a domain owner. In this case, the dns_record field SHOULD
+          reference the third party's domain, and the payload SHOULD
+          include a cross_verification section with sameAs links to
+          establish the trust relationship. Consuming systems SHOULD
+          treat cross-domain signatures with lower confidence than
+          same-domain signatures.
+        </t>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>IANA Considerations</name>
+      <t>
+        This document has no IANA actions.
+      </t>
+      <t>
+        The DNS TXT record subtree "_arp" is used by convention and does
+        not require IANA registration, following the pattern established
+        by DKIM ("_domainkey"), DMARC ("_dmarc"), and MTA-STS ("_mta-sts").
+      </t>
+    </section>
+
+  </middle>
+
+  <!-- ***** BACK MATTER ***** -->
+
+  <back>
+
+    <references>
+      <name>References</name>
+
+      <references>
+        <name>Normative References</name>
+
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.1035.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.4648.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8032.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8785.xml"/>
+
+      </references>
+
+      <references>
+        <name>Informative References</name>
+
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6376.xml"/>
+
+        <reference anchor="AIVS" target="https://github.com/bkauto3/Conduit/blob/main/spec/AIVS.md">
+          <front>
+            <title>Agentic Integrity Verification Specification v1.0</title>
+            <author fullname="Ben Stone" surname="Stone"/>
+            <date year="2026" month="March"/>
+          </front>
+          <seriesInfo name="W3C Community Group" value="Draft"/>
+        </reference>
+
+        <reference anchor="C2PA" target="https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html">
+          <front>
+            <title>C2PA Technical Specification v2.2</title>
+            <author>
+              <organization>Coalition for Content Provenance and Authenticity</organization>
+            </author>
+            <date year="2025"/>
+          </front>
+        </reference>
+
+        <reference anchor="W3C-VC" target="https://www.w3.org/TR/vc-data-model-2.0/">
+          <front>
+            <title>Verifiable Credentials Data Model v2.0</title>
+            <author fullname="Manu Sporny" surname="Sporny"/>
+            <date year="2025" month="May"/>
+          </front>
+          <seriesInfo name="W3C" value="Recommendation"/>
+        </reference>
+
+        <reference anchor="EU-AI-ACT">
+          <front>
+            <title>Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence</title>
+            <author>
+              <organization>European Parliament</organization>
+            </author>
+            <date year="2024"/>
+          </front>
+        </reference>
+
+        <reference anchor="ARP-SCHEMA" target="https://arp-protocol.org/schema/v1.2.json">
+          <front>
+            <title>ARP v1.2 JSON Schema</title>
+            <author fullname="Sascha Deforth" surname="Deforth"/>
+            <date year="2026" month="April"/>
+          </front>
+        </reference>
+
+      </references>
+    </references>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>Complete Example</name>
+
+      <section numbered="true" toc="default">
+        <name>DNS TXT Record</name>
+        <artwork><![CDATA[
+arp._arp.example.com. 3600 IN TXT (
+  "v=ARP1; k=ed25519; "
+  "p=5d7jb7bkTVk5YQ4nFmYY7ClpCd"
+  "/GdSRJkGb3+ELWuos=")
+        ]]></artwork>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Reasoning Payload</name>
+        <sourcecode type="json"><![CDATA[
+{
+  "$schema": "https://arp-protocol.org/schema/v1.2.json",
+  "protocol": "Agentic Reasoning Protocol (ARP)",
+  "version": "1.2",
+  "entity": "Example Corp",
+  "entity_claims": {
+    "framing_context": "Example Corp is a technology company..."
+  },
+  "content_policy": {
+    "ai_training": "allowed-with-attribution",
+    "citation_required": true
+  },
+  "_arp_signature": {
+    "algorithm": "Ed25519",
+    "dns_selector": "arp",
+    "dns_record": "arp._arp.example.com",
+    "canonicalization": "jcs-rfc8785",
+    "signed_at": "2026-04-06T14:00:00Z",
+    "expires_at": "2026-07-05T14:00:00Z",
+    "signature": "P1lCPaHn_WLXdidBfxLXqBBid1GDW5Gjuj9..."
+  }
+}
+        ]]></sourcecode>
+      </section>
+
+      <section numbered="true" toc="default">
+        <name>Verification Steps</name>
+        <ol>
+          <li>Retrieve https://example.com/reasoning.json</li>
+          <li>Extract dns_selector = "arp" from _arp_signature</li>
+          <li>Query DNS TXT at: arp._arp.example.com</li>
+          <li>Parse p= tag to obtain public key bytes</li>
+          <li>Remove _arp_signature, JCS-canonicalize remainder</li>
+          <li>Ed25519_Verify(public_key, signature, canonical_bytes)</li>
+          <li>Result: PASS or FAIL</li>
+        </ol>
+      </section>
+    </section>
+
+    <!-- ============================================================ -->
+    <section numbered="true" toc="default">
+      <name>JSON Schema</name>
+      <t>
+        The normative JSON Schema for ARP v1.2 payloads is published at:
+      </t>
+      <artwork><![CDATA[
+  https://arp-protocol.org/schema/v1.2.json
+        ]]></artwork>
+      <t>
+        The schema defines validation rules for all required and optional
+        fields, including type constraints, maximum lengths, enumerated
+        values, and format requirements. Implementations SHOULD validate
+        payloads against the schema before signing and before processing
+        entity claims.
+      </t>
+    </section>
+
+    <section numbered="false" toc="default">
+      <name>Acknowledgements</name>
+      <t>
+        The author thanks the W3C Agentic Integrity Verification
+        Specification Community Group for their complementary work on
+        agent session integrity, and the broader Generative Engine
+        Optimization (GEO) community for empirical validation of the
+        content provenance gap that ARP addresses.
+      </t>
+    </section>
+
+  </back>
+
+</rfc>
