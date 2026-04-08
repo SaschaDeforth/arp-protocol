@@ -342,7 +342,7 @@ The Cryptographic Trust Layer provides **deterministic domain authority** for re
 
 Advanced AI models (e.g., Gemini, GPT) evaluate reasoning.json content through internal Misinformation Detection filters. Without cryptographic proof that the file was authored by the domain owner, the AI treats the directives with suspicion — potentially suppressing legitimate self-attested claims.
 
-### 13.2 Solution: DKIM for AI Directives
+### 13.2 Proposed Solution: DKIM Model for AI Directives
 
 ARP v1.2 adopts the DKIM (RFC 6376) model:
 
