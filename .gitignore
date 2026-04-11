@@ -2,3 +2,14 @@
 .vercel
 node_modules
 .env*.local
+
+# Internal drafts — NOT for public consumption
+paper/
+docs/phoenix/
+REVIEW_ANALYSIS.md
+IETF_SUBMISSION_GUIDE.md
+aivs-interop-github-issue.md
+w3c-aivs-introduction-email.md
+draft-deforth-arp-00.txt
+draft-deforth-arp-00.xml
+draft-deforth-arp-00.html
