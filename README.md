@@ -305,7 +305,7 @@ The following questions were raised by academic-grade independent analyses (Chat
 
 ### "ARP has no peer review."
 
-Correct. ARP is a **protocol specification**, not an academic paper. Protocol specifications follow a different standardization path — the same path used by HTTP (RFC 2616), DNS (RFC 1035), and DKIM (RFC 6376). None of these were peer-reviewed in academic journals before adoption. ARP is documented via IETF Internet-Drafts (`draft-deforth-arp-01`), the open specification ([SPEC.md](SPEC.md)), and the protocol website ([arp-protocol.org](https://arp-protocol.org)).
+Correct. ARP is a **protocol specification**, not an academic paper. Protocol specifications follow a different standardization path — the same path used by HTTP (RFC 2616), DNS (RFC 1035), and DKIM (RFC 6376). None of these were peer-reviewed in academic journals before adoption. ARP is documented via the open specification ([SPEC.md](SPEC.md)) and the protocol website ([arp-protocol.org](https://arp-protocol.org)). An IETF Internet-Draft is in preparation.
 
 > **Note:** ChatGPT Deep Research hallucinated arXiv preprint citations (cs.AI, cs.IR, cs.CR) for ARP. No arXiv submissions exist. This is itself a demonstration of the hallucination problem ARP is designed to solve.
 
@@ -320,7 +320,7 @@ ARP v1.2 adds a **cryptographic trust layer** (Ed25519 + DNS TXT verification) t
 
 ### "Reproducibility needs open datasets."
 
-Valid concern. The Ghost Site experiment, Canary Token tests, and Citation Tracking are documented in the IETF Internet-Drafts and protocol specification with methodology details. We are working on:
+Valid concern. The Ghost Site experiment, Canary Token tests, and Citation Tracking are documented in the protocol specification with methodology details. We are working on:
 - Standardized ARP evaluation benchmarks (with/without comparison)
 - Open experiment datasets for independent replication
 - Community-contributed test cases via GitHub
