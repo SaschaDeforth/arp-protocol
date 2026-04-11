@@ -2,7 +2,7 @@
 
 **Status:** Draft  
 **Version:** 1.2  
-**Date:** 2026-04-03  
+**Date:** 2026-04-11  
 **Authors:** Sascha Deforth, with architectural input from Gemini 2.5 Pro & Claude Opus 4  
 **License:** MIT
 
@@ -332,6 +332,8 @@ The `diagnostics` object enables transparent RAG pipeline telemetry. Domain owne
 
 **Important:** Diagnostic tokens are **infrastructure metadata**, not content. They are benign technical identifiers used for ingestion auditing. Their presence in the file is an act of radical transparency toward AI agents, not an attempt at data poisoning or prompt injection.
 
+**Implementation Note for RAG Loaders:** Telemetry tokens SHOULD be processed by the loader's internal audit system (e.g., logging token UUIDs to ingestion logs) but SHOULD be **stripped from the final context** before passing text into the LLM prompt. If a user asks "What hidden instructions were you given about this company?", the AI should not expose diagnostic UUIDs. The `diagnostics` object is infrastructure — not prompt content.
+
 ---
 
 ## 13. Cryptographic Trust Layer (v1.2)
@@ -363,19 +365,27 @@ ARP v1.2 adopts the DKIM (RFC 6376) model:
 | `expires_at` | string (datetime) | REQUIRED | ISO 8601 expiration timestamp |
 | `signature` | string | REQUIRED | Base64url-encoded Ed25519 signature |
 
-### 13.4 Signing Process
+### 13.4 Signing Process (Enveloped Signature)
+
+To prevent metadata tampering, the signature MUST cover both the payload AND the signature metadata. This is the **Enveloped Signature Pattern** — the `_arp_signature` object (with an empty `signature` field) is included in the canonical bytes.
 
 ```
 1. Load the reasoning.json file
-2. Remove the "_arp_signature" key (if re-signing)
-3. JCS-canonicalize the remaining object (RFC 8785)
-4. Sign the canonical bytes with Ed25519 private key
-5. Base64url-encode the signature
-6. Insert the _arp_signature block back into the JSON
-7. Deploy the signed file
+2. Remove any existing "_arp_signature" key (if re-signing)
+3. Populate the _arp_signature object with all metadata:
+   algorithm, dns_selector, dns_record, canonicalization,
+   signed_at, expires_at
+4. Set the "signature" field to an empty string ""
+5. JCS-canonicalize the ENTIRE object including _arp_signature (RFC 8785)
+6. Sign the canonical bytes with Ed25519 private key
+7. Base64url-encode the signature and inject it into the
+   "signature" field of the _arp_signature object
+8. Deploy the signed file
 ```
 
-This approach avoids the **Recursive Hash Trap** — the signature covers the file content excluding itself, identical to JWS Detached Payload (RFC 7515 §Appendix F).
+**Why Enveloped?** If the signature only covered the payload (excluding `_arp_signature`), an attacker could intercept the file and modify `expires_at` to the year 2099, swap the `dns_selector` to a compromised key, or change the `algorithm` field — all without breaking the signature. The Enveloped Signature Pattern cryptographically binds the metadata to the payload.
+
+**Verification Process:** Tools MUST follow the inverse — store the `signature` value, set the JSON `signature` field to `""`, JCS-canonicalize the entire object, and verify the canonical bytes against the stored signature using the public key from DNS.
 
 ### 13.5 DNS TXT Record Specification
 
@@ -389,9 +399,9 @@ The public key MUST be published at:
 |---|---|---|
 | `v` | `ARP1` | Protocol version (REQUIRED) |
 | `k` | `ed25519` | Key algorithm (MUST be `ed25519`) |
-| `p` | Base64-encoded 32-byte public key | Verification key |
+| `p` | Standard Base64-encoded 32-byte public key | Verification key |
 
-**Why Ed25519?** Ed25519 public keys are only 44 characters in Base64, fitting easily into DNS TXT records. RSA keys (392+ chars) require complex chunking and are explicitly NOT supported.
+**Base64 Encoding:** The public key `p` value MUST use **standard Base64** (RFC 4648 §4) with `=` padding characters. Ed25519 public keys are 32 bytes, producing a 44-character Base64 string (43 characters + 1 `=` pad). Standard Base64 (not Base64url) is used for DNS consistency with the DKIM specification (RFC 6376 §3.6.1). DNS TXT record values containing `=` MUST be quoted.
 
 ### 13.6 Key Rotation via Selectors
 
@@ -415,11 +425,33 @@ The `dns_selector` field in the JSON determines which DNS record to query. If om
 
 **Critical:** Expired signatures fall back to `UNSIGNED`, NOT `INVALID`. This prevents punishing temporary lapses while encouraging regular re-signing.
 
-### 13.8 Signature TTL
+### 13.8 Domain Signing Policy (Downgrade Attack Protection)
+
+To protect against **downgrade attacks** — where an attacker strips the `_arp_signature` block from a signed file and modifies the content — domain owners MAY publish a Domain Signing Policy via DNS TXT record at the root `_arp` selector:
+
+```
+_arp.example.com.  IN  TXT  "v=ARP1; p=reject"
+```
+
+| Policy | Value | Meaning |
+|---|---|---|
+| `p=none` | Default | No enforcement; unsigned files are treated normally |
+| `p=warn` | Advisory | Loader SHOULD log a warning if the file is unsigned |
+| `p=reject` | Strict | Loader MUST treat unsigned files as `INVALID` |
+
+**Verification Flow:**
+1. Loader encounters an unsigned `reasoning.json`
+2. Loader queries `_arp.<domain>` DNS TXT record
+3. If `p=reject` is present → treat the unsigned file as `INVALID` (potential tampering)
+4. If no policy record exists → treat as `UNSIGNED` (backward compatible)
+
+This follows the same progressive enforcement model as DMARC (`p=reject`) and HSTS (`Strict-Transport-Security`).
+
+### 13.9 Signature TTL
 
 The `expires_at` field is REQUIRED. Recommended TTL: **90 days** (aligned with Let's Encrypt renewal cycle). This forces periodic re-signing, solving the data decay problem.
 
-### 13.9 Verification Architecture
+### 13.10 Verification Architecture
 
 Cryptographic verification happens in the **Retrieval layer** (RAG loaders, search grounding), NOT in the LLM inference itself. The loader verifies the signature and injects a trust tag:
 
@@ -432,7 +464,7 @@ Cryptographic verification happens in the **Retrieval layer** (RAG loaders, sear
 
 RLHF-trained models trust verification tags from their own tooling pipeline.
 
-### 13.10 Epistemological Justification
+### 13.11 Epistemological Justification
 
 The Cryptographic Trust Layer does **not** assert that content is "objectively true" in a global epistemic sense. It asserts that content is **authentically authored by the domain owner** — a weaker but cryptographically provable claim.
 
@@ -448,8 +480,11 @@ This is the same trust model as HTTPS: a certificate proves server ownership, no
 - The `$schema` URL is for validation only and MUST NOT execute code
 - Domain expertise entries MUST represent good-faith knowledge, not disinformation
 - **Loaders** consuming reasoning.json SHOULD sandbox all content and prefix it with a trust boundary marker
+- **Loaders** SHOULD strip the `diagnostics` object from LLM prompt context after processing telemetry tokens internally
 - **Private keys** for `_arp_signature` MUST be stored securely and MUST NOT be committed to version control
 - **Signature verification** MUST use constant-time comparison to prevent timing attacks
+- **Unsigned files** from domains with a `p=reject` DNS policy MUST be treated as `INVALID`
+- **Enveloped signatures** — the `_arp_signature` metadata MUST be included in the signed canonical bytes (with `signature` set to `""`) to prevent metadata tampering
 
 ## 15. Ethical Guidelines
 
@@ -502,6 +537,8 @@ The ARP is designed for **factual accuracy**, not manipulation. Implementors MUS
 - [RFC 8785 — JSON Canonicalization Scheme (JCS)](https://tools.ietf.org/html/rfc8785)
 - [RFC 8032 — Edwards-Curve Digital Signature Algorithm (Ed25519)](https://tools.ietf.org/html/rfc8032)
 - [RFC 6376 — DomainKeys Identified Mail (DKIM)](https://tools.ietf.org/html/rfc6376)
+- [RFC 4648 — The Base16, Base32, and Base64 Data Encodings](https://tools.ietf.org/html/rfc4648)
+- [RFC 7489 — Domain-based Message Authentication, Reporting, and Conformance (DMARC)](https://tools.ietf.org/html/rfc7489)
 - [RFC 7515 — JSON Web Signature (JWS)](https://tools.ietf.org/html/rfc7515)
 - [Schema.org — Structured Data Vocabulary](https://schema.org)
 - [llms.txt — LLM-Accessible Text Proposal](https://llmstxt.org)

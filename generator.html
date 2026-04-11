@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator — reasoning.json v1.1</title>
-    <meta name="description" content="Generate a reasoning.json file for your brand. Fill in the form, get a valid v1.1 ARP file ready to deploy.">
+    <title>Generator — reasoning.json v1.2</title>
+    <meta name="description" content="Generate a reasoning.json file for your brand. Fill in the form, get a valid v1.2 ARP file ready to sign and deploy.">
     <meta name="robots" content="index, follow">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -289,10 +289,10 @@
     <header class="header">
         <h1>Generate your <code>reasoning.json</code></h1>
         <p class="header-desc">
-            Fill in the form to create a valid v1.1 reasoning file. Download it and deploy to <code>/.well-known/reasoning.json</code>.
+            Fill in the form to create a valid v1.2 reasoning file. Sign it with the <a href="/sign/" style="color: var(--accent);">ARP Signer</a> and deploy to <code>/.well-known/reasoning.json</code>.
         </p>
         <div class="header-meta">
-            <span>Schema: v1.1</span>
+            <span>Schema: v1.2</span>
             <span>Client-side only — your data never leaves your browser</span>
         </div>
     </header>
@@ -330,8 +330,8 @@
             </div>
             <div class="gen-row">
                 <div class="field-group">
-                    <label class="field-label">Headquarters</label>
-                    <input type="text" id="gen-hq" class="gen-input" placeholder="San Francisco, CA">
+                    <label class="field-label">Headquarters <span class="field-counter" id="cnt-hq">0/100</span></label>
+                    <input type="text" id="gen-hq" class="gen-input" placeholder="San Francisco, CA" maxlength="100" oninput="updateCounter('hq', 100)">
                 </div>
                 <div class="field-group">
                     <label class="field-label">Founded</label>
@@ -340,12 +340,12 @@
             </div>
             <div class="gen-row">
                 <div class="field-group">
-                    <label class="field-label">Industry</label>
-                    <input type="text" id="gen-industry" class="gen-input" placeholder="Enterprise Software">
+                    <label class="field-label">Industry <span class="field-counter" id="cnt-industry">0/100</span></label>
+                    <input type="text" id="gen-industry" class="gen-input" placeholder="Enterprise Software" maxlength="100" oninput="updateCounter('industry', 100)">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Employees</label>
-                    <input type="text" id="gen-employees" class="gen-input" placeholder="50-200">
+                    <label class="field-label">Employees <span class="field-counter" id="cnt-employees">0/50</span></label>
+                    <input type="text" id="gen-employees" class="gen-input" placeholder="50-200" maxlength="50" oninput="updateCounter('employees', 50)">
                 </div>
             </div>
             <div class="field-group">
@@ -465,13 +465,14 @@
     <div class="gen-actions">
         <button class="btn btn-primary" onclick="generate()">🧠 Generate reasoning.json</button>
         <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy to Clipboard</button>
-        <button class="btn btn-secondary" onclick="downloadOutput()">⬇ Download File</button>
+        <button class="btn btn-secondary" onclick="downloadOutput()">⬇ Download Unsigned</button>
+        <button id="btn-to-signer" class="btn btn-primary" onclick="goToSigner()" style="display: none; background: #1a7f37; border-color: #1a7f37;">🔐 Next: Cryptographically Sign →</button>
     </div>
 
     <!-- Output -->
     <div id="output-box" class="output-box">
         <div class="output-header">
-            <span>reasoning.json (v1.1)</span>
+            <span>reasoning.json (v1.2 — unsigned draft)</span>
             <span id="output-size">0 bytes</span>
         </div>
         <div id="output-content" class="output-content"></div>
@@ -507,7 +508,7 @@
 
 <script>
 // ========================================================
-// reasoning.json Generator — v1.1
+// reasoning.json Generator — v1.2
 // ========================================================
 
 function toggleSection(header) {
@@ -516,7 +517,7 @@ function toggleSection(header) {
 }
 
 function updateCounter(field, max) {
-    const input = document.getElementById('gen-' + field) || document.getElementById('gen-' + field.replace('pitch','pitch'));
+    const input = document.getElementById('gen-' + field);
     const counter = document.getElementById('cnt-' + field);
     if (!input || !counter) return;
     const len = input.value.length;
@@ -552,16 +553,18 @@ function addCorrection() {
         alert('Maximum 20 corrections allowed.');
         return;
     }
+    const idTopic = 'corr-topic-' + Date.now();
+    const idFact = 'corr-fact-' + Date.now();
     const block = document.createElement('div');
     block.className = 'correction-block';
     block.innerHTML = `
         <div class="field-group">
-            <label class="field-label">Trigger Topic</label>
-            <input type="text" class="gen-input correction-topic" placeholder="e.g. Founding date and history" maxlength="200">
+            <label class="field-label">Trigger Topic <span class="field-counter" id="cnt-${idTopic}">0/200</span></label>
+            <input type="text" id="gen-${idTopic}" class="gen-input correction-topic" placeholder="e.g. Founding date and history" maxlength="200" oninput="updateCounter('${idTopic}', 200)">
         </div>
         <div class="field-group">
-            <label class="field-label">Verified Fact</label>
-            <input type="text" class="gen-input correction-fact" placeholder="The verified truth about this topic." maxlength="300">
+            <label class="field-label">Verified Fact <span class="field-counter" id="cnt-${idFact}">0/300</span></label>
+            <input type="text" id="gen-${idFact}" class="gen-input correction-fact" placeholder="The verified truth about this topic." maxlength="300" oninput="updateCounter('${idFact}', 300)">
         </div>
         <div class="field-group">
             <label class="field-label">Evidence URL</label>
@@ -592,9 +595,9 @@ function generate() {
     }
 
     const result = {
-        "$schema": "https://arp-protocol.org/schema/v1.1.json",
+        "$schema": "https://arp-protocol.org/schema/v1.2.json",
         "protocol": "Agentic Reasoning Protocol (ARP)",
-        "version": "1.1",
+        "version": "1.2",
         "entity": entity
     };
 
@@ -630,16 +633,23 @@ function generate() {
     // Corrections
     const corrBlocks = document.querySelectorAll('.correction-block');
     const corrections = [];
+    let missingFields = false;
     corrBlocks.forEach(block => {
         const topic = block.querySelector('.correction-topic').value.trim();
         const fact = block.querySelector('.correction-fact').value.trim();
         const url = block.querySelector('.correction-url').value.trim();
-        if (topic && fact) {
+        if ((topic && !fact) || (!topic && fact)) {
+            missingFields = true;
+        } else if (topic && fact) {
             const entry = { trigger_topic: topic, verified_fact: fact };
             if (url) entry.evidence_url = url;
             corrections.push(entry);
         }
     });
+    if (missingFields) {
+        alert('Warning: A correction is missing either a Trigger Topic or a Verified Fact. Please fix or remove it before generating.');
+        return;
+    }
     if (corrections.length > 0) {
         result.corrections = {
             common_hallucinations: corrections,
@@ -683,6 +693,15 @@ function generate() {
     document.getElementById('output-size').textContent = new Blob([lastOutput]).size + ' bytes';
 
     outputBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Show Signer handoff button
+    document.getElementById('btn-to-signer').style.display = 'inline-block';
+}
+
+function goToSigner() {
+    if (!lastOutput) return;
+    sessionStorage.setItem('unsigned_arp_payload', lastOutput);
+    window.location.href = '/sign/';
 }
 
 function copyOutput() {
