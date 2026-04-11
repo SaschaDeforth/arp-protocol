@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Agenda — Agentic Reasoning Protocol</title>
+    <meta name="description" content="Open research agenda for the Agentic Reasoning Protocol (ARP). Derived from independent analysis by Google Gemini, OpenAI ChatGPT, and Anthropic Claude.">
+    <meta name="author" content="Sascha Deforth">
+    <link rel="canonical" href="https://arp-protocol.org/research.html">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <meta property="og:title" content="Research Agenda — Agentic Reasoning Protocol">
+    <meta property="og:description" content="Open research agenda for ARP. Formal research questions derived from independent triple AI platform validation.">
+    <meta property="og:url" content="https://arp-protocol.org/research.html">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="style.css">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "name": "Research Agenda — Agentic Reasoning Protocol",
+        "description": "Open research questions and standardization roadmap for ARP, derived from independent analysis by Google Gemini Deep Research, OpenAI ChatGPT Deep Research, and Anthropic Claude Opus 4.6.",
+        "url": "https://arp-protocol.org/research.html",
+        "datePublished": "2026-04-11",
+        "author": {
+            "@type": "Person",
+            "@id": "https://truesource.studio/#person",
+            "name": "Sascha Deforth"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="/" class="nav-logo">reasoning.json</a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/#specification" class="nav-link">Specification</a>
+            <a href="/#analysis" class="nav-link" style="color: #8b5cf6;">Research</a>
+            <a href="SPEC.md" class="nav-link">Full Spec</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Header -->
+<header class="header">
+    <div class="container">
+        <h1>Research Agenda</h1>
+        <p class="header-desc">
+            Open research questions for the Agentic Reasoning Protocol, derived from
+            independent analysis by Google Gemini Deep Research, OpenAI ChatGPT Deep Research,
+            and Anthropic Claude Opus 4.6.
+        </p>
+        <div class="header-meta">
+            <span>Published: <strong>April 11, 2026</strong></span>
+            <span>Status: <strong>Open — Contributions Welcome</strong></span>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Context -->
+    <section class="section" id="context">
+        <h2>Context</h2>
+        <p>
+            In April 2026, all three major AI research platforms — Google (Gemini Deep Research),
+            OpenAI (ChatGPT Deep Research), and Anthropic (Claude Opus 4.6 Thinking) —
+            independently produced comprehensive analyses of the Agentic Reasoning Protocol.
+        </p>
+        <p>
+            These analyses converged on ARP's core thesis: the epistemological gap between
+            descriptive web standards and prescriptive AI cognition is real, and <code>reasoning.json</code>
+            addresses it. However, they also identified specific open research questions that
+            require community investigation.
+        </p>
+        <p>
+            This page consolidates those questions into a formal, open research agenda.
+            Contributions are welcome via
+            <a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">GitHub Issues</a>.
+        </p>
+    </section>
+
+    <!-- Research Question 1 -->
+    <section class="section" id="rq1">
+        <h2>RQ1: Standardized Evaluation Benchmarks</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research</p>
+        <p>
+            Do AI-generated responses improve measurably when a domain's
+            <code>reasoning.json</code> is present in the retrieval context?
+        </p>
+        <h3>Proposed Methodology</h3>
+        <ul>
+            <li>Select N domains across verticals (SaaS, consulting, e-commerce, healthcare)</li>
+            <li>Generate baseline AI responses about each entity <em>without</em> ARP</li>
+            <li>Deploy <code>reasoning.json</code> with verified corrections and context</li>
+            <li>Re-query after indexing and measure: hallucination rate, factual accuracy, entity attribution correctness</li>
+            <li>Use automated fact-checking against <code>evidence_url</code> references</li>
+        </ul>
+        <h3>Open Sub-Questions</h3>
+        <ul>
+            <li>Which AI platforms (Perplexity, ChatGPT, Gemini, Claude) show the strongest ARP responsiveness?</li>
+            <li>Does the <em>Pink Elephant Fix</em> demonstrably outperform traditional negation-based corrections?</li>
+            <li>What is the minimum indexing latency before ARP corrections take effect?</li>
+        </ul>
+    </section>
+
+    <!-- Research Question 2 -->
+    <section class="section" id="rq2">
+        <h2>RQ2: Independent Experiment Replication</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research</p>
+        <p>
+            Can the Ghost Site experiment, Canary Token forensics, and Citation Tracking
+            results be independently replicated by third parties?
+        </p>
+        <h3>Experiments to Replicate</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Experiment</th>
+                        <th>Original Finding</th>
+                        <th>Replication Needs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ghost Site</td>
+                        <td>Dominant AI source within 24h</td>
+                        <td>New domain, structured data only, multi-platform query</td>
+                    </tr>
+                    <tr>
+                        <td>Canary Tokens</td>
+                        <td>GPT/Gemini ingest reasoning.json</td>
+                        <td>Unique tokens per platform, automated monitoring</td>
+                    </tr>
+                    <tr>
+                        <td>Citation Tracking</td>
+                        <td>0% → 67% across 6 platforms in 22 days</td>
+                        <td>Standardized query set, daily measurement</td>
+                    </tr>
+                    <tr>
+                        <td>Zero Hallucination</td>
+                        <td>Controlled ChatGPT case study</td>
+                        <td>Multiple LLMs, statistical significance</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Research Question 3 -->
+    <section class="section" id="rq3">
+        <h2>RQ3: IETF Standardization Pathway</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research, Gemini Deep Research</p>
+        <p>
+            What is the optimal standardization pathway for a <code>.well-known</code> URI
+            serving cognitive reasoning directives?
+        </p>
+        <h3>Current Status</h3>
+        <ul>
+            <li>IETF Internet-Draft submitted: <code>draft-deforth-arp-01</code></li>
+            <li>W3C AIVS Community Group introduction completed</li>
+            <li>IETF Internet-Drafts submitted: <code>draft-deforth-arp-00</code>, <code>draft-deforth-arp-01</code></li>
+        </ul>
+        <h3>Open Questions</h3>
+        <ul>
+            <li>Should ARP pursue IETF RFC status, W3C Community Group Report, or both?</li>
+            <li>How should the protocol handle versioning across RFC iterations?</li>
+            <li>What is the relationship between ARP and the emerging AI Verifiable Standards (AIVS)?</li>
+        </ul>
+    </section>
+
+    <!-- Research Question 4 -->
+    <section class="section" id="rq4">
+        <h2>RQ4: Multimodal Extension</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research</p>
+        <p>
+            Can the ARP schema be extended to govern reasoning about non-text entities —
+            images, video, IoT devices, autonomous vehicles?
+        </p>
+        <h3>Considerations</h3>
+        <ul>
+            <li>Image agents: Can <code>reasoning.json</code> provide correction directives for visual AI (e.g., product image misidentification)?</li>
+            <li>IoT agents: Can sensor-equipped autonomous systems use domain-hosted reasoning directives for decision boundaries?</li>
+            <li>Video: Can reasoning directives be temporally scoped (valid for specific content windows)?</li>
+        </ul>
+    </section>
+
+    <!-- Research Question 5 -->
+    <section class="section" id="rq5">
+        <h2>RQ5: Trust Model Adversarial Analysis</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research, Gemini Deep Research</p>
+        <p>
+            What are the attack surfaces of a self-attested reasoning file, and how
+            effectively does v1.2 cryptographic signing mitigate them?
+        </p>
+        <h3>Threat Vectors</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Threat</th>
+                        <th>ARP v1.1 Mitigation</th>
+                        <th>ARP v1.2 Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>False self-attestation</td>
+                        <td>Good faith (same as schema.org)</td>
+                        <td>Ed25519 signature = non-repudiation</td>
+                    </tr>
+                    <tr>
+                        <td>Man-in-the-middle</td>
+                        <td>HTTPS transport security</td>
+                        <td>HTTPS + signature verification</td>
+                    </tr>
+                    <tr>
+                        <td>Domain spoofing</td>
+                        <td>DNS resolution</td>
+                        <td>DNS TXT record binding</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor sabotage</td>
+                        <td>Ethics policy</td>
+                        <td>Signature attribution + community reporting</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Research Question 6 -->
+    <section class="section" id="rq6">
+        <h2>RQ6: Long-Term Search Impact</h2>
+        <p><strong>Source:</strong> ChatGPT Deep Research</p>
+        <p>
+            What is the long-term impact of ARP on AI search results? Does the effect
+            persist, amplify, or decay over time as AI models retrain?
+        </p>
+        <h3>Measurement Dimensions</h3>
+        <ul>
+            <li>Citation persistence: Do AI platforms continue citing reasoning.json after model updates?</li>
+            <li>Training integration: Do ARP directives eventually enter model training data?</li>
+            <li>Competitive dynamics: When multiple entities in a vertical deploy ARP, how do AI systems resolve conflicting claims?</li>
+        </ul>
+    </section>
+
+    <!-- How to Contribute -->
+    <section class="section" id="contribute">
+        <h2>How to Contribute</h2>
+        <p>
+            This research agenda is open. We invite AI researchers, RAG engineers, and
+            domain owners to contribute:
+        </p>
+        <ul>
+            <li><strong>Replicate experiments</strong> — Run the Ghost Site or Canary Token experiments independently and share results</li>
+            <li><strong>Propose benchmarks</strong> — Define standardized evaluation datasets via <a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
+            <li><strong>Submit findings</strong> — Formal research contributions welcome via <a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">GitHub Issues</a> or as independent publications</li>
+            <li><strong>Build integrations</strong> — LlamaIndex, CrewAI, AutoGen loaders welcome via Pull Request</li>
+        </ul>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-col">
+            <div class="footer-col-title">Protocol</div>
+            <a href="SPEC.md">Specification v1.2</a>
+            <a href="ETHICS.md">Ethics Policy v1.2</a>
+            <a href="/">Home</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Ecosystem</div>
+            <a href="https://truesource.studio">TrueSource AI</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://www.linkedin.com/in/deforth/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">Legal</div>
+            <a href="https://truesource.studio/impressum.html">Impressum</a>
+            <a href="https://truesource.studio/datenschutz.html">Datenschutz</a>
+            <a href="LICENSE">MIT License</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © 2026 Sascha Deforth. Built in Düsseldorf.
+    </div>
+</footer>
+
+</body>
+</html>

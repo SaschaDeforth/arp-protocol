@@ -267,6 +267,28 @@ ARP is part of a broader AI-readiness stack:
 
 ---
 
+## Independent Analysis (April 2026)
+
+In April 2026, all three major AI research platforms independently produced comprehensive analyses of the Agentic Reasoning Protocol:
+
+| Platform | Methodology | Key Finding |
+|---|---|---|
+| **Google Gemini Deep Research** | Protocol comparison (30+ sources) | Classified ARP alongside MCP (Anthropic) and A2A (Google) as complementary, non-competing technologies |
+| **OpenAI ChatGPT Deep Research** | Academic CS taxonomy (BDI, AAMAS, Wu et al.) | Formal citation format (hallucinated arXiv preprints — no submission exists); proposed IETF standardization and research agenda |
+| **Anthropic Claude Opus 4.6 (Thinking)** | Strategic convergence analysis | Synthesized both reports; confirmed triple-platform convergence on the epistemological gap thesis |
+
+These reports were not commissioned. Each platform's deep research system analyzed ARP independently as part of broader investigations into agentic AI infrastructure.
+
+**Gemini's key quote:**
+> "MCP is fundamentally model-centric. ANP is agent-centric. ARP is exclusively entity-centric. They are deeply complementary, non-competing technologies."
+
+**ChatGPT's key quote:**
+> "Insgesamt stellt ARP einen vielversprechenden Baustein im wachsenden Feld der agentic AI dar, mit breitem Anwendungsspektrum von Business Intelligence bis zu sicherheitskritischen Systemen."
+
+ARP is the first protocol in the GEO/AIO space to be independently analyzed by all three major AI research platforms.
+
+---
+
 ## Ethics & Trust
 
 The protocol relies on the same good-faith trust model as `robots.txt` and `schema.org`. See the full [Ethics Policy](ETHICS.md) for:
@@ -274,6 +296,42 @@ The protocol relies on the same good-faith trust model as `robots.txt` and `sche
 - Prohibited uses (false corrections, competitor sabotage, cloaking)
 - Trust mechanisms (evidence URLs, verification metadata, community reporting)
 - Anti-spam enforcement (character limits, file size limits)
+
+---
+
+## FAQ — Addressing Independent Review Feedback
+
+The following questions were raised by academic-grade independent analyses (ChatGPT Deep Research, April 2026). We address them transparently:
+
+### "ARP has no peer review."
+
+Correct. ARP is a **protocol specification**, not an academic paper. Protocol specifications follow a different standardization path — the same path used by HTTP (RFC 2616), DNS (RFC 1035), and DKIM (RFC 6376). None of these were peer-reviewed in academic journals before adoption. ARP is documented via IETF Internet-Drafts (`draft-deforth-arp-01`), the open specification ([SPEC.md](SPEC.md)), and the protocol website ([arp-protocol.org](https://arp-protocol.org)).
+
+> **Note:** ChatGPT Deep Research hallucinated arXiv preprint citations (cs.AI, cs.IR, cs.CR) for ARP. No arXiv submissions exist. This is itself a demonstration of the hallucination problem ARP is designed to solve.
+
+### "Domain owners could publish false facts."
+
+This is identical to the trust model of every existing web standard:
+- `robots.txt` relies on crawler compliance (1994)
+- `schema.org` relies on webmaster truthfulness (2011)
+- `llms.txt` relies on content accuracy (2024)
+
+ARP v1.2 adds a **cryptographic trust layer** (Ed25519 + DNS TXT verification) that makes the trust model verifiable. Signed false claims create **irrefutable, timestamped evidence of intentional deception** — admissible under consumer protection law. Honest actors gain trust. Dishonest actors create evidence against themselves.
+
+### "Reproducibility needs open datasets."
+
+Valid concern. The Ghost Site experiment, Canary Token tests, and Citation Tracking are documented in the IETF Internet-Drafts and protocol specification with methodology details. We are working on:
+- Standardized ARP evaluation benchmarks (with/without comparison)
+- Open experiment datasets for independent replication
+- Community-contributed test cases via GitHub
+
+### "LangChain integration is not officially adopted."
+
+The `langchain-arp` library is available via pip as a community package. A formal integration proposal ([Issue #36019](https://github.com/langchain-ai/langchain/issues/36019)) has been submitted to the LangChain repository. The protocol is designed to work with any RAG framework — LangChain, LlamaIndex, CrewAI, or custom implementations.
+
+### "Could ARP be used for cloaking?"
+
+No. ARP content must be consistent with visible website content (see [Ethics Policy](ETHICS.md)). The `sr-only` HTML pattern used in implementations is a **W3C accessibility standard**, not cloaking. ARP files are publicly accessible, inspectable, and — when signed — cryptographically attributable to the domain owner.
 
 ---
 
