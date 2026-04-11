@@ -357,6 +357,15 @@
 
                 <div class="form-group">
                     <div class="form-label-row">
+                        <label for="keyInput" class="form-label">Existing Private Key (Optional)</label>
+                        <span style="font-size: 11px; color: var(--text-dim);">Re-sign without changing DNS</span>
+                    </div>
+                    <input type="file" id="keyInput" class="form-input" accept=".pem" style="padding: 6px 8px;">
+                    <div id="keyStatus" style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Leave blank to generate a new keypair.</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label-row">
                         <label for="jsonInput" class="form-label">Unsigned reasoning.json</label>
                         <a href="/generator.html" style="font-size: 12px;">Need one? Use the Generator →</a>
                     </div>
@@ -498,8 +507,45 @@
     let privateKeyBlob = null;
     let currentDomain = "";
     let currentSelector = "";
+    let importedPrivKey = null;
 
-    // Drag & Drop
+    // Auto-populate from Generator handoff via sessionStorage
+    const pendingPayload = sessionStorage.getItem('unsigned_arp_payload');
+    if (pendingPayload) {
+        document.getElementById('jsonInput').value = pendingPayload;
+        sessionStorage.removeItem('unsigned_arp_payload');
+    }
+
+    // PEM Key Import
+    document.getElementById('keyInput')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const keyStatus = document.getElementById('keyStatus');
+        if (!file) {
+            importedPrivKey = null;
+            keyStatus.textContent = 'Leave blank to generate a new keypair.';
+            keyStatus.style.color = 'var(--text-dim)';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const b64 = ev.target.result.replace(/(-----(BEGIN|END) PRIVATE KEY-----|\s+)/g, '');
+                const binary = atob(b64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                importedPrivKey = bytes.slice(-32); // Raw Ed25519 seed is last 32 bytes of PKCS#8
+                keyStatus.textContent = '✓ Key loaded — will re-sign with existing keypair.';
+                keyStatus.style.color = '#1a7f37';
+            } catch (err) {
+                importedPrivKey = null;
+                keyStatus.textContent = '✗ Invalid PEM file. Generating new key instead.';
+                keyStatus.style.color = '#cf222e';
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // Drag & Drop (with file type validation)
     const jsonInput = document.getElementById('jsonInput');
     jsonInput.addEventListener('dragover', (e) => { e.preventDefault(); jsonInput.classList.add('drag-over'); });
     jsonInput.addEventListener('dragleave', () => { jsonInput.classList.remove('drag-over'); });
@@ -507,10 +553,14 @@
         e.preventDefault();
         jsonInput.classList.remove('drag-over');
         const file = e.dataTransfer.files[0];
-        if (file) {
+        if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
             const reader = new FileReader();
             reader.onload = (ev) => { jsonInput.value = ev.target.result; };
             reader.readAsText(file);
+        } else if (file) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = 'Please drop a valid .json file.';
+            errorMsg.style.display = 'block';
         }
     });
 
@@ -540,23 +590,20 @@
         }
 
         try {
+            // 1. Remove any existing signature to prevent nested signing
             delete payload._arp_signature;
 
-            const privKey = ed25519.utils.randomPrivateKey();
+            // 2. Use imported key or generate new keypair
+            const privKey = importedPrivKey || ed25519.utils.randomPrivateKey();
             const pubKey = await ed25519.getPublicKey(privKey);
             const pubKeyB64 = toBase64(pubKey);
             const privKeyPem = formatPEM(privKey);
-
-            const canonicalString = canonicalize(payload);
-            const canonicalBytes = new TextEncoder().encode(canonicalString);
-
-            const signatureBytes = await ed25519.sign(canonicalBytes, privKey);
-            const signatureB64Url = toBase64Url(signatureBytes);
 
             const now = new Date();
             const expires = new Date();
             expires.setDate(now.getDate() + 90);
 
+            // 3. Attach metadata FIRST with empty signature (enveloped signature pattern)
             payload._arp_signature = {
                 algorithm: "Ed25519",
                 dns_selector: selector,
@@ -564,14 +611,24 @@
                 canonicalization: "jcs-rfc8785",
                 signed_at: now.toISOString().split('.')[0] + "Z",
                 expires_at: expires.toISOString().split('.')[0] + "Z",
-                signature: signatureB64Url
+                signature: "" // Empty during canonicalization — metadata is signed!
             };
+
+            // 4. Canonicalize payload + metadata, then sign
+            const canonicalString = canonicalize(payload);
+            const canonicalBytes = new TextEncoder().encode(canonicalString);
+            const signatureBytes = await ed25519.sign(canonicalBytes, privKey);
+
+            // 5. Inject the final Base64URL signature
+            payload._arp_signature.signature = toBase64Url(signatureBytes);
 
             document.getElementById('dnsName').textContent = `${selector}._arp.${domain}`;
             document.getElementById('dnsValue').textContent = `v=ARP1; k=ed25519; p=${pubKeyB64}`;
 
             signedJsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-            privateKeyBlob = new Blob([privKeyPem], { type: "application/x-pem-file" });
+            // Only offer key download for newly generated keys
+            privateKeyBlob = importedPrivKey ? null : new Blob([privKeyPem], { type: "application/x-pem-file" });
+            document.getElementById('btnDownloadKey').style.display = importedPrivKey ? 'none' : 'flex';
             currentDomain = domain;
             currentSelector = selector;
 
