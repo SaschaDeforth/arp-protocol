@@ -26,6 +26,10 @@
     {
       "source": "/.well-known/layer0",
       "destination": "/layer0/index.html"
+    },
+    {
+      "source": "/schema/v1\\.2/reasoning\\.schema\\.json",
+      "destination": "/schema/v1.2.json"
     }
   ]
 }
