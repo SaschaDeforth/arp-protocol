@@ -1,7 +1,15 @@
 # https://arp-protocol.org/robots.txt
-# Agentic Reasoning Protocol — Open Standard
+# Agentic Reasoning Protocol — Open Standard for AI Agent Grounding
+# https://arp-protocol.org
 
 User-agent: *
+Allow: /
+
+# Search Engine Crawlers — Critical for AI Discovery
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
 Allow: /
 
 # AI Crawlers — Welcome
@@ -17,7 +25,30 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: DeepSeekBot
+Allow: /
+
+User-agent: GrokBot
+Allow: /
+
+User-agent: CohereBot
+Allow: /
+
 User-agent: Amazonbot
 Allow: /
 
+User-agent: Applebot-Extended
+Allow: /
+
+# Social & Link Preview Bots
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
 Sitemap: https://arp-protocol.org/sitemap.xml
+
+# AI-readable content index
+# llms.txt: https://arp-protocol.org/llms.txt
+# Reasoning: https://arp-protocol.org/.well-known/reasoning.json
