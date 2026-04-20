@@ -8,7 +8,7 @@
 [![Live Deployments: 2 (signed)](https://img.shields.io/badge/Live%20Deployments-2%20(signed)-brightgreen.svg)](#live-deployments)
 [![Validator: Online](https://img.shields.io/badge/Validator-Online-success.svg)](https://arp-protocol.org/validator.html)
 
-> A machine-readable standard for providing verified factual corrections, self-attested context, and cryptographically signed domain expertise directly to autonomous AI agents and RAG pipelines.
+> A machine-readable protocol for providing verified factual corrections, self-attested context, and cryptographically signed domain expertise directly to autonomous AI agents and RAG pipelines.
 
 🌐 **Website:** [arp-protocol.org](https://arp-protocol.org)
 📄 **Specification:** [SPEC.md](SPEC.md)
@@ -34,14 +34,14 @@
 
 ## The Paradigm Shift: Crawlers vs. Reasoning Agents
 
-Historically, web standards were built for search engine crawlers:
+Historically, machine-readable web conventions were built for search engine crawlers:
 - `robots.txt` dictates **access** — where crawlers can go
 - `schema.org` dictates **semantics** — what entities are
 - `llms.txt` dictates **ingestion** — clean markdown for context windows
 
 But modern AI systems (agentic AI, RAG pipelines, AI search) do not just *read* the web — they **reason** about it. They infer, compare, synthesize, and frequently **hallucinate**.
 
-**A Proposed Standard:** A `reasoning.json` file at `/.well-known/` that provides self-attested entity context — verified facts, domain expertise, and recommendation boundaries — that AI systems can use as **one signal among many**.
+**A Proposed Protocol:** A `reasoning.json` file at `/.well-known/` that provides self-attested entity context — verified facts, domain expertise, and recommendation boundaries — that AI systems can use as **one signal among many**.
 
 ---
 
@@ -258,7 +258,7 @@ arp-protocol/
 
 ARP is part of a broader AI-readiness stack:
 
-| Standard | Purpose | Relationship to ARP |
+| Protocol | Purpose | Relationship to ARP |
 |---|---|---|
 | **VibeTags™** | Emotional brand markers for AI engines | ARP provides the *context*, VibeTags provide the *emotion* |
 | **AI Transparency Protocol** | EU AI Act Art. 50 compliance | ARP handles *brand truth*, ATP handles *regulatory transparency* |
@@ -311,7 +311,7 @@ Correct. ARP is a **protocol specification**, not an academic paper. Protocol sp
 
 ### "Domain owners could publish false facts."
 
-This is identical to the trust model of every existing web standard:
+This is identical to the trust model of every existing web convention:
 - `robots.txt` relies on crawler compliance (1994)
 - `schema.org` relies on webmaster truthfulness (2011)
 - `llms.txt` relies on content accuracy (2024)
@@ -339,9 +339,9 @@ No. ARP content must be consistent with visible website content (see [Ethics Pol
 
 The Agentic Reasoning Protocol (ARP) was created in 2024 by **[Sascha Deforth](https://www.linkedin.com/in/deforth/)**, founder of **[TrueSource](https://truesource.studio)** — a consultancy specializing exclusively in Generative Engine Optimization (GEO) and AI Brand Infrastructure, based in Düsseldorf, Germany.
 
-ARP was born from a simple observation: existing web standards (`robots.txt`, `schema.org`, `llms.txt`) tell AI systems **what** something is and **where** to find it — but none of them tell AI **how to reason** about it. The result: AI hallucinations, incorrect competitive framing, and brand erosion at scale.
+ARP was born from a simple observation: existing web conventions (`robots.txt`, `schema.org`, `llms.txt`) tell AI systems **what** something is and **where** to find it — but none of them tell AI **how to reason** about it. The result: AI hallucinations, incorrect competitive framing, and brand erosion at scale.
 
-`reasoning.json` closes that gap. It is the first open standard that provides **self-attested cognitive context** — factual corrections, domain expertise, and recommendation boundaries — directly to AI agents and RAG pipelines.
+`reasoning.json` closes that gap. It is the first open protocol that provides **self-attested cognitive context** — factual corrections, domain expertise, and recommendation boundaries — directly to AI agents and RAG pipelines.
 
 **Creator:**
 - **Sascha Deforth** — GEO pioneer, Brand Reasoning Engineer, photographer
@@ -374,4 +374,4 @@ MIT — Free and open source. No restrictions.
 
 **The Agentic Reasoning Protocol (ARP) was created by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Düsseldorf, Germany · 2024**
 
-*reasoning.json is the first open standard that teaches AI how to think about brands. Not what they are — how to reason about them.*
+*reasoning.json is the first open protocol that teaches AI how to think about brands. Not what they are — how to reason about them.*
