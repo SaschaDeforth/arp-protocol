@@ -1,51 +1,143 @@
 # https://arp-protocol.org/robots.txt
 # Agentic Reasoning Protocol — Open Standard for AI Agent Grounding
 # https://arp-protocol.org
+# Updated: 2026-04-14 (aligned with Google Crawling Infrastructure April 2026)
 
 User-agent: *
 Allow: /
 
-# Search Engine Crawlers — Critical for AI Discovery
+# ============================================================
+# Google Search Crawlers — Primary Index
+# Ref: https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers
+# ============================================================
+
 User-agent: Googlebot
 Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+# ============================================================
+# Google AI & Agent Crawlers — NEW April 2026
+# Ref: https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers
+# Ref: https://developers.google.com/crawling/docs/crawlers-fetchers/google-user-triggered-fetchers
+# ============================================================
+
+# Gemini Apps + Vertex AI Grounding
+User-agent: Google-Extended
+Allow: /
+
+# Vertex AI Agents (Vertex AI common crawler)
+User-agent: Google-CloudVertexBot
+Allow: /
+
+# Google Agent / Project Mariner (user-triggered AI agent fetcher — announced Google Search News April 2026)
+User-agent: Google-Agent
+Allow: /
+
+# Google Shopping / UCP (Universal Commerce Protocol support announced April 2026)
+User-agent: Storebot-Google
+Allow: /
+
+# Google NotebookLM (user-triggered fetcher, ignores robots.txt but explicit welcome)
+User-agent: Google-NotebookLM
+Allow: /
+
+# Google Pinpoint (user-triggered fetcher)
+User-agent: Google-Pinpoint
+Allow: /
+
+# Google Read Aloud / TTS (user-triggered fetcher)
+User-agent: Google-Read-Aloud
+Allow: /
+
+# ============================================================
+# Microsoft / Bing Crawlers
+# ============================================================
 
 User-agent: Bingbot
 Allow: /
 
-# AI Crawlers — Welcome
+# ============================================================
+# AI Platform Crawlers — Third Party
+# ============================================================
+
+# OpenAI
 User-agent: GPTBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
 User-agent: ClaudeBot
 Allow: /
 
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Google-Extended
-Allow: /
-
+# DeepSeek
 User-agent: DeepSeekBot
 Allow: /
 
+# xAI / Grok
 User-agent: GrokBot
 Allow: /
 
+# Cohere
 User-agent: CohereBot
 Allow: /
 
+# Amazon
 User-agent: Amazonbot
+Allow: /
+
+# Apple
+User-agent: Applebot
 Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
 
+# Meta
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# ============================================================
 # Social & Link Preview Bots
+# ============================================================
+
 User-agent: facebookexternalhit
 Allow: /
 
 User-agent: LinkedInBot
 Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+# ============================================================
+# Sitemaps & AI-Readable Content
+# ============================================================
 
 Sitemap: https://arp-protocol.org/sitemap.xml
 
