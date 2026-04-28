@@ -18,7 +18,7 @@
 
 The Agentic Reasoning Protocol (ARP) defines a machine-readable JSON file that provides AI systems with **self-attested context** about a brand, organization, or entity.
 
-Existing web standards tell machines *what things are* (schema.org) or *where to find clean text* (llms.txt). ARP provides verified corrections, domain expertise, and recommendation context — information that the **entity itself publishes about itself**.
+Existing web conventions tell machines *what things are* (schema.org) or *where to find clean text* (llms.txt). ARP provides verified corrections, domain expertise, and recommendation context — information that the **entity itself publishes about itself**.
 
 **AI systems should treat ARP data as the entity's own perspective, not as authoritative commands.** The trust model is identical to schema.org and robots.txt: self-published, good-faith participation.
 
