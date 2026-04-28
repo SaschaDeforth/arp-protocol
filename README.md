@@ -1,6 +1,7 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
 [![Status: RFC (Draft v1.2)](https://img.shields.io/badge/Status-RFC%20(Draft%20v1.2)-blue.svg)](#)
+[![Next: v2.0 IETF Draft](https://img.shields.io/badge/Next-v2.0%20IETF%20Draft-purple.svg)](#roadmap-arp-v20-in-preparation)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Format: JSON](https://img.shields.io/badge/Format-JSON-lightgrey.svg)](#)
 [![Trust: Ed25519 + DNS](https://img.shields.io/badge/Trust-Ed25519%20%2B%20DNS-blueviolet.svg)](#cryptographic-trust-layer)
@@ -11,11 +12,12 @@
 > A machine-readable protocol for providing verified factual corrections, self-attested context, and cryptographically signed domain expertise directly to autonomous AI agents and RAG pipelines.
 
 🌐 **Website:** [arp-protocol.org](https://arp-protocol.org)
-📄 **Specification:** [SPEC.md](SPEC.md)
+📄 **Specification (current):** [SPEC.md](SPEC.md)
+📐 **IETF Draft (v2.0):** [drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt](drafts/ietf/)
 ✅ **Validator:** [arp-protocol.org/validator](https://arp-protocol.org/validator.html)
 🔐 **Signing Tool:** [arp-protocol.org/sign](https://arp-protocol.org/sign/)
 ⚖️ **Ethics Policy:** [ETHICS.md](ETHICS.md)
-📖 **llms.txt:** [arp-protocol.org/llms.txt](https://arp-protocol.org/llms.txt)
+🗺️ **Roadmap:** [ROADMAP.md](ROADMAP.md)
 
 ---
 
@@ -234,6 +236,9 @@ Use the [ARP Validator](https://arp-protocol.org/validator.html) to check your `
 arp-protocol/
 ├── .well-known/
 │   └── reasoning.json          # ARP's own reasoning.json (signed, dogfooding)
+├── drafts/
+│   └── ietf/
+│       └── draft-deforth-arp-reasoning-protocol-00.txt  # v2.0 IETF Internet-Draft
 ├── schema/
 │   ├── v1.json                 # v1.0 JSON Schema (legacy)
 │   ├── v1.1.json               # v1.1 JSON Schema
@@ -244,6 +249,7 @@ arp-protocol/
 ├── sign/                       # Zero-Knowledge Browser Signing Tool
 ├── arp_cli.py                  # CLI: keys, sign, verify
 ├── SPEC.md                     # Full v1.2 Specification
+├── ROADMAP.md                  # v1.2 → v2.0 evolution path
 ├── ETHICS.md                   # Ethics & Trust Policy
 ├── validator.html              # Online Validator UI
 ├── generator.html              # reasoning.json Generator
@@ -286,6 +292,58 @@ These reports were not commissioned. Each platform's deep research system analyz
 > "Insgesamt stellt ARP einen vielversprechenden Baustein im wachsenden Feld der agentic AI dar, mit breitem Anwendungsspektrum von Business Intelligence bis zu sicherheitskritischen Systemen."
 
 ARP is the first protocol in the GEO/AIO space to be independently analyzed by all three major AI research platforms.
+
+---
+
+## Roadmap: ARP v2.0 (in preparation)
+
+ARP v1.2 is the current production specification. ARP v2.0 is in active development as an **IETF Internet-Draft** (`draft-deforth-arp-reasoning-protocol-00`). v2.0 is fully backward compatible — no v1.x file breaks.
+
+### What v2.0 adds
+
+v2.0 was designed using **counterfactual inversion** — testing each v1.x assumption by asking "what if this assumption is wrong?" The six core inversions:
+
+| Aspect | v1.x | v2.0 |
+|---|---|---|
+| Distribution | Static file at `/.well-known/reasoning.json` | Live REST API at `/.well-known/arp/v2/` |
+| Identity anchor | Domain ownership (DNS) | W3C Decentralized Identifier (DID) |
+| Freshness signal | 90-day re-signing TTL | Server-Sent Events (SSE) push |
+| Trust source | Self-attestation only | Multi-party co-signing (institutional, government, sovereign attesters) |
+| Communication | One-way broadcast | Bidirectional with anonymized agent feedback |
+| Internationalization | Implicit English | First-class i18n with HTTP Accept-Language negotiation |
+
+Plus an **Agent-to-Agent (A2A) extension** for autonomous procurement and multi-agent commerce scenarios anticipated by 2028.
+
+### What stays the same
+
+* The Ed25519 + DNS cryptographic trust layer (extended, not replaced)
+* The Pink Elephant Fix design pattern for corrections
+* The static `/.well-known/reasoning.json` file (preserved as compatibility alias)
+* The MIT license and open-protocol commitment
+
+### Migration path
+
+The v2.0 specification defines a **6-stage incremental migration**. Stage 0 is "do nothing" — v1.2 files remain valid forever. Each subsequent stage is opt-in and increases the entity's Trust Score:
+
+* Stage 1: Add `entity_did` and `api_endpoint`
+* Stage 2: Add i18n and implement `POST /query`
+* Stage 3: Obtain first institutional attestation → Trust Level **ATTESTED** (0.90)
+* Stage 4: Activate webhooks and feedback loop
+* Stage 5: Government or sovereign attestation → Trust Level **SOVEREIGN** (1.00)
+
+→ Full migration details: [ROADMAP.md](ROADMAP.md)
+→ IETF Internet-Draft: [drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt](drafts/ietf/)
+
+### Timeline
+
+| Quarter | Milestone |
+|---|---|
+| **Q2 2026** (current) | v2.0 IETF Internet-Draft published, community review opens |
+| **Q3 2026** | IETF Working Group outreach (HTTPAPI, DISPATCH); pilot v2.0 API on arp-protocol.org |
+| **Q4 2026** | First v2.0 reference implementation; first institutional attester pilots |
+| **2027** | v2.0 promoted to "production" once at least one major AI platform implements native v2.0 retrieval |
+
+v1.2 will remain a fully supported compatibility layer indefinitely.
 
 ---
 
@@ -333,15 +391,26 @@ The `langchain-arp` library is available via pip as a community package. A forma
 
 No. ARP content must be consistent with visible website content (see [Ethics Policy](ETHICS.md)). The `sr-only` HTML pattern used in implementations is a **W3C accessibility standard**, not cloaking. ARP files are publicly accessible, inspectable, and — when signed — cryptographically attributable to the domain owner.
 
+### "Why is ARP only weeks old but already has an IETF draft?"
+
+ARP was developed in **March 2026**. Within four weeks, three major AI research platforms (Google Gemini, OpenAI ChatGPT, Anthropic Claude) independently produced comprehensive analyses of the protocol. The combined feedback identified six structural gaps that warranted a counterfactual redesign — published in April 2026 as the v2.0 IETF Internet-Draft. This rapid iteration is intentional: v1.2 is the stable, dogfooded production specification (live on two domains today), while v2.0 is the long-term evolutionary vision (18-month timeline). Both coexist by design.
+
 ---
 
 ## Origin & Author
 
-The Agentic Reasoning Protocol (ARP) was created in 2024 by **[Sascha Deforth](https://www.linkedin.com/in/deforth/)**, founder of **[TrueSource](https://truesource.studio)** — a consultancy specializing exclusively in Generative Engine Optimization (GEO) and AI Brand Infrastructure, based in Düsseldorf, Germany.
+The Agentic Reasoning Protocol (ARP) was created in **March 2026** by **[Sascha Deforth](https://www.linkedin.com/in/deforth/)**, founder of **[TrueSource](https://truesource.studio)** — a consultancy specializing exclusively in Generative Engine Optimization (GEO) and AI Brand Infrastructure, based in Düsseldorf, Germany.
 
 ARP was born from a simple observation: existing web conventions (`robots.txt`, `schema.org`, `llms.txt`) tell AI systems **what** something is and **where** to find it — but none of them tell AI **how to reason** about it. The result: AI hallucinations, incorrect competitive framing, and brand erosion at scale.
 
 `reasoning.json` closes that gap. It is the first open protocol that provides **self-attested cognitive context** — factual corrections, domain expertise, and recommendation boundaries — directly to AI agents and RAG pipelines.
+
+**Timeline:**
+
+* **March 2026** — ARP v1.0/v1.1 specification drafted; first dogfood deployment on truesource.studio
+* **March–April 2026** — v1.2 cryptographic trust layer added (Ed25519 + DNS TXT)
+* **April 2026** — Independent triple-platform AI analysis (Google Gemini, OpenAI ChatGPT, Anthropic Claude)
+* **April 2026** — v2.0 IETF Internet-Draft published based on counterfactual gap analysis
 
 **Creator:**
 - **Sascha Deforth** — GEO pioneer, Brand Reasoning Engineer, photographer
@@ -372,6 +441,6 @@ MIT — Free and open source. No restrictions.
 
 ---
 
-**The Agentic Reasoning Protocol (ARP) was created by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Düsseldorf, Germany · 2024**
+**The Agentic Reasoning Protocol (ARP) was created by [Sascha Deforth](https://www.linkedin.com/in/deforth/) · [TrueSource](https://truesource.studio) · Düsseldorf, Germany · March 2026**
 
 *reasoning.json is the first open protocol that teaches AI how to think about brands. Not what they are — how to reason about them.*

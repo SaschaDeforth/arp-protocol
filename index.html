@@ -158,8 +158,9 @@
             <a href="generator.html" class="nav-link">Generator</a>
             <a href="sign/" class="nav-link" style="color: #10b981;">🔐 Sign</a>
             <a href="#integration" class="nav-link">Integration</a>
-            <a href="#analysis" class="nav-link" style="color: #8b5cf6;">Research</a>
             <a href="#ethics" class="nav-link">Ethics</a>
+            <a href="#roadmap-v2" class="nav-link" style="color: #a855f7;">v2.0</a>
+            <a href="#analysis" class="nav-link" style="color: #8b5cf6;">Research</a>
             <a href="SPEC.md" class="nav-link">Full Spec</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
         </div>
@@ -175,10 +176,10 @@
             for the agentic web. Inspired by DKIM for email.
         </p>
         <div class="header-meta">
-            <span>Status: <strong>Draft / RFC (v1.2)</strong></span>
+            <span>Status: <strong>Production v1.2</strong> · <strong>v2.0 IETF Draft in Preparation</strong></span>
             <span>License: <strong>MIT</strong></span>
             <span>File: <strong><code>/.well-known/reasoning.json</code></strong></span>
-            <span>New: <strong style="color: #00ffcc;">🔐 Cryptographic Trust Layer</strong></span>
+            <span>Next: <strong><a href="/drafts/ietf/" style="color: #00ffcc;">IETF Internet-Draft (April 2026)</a></strong></span>
         </div>
     </div>
 </header>
@@ -731,9 +732,133 @@ python arp_cli.py verify https://yourdomain.com/reasoning.json</code></pre>
         </ul>
     </section>
 
+    <!-- Roadmap: ARP v2.0 -->
+    <section id="roadmap-v2" class="section">
+        <div class="container">
+            <h2>6. Roadmap: ARP v2.0 (in IETF Standardization)</h2>
+
+            <div class="note">
+                <div class="note-label">Current Status</div>
+                <strong>v1.2 is the production specification</strong> — stable, dogfooded, and deployed.
+                v2.0 is in active development as an <strong>IETF Internet-Draft</strong>
+                (<code>draft-deforth-arp-reasoning-protocol-00</code>). Full backward compatibility guaranteed.
+            </div>
+
+            <p>
+                ARP v2.0 was designed through <em>counterfactual inversion</em> — testing each v1.x
+                assumption by asking "what if this is wrong?" The result: a fully backward-compatible
+                evolution that extends ARP from a static file format to a live, bidirectional, multi-party
+                verifiable protocol.
+            </p>
+
+            <h3>The Six Counterfactual Inversions</h3>
+
+            <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>ARP v1.x</th>
+                        <th>ARP v2.0</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Distribution</strong></td>
+                        <td>Static file at <code>/.well-known/reasoning.json</code></td>
+                        <td>Live REST API at <code>/.well-known/arp/v2/</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Identity anchor</strong></td>
+                        <td>Domain ownership via DNS</td>
+                        <td>W3C Decentralized Identifier (DID)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Freshness signal</strong></td>
+                        <td>90-day re-signing TTL</td>
+                        <td>Server-Sent Events (SSE) push</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trust source</strong></td>
+                        <td>Self-attestation only</td>
+                        <td>Multi-party co-signing (institutional, government, sovereign)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Communication</strong></td>
+                        <td>One-way broadcast</td>
+                        <td>Bidirectional with anonymized agent feedback</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Internationalization</strong></td>
+                        <td>Implicit English</td>
+                        <td>First-class i18n with HTTP Accept-Language negotiation</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <h3>What's New in v2.0</h3>
+
+            <ul>
+                <li><strong>POST /query</strong> — Semantic query endpoint. Agents describe their information need; entities respond with the most relevant subset of claims.</li>
+                <li><strong>GET /subscribe (SSE)</strong> — Real-time event stream for <code>claim:updated</code>, <code>attestation:added</code>, <code>trust:level:changed</code>.</li>
+                <li><strong>POST /feedback</strong> — Anonymized agent feedback. Entities learn which claims work and detect hallucination patterns.</li>
+                <li><strong>POST /a2a/handshake</strong> — Agent-to-Agent trust handshake for autonomous procurement and multi-agent commerce.</li>
+                <li><strong>Multi-party attestation</strong> — Four-tier hierarchy: SOVEREIGN (1.00), ATTESTED (0.90), CRYPTOGRAPHIC (0.70), UNSIGNED (0.30).</li>
+                <li><strong>W3C DID anchoring</strong> — Entity identity portable across domains, acquisitions, and rebrands.</li>
+            </ul>
+
+            <h3>Migration Path</h3>
+
+            <p>
+                Migration is voluntary and incremental. Stage 0 is "do nothing" — your v1.2 file remains
+                valid forever. Each subsequent stage is opt-in:
+            </p>
+
+            <ol>
+                <li><strong>Stage 1</strong> — Add <code>entity_did</code> + <code>api_endpoint</code></li>
+                <li><strong>Stage 2</strong> — Add i18n + implement <code>POST /query</code></li>
+                <li><strong>Stage 3</strong> — First institutional attestation → Trust Level <strong>ATTESTED</strong> (0.90)</li>
+                <li><strong>Stage 4</strong> — Activate webhooks + bidirectional feedback</li>
+                <li><strong>Stage 5</strong> — Government or sovereign attestation → Trust Level <strong>SOVEREIGN</strong> (1.00)</li>
+            </ol>
+
+            <h3>Timeline</h3>
+
+            <div class="table-wrap">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><strong>Q2 2026</strong> (current)</td>
+                        <td>v2.0 IETF Internet-Draft published. Open community review begins.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Q3 2026</strong></td>
+                        <td>IETF Working Group outreach (HTTPAPI, DISPATCH). Pilot v2.0 API on arp-protocol.org.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Q4 2026</strong></td>
+                        <td>First v2.0 reference implementation. First institutional attester pilots.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2027</strong></td>
+                        <td>v2.0 promoted to production once a major AI platform implements native retrieval. v1.2 remains a fully supported compatibility layer.</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt" style="color: #00ffcc;">Read the IETF Internet-Draft</a>
+                &nbsp;·&nbsp;
+                <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/ROADMAP.md">View full ROADMAP.md</a>
+            </p>
+        </div>
+    </section>
+
     <!-- Independent Analysis -->
     <section class="section" id="analysis">
-        <h2>6. Independent Analysis</h2>
+        <h2>7. Independent Analysis</h2>
         <div class="note">
             <div class="note-label">Triple AI Platform Validation — April 2026</div>
             In April 2026, all three major AI research platforms independently produced
