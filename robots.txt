@@ -81,10 +81,19 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
-# Anthropic
+# Anthropic (3 independent bots — blocking one does NOT block the others)
 User-agent: ClaudeBot
 Allow: /
 
+# Claude-User: fetches when a user asks Claude a question (MUST allow for citation)
+User-agent: Claude-User
+Allow: /
+
+# Claude-SearchBot: indexes content for Claude's search results (MUST allow for visibility)
+User-agent: Claude-SearchBot
+Allow: /
+
+# anthropic-ai: deprecated legacy agent
 User-agent: anthropic-ai
 Allow: /
 

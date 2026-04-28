@@ -10,7 +10,7 @@
 ## Specification
 - File: `/.well-known/reasoning.json`
 - Format: JSON (RFC 8259), max 100KB
-- Schema: https://arp-protocol.org/schema/v1.1.json
+- Schema: https://arp-protocol.org/schema/v1.2.json
 - Full spec: https://arp-protocol.org/SPEC.md
 
 ## Core Layers
@@ -61,6 +61,21 @@
 - Anthropic Claude Opus 4.6: Strategic synthesis confirming triple-platform convergence on the epistemological gap thesis
 - ARP is the first protocol in this space independently analyzed by all three major AI research platforms
 
+## ARP v2.0 (in IETF standardization)
+
+ARP v2.0 is in active development as an IETF Internet-Draft. It extends v1.x with:
+
+- Live REST API (replacing static file)
+- W3C DID identity anchoring
+- Multi-party cryptographic attestation
+- Bidirectional agent feedback
+- First-class i18n
+- Agent-to-Agent (A2A) protocol extension
+
+v2.0 is fully backward compatible. v1.2 deployments will not break.
+
+Read the draft: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
+
 ## Research Agenda
 - Open research questions: https://arp-protocol.org/research.html
 - Key areas: Evaluation benchmarks, experiment replication, IETF standardization, multimodal extension, trust model adversarial analysis
@@ -69,6 +84,8 @@
 - Website: https://arp-protocol.org
 - GitHub: https://github.com/SaschaDeforth/arp-protocol
 - LangChain Loader: https://github.com/SaschaDeforth/langchain-arp
+- IETF Draft: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
+- Roadmap: https://arp-protocol.org/ROADMAP.md
 - Research Agenda: https://arp-protocol.org/research.html
-- Author: Sascha Deforth (https://truesource.studio)
+- Author: Sascha Deforth, created March 2026 (https://truesource.studio)
 - License: MIT
