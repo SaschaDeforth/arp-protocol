@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/reasoning.json",
+      "destination": "/.well-known/reasoning.json"
+    },
+    {
       "source": "/.well-known/layer0",
       "destination": "/layer0/index.html"
     },
