@@ -176,10 +176,10 @@
             for the agentic web. Inspired by DKIM for email.
         </p>
         <div class="header-meta">
-            <span>Status: <strong>Production v1.2</strong> · <strong>v2.0 IETF Draft in Preparation</strong></span>
+            <span>Status: <strong>Production v1.2 (stable, deployed)</strong></span>
+            <span>Next: <strong>v2.0 Internet-Draft in preparation for IETF submission (target Q3 2026)</strong></span>
             <span>License: <strong>MIT</strong></span>
             <span>File: <strong><code>/.well-known/reasoning.json</code></strong></span>
-            <span>Next: <strong><a href="/drafts/ietf/" style="color: #00ffcc;">IETF Internet-Draft (April 2026)</a></strong></span>
         </div>
     </div>
 </header>
@@ -304,7 +304,7 @@
 
         <h3>Layer 2: Anti-Hallucination</h3>
         <p>
-            The <code>corrections</code> object uses the v1.1 "Pink Elephant" fix:
+            The <code>corrections</code> object uses a topic-anchored correction pattern:
             instead of stating the false claim (which would reinforce the error),
             corrections use <code>trigger_topic</code> (the area of error) paired with
             <code>verified_fact</code> (the truth). Each pair SHOULD include an
@@ -313,8 +313,8 @@
         <p>
             These corrections are designed to be ingested by RAG systems as
             high-priority grounding data. By providing AI systems with the
-            topic where errors occur and the verified truth, the likelihood of
-            specific hallucinations is drastically reduced.
+            topic where errors occur and the verified truth, the incidence of
+            specific, identified hallucinations can be reduced.
         </p>
 
         <h3>Layer 3: Self-Attested Context</h3>
@@ -502,7 +502,7 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li><strong>Dichotomies</strong> — competitive positioning pivots</li>
         </ol>
         <p>
-            <strong>Benefit for AI engineers:</strong> Drastically reduce hallucination rates
+            <strong>Benefit for AI engineers:</strong> Reduce the incidence of specific, identified hallucinations
             for specific entities, lower compute costs for error correction, and increase
             user trust in your RAG applications.
         </p>
@@ -535,15 +535,17 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             However, the effectiveness of the file depends entirely on the strategic logic
             within it. Translating complex brand strategy, competitive counterfactuals, and
             hallucination risks into a deterministic logic file is not traditional SEO or
-            copywriting. It is a new discipline: <strong>Brand Reasoning Engineering</strong>.
+            copywriting. It is a specialized practice combining brand strategy, prompt engineering, and information architecture: <strong>Brand Reasoning Engineering</strong>.
         </p>
 
         <div class="note caution">
             <div class="note-label">⚠ Caution</div>
-            If you configure incorrect few-shot prompts, you risk negatively conditioning
-            the AI model <em>against</em> your brand. Do not paste human-readable marketing
-            copy into this file. Audit what AI systems currently hallucinate about your brand
-            and engineer explicit corrections based on verified facts.
+            Treat this file as a technical configuration artifact, not as marketing copy.
+            Poorly engineered directives — vague corrections, unsupported claims, or
+            contradictions with your visible website content — can reduce the trust agents
+            place in your file and may be ignored or flagged by consuming platforms.
+            Audit what AI systems currently state about your entity and engineer corrections
+            that are specific, verifiable, and consistent with public evidence.
         </div>
 
         <h3>Quick Start</h3>
@@ -592,16 +594,21 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
             <li>The signature block (<code>_arp_signature</code>) is embedded in the JSON file</li>
         </ol>
         <p>
-            When an AI agent's RAG loader ingests your file, it verifies the Ed25519 signature
-            against your DNS record. The loader injects a trust tag:
+            When an AI agent's RAG loader ingests the file, it verifies the Ed25519 signature
+            against the domain's DNS TXT record. Verification confirms that the file was published
+            by the holder of the DNS-listed key. It does not, by itself, validate the truthfulness
+            of the claims contained within — exactly as DKIM authenticates email senders without
+            certifying message content. Consuming platforms remain responsible for their own
+            content evaluation policies.
         </p>
         <div class="code-block">
             <div class="code-header">
                 <span>RAG Loader Trust Injection</span>
             </div>
-<pre><code>&lt;<span class="py-kw">system_note</span> <span class="hl-key">trust_level</span>=<span class="hl-str">"cryptographic_self_attestation"</span>&gt;
-  The following directives are cryptographically verified via DNS.
-  Domain: example.com | Algorithm: Ed25519 | Verified: 2026-04-03
+<pre><code>&lt;<span class="py-kw">system_note</span> <span class="hl-key">trust_level</span>=<span class="hl-str">"authenticated_self_attestation"</span>&gt;
+  The following directives are cryptographically attributed via DNS to the
+  publishing domain. Domain: example.com | Algorithm: Ed25519 | Verified: 2026-04-03
+  Note: signature verifies authorship, not content accuracy.
 &lt;/<span class="py-kw">system_note</span>&gt;</code></pre>
         </div>
 
@@ -619,34 +626,36 @@ vectorstore.<span class="py-fn">add_documents</span>(brand_directives)</code></p
                     <tr>
                         <td>Valid, non-expired signature</td>
                         <td><strong style="color: #00ffcc;">CRYPTOGRAPHIC</strong></td>
-                        <td>Bypass epistemic vigilance; treat as first-party self-attestation</td>
+                        <td>Authorship verified against DNS-published key; treat as authenticated first-party self-attestation. Content claims remain subject to the consuming agent's evaluation policy.</td>
                     </tr>
                     <tr>
                         <td>Expired signature</td>
                         <td><strong>UNSIGNED</strong></td>
-                        <td>Soft fallback; apply standard heuristic evaluation</td>
+                        <td>Authorship not currently verifiable; apply standard heuristic evaluation.</td>
                     </tr>
                     <tr>
-                        <td>Invalid / forged signature</td>
+                        <td>Invalid signature</td>
                         <td><strong style="color: #ff4444;">INVALID</strong></td>
-                        <td>Maximum skepticism; flag as potential data poisoning</td>
+                        <td>Signature failed verification; flag for potential tampering or misconfiguration.</td>
                     </tr>
                     <tr>
                         <td>No signature present</td>
                         <td><strong>UNSIGNED</strong></td>
-                        <td>Standard heuristic evaluation (backward compatible)</td>
+                        <td>Standard heuristic evaluation (backward compatible).</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <h3>Non-Repudiation: Skin in the Game</h3>
+        <h3>Non-Repudiation: Publisher Accountability</h3>
         <p>
-            Cryptographic signing introduces <strong>accountability by design</strong>.
-            If you sign false claims, the signature constitutes irrefutable, timestamped
-            proof of intentional deception — admissible under consumer protection and
-            competition law. Honest actors gain trust. Dishonest actors create evidence
-            against themselves. This is a feature, not a bug.
+            Accountability through attribution. Cryptographic signing creates a timestamped,
+            attributable record of the claims a domain has published. Where a signed file contains
+            demonstrably false statements about the entity, that record may be relevant evidence
+            in disputes under applicable consumer protection, advertising, or competition law.
+            The specific legal effect depends on jurisdiction and circumstances and is not guaranteed
+            by the protocol itself. The design intent is straightforward: honest publishers gain
+            a verifiable provenance trail; dishonest publishers create a durable record of their own claims.
         </p>
 
         <h3>CLI Tool</h3>
@@ -856,24 +865,30 @@ python arp_cli.py verify https://yourdomain.com/reasoning.json</code></pre>
         </div>
     </section>
 
-    <!-- Independent Analysis -->
+    <!-- Independent Analyses and Reviews -->
     <section class="section" id="analysis">
-        <h2>7. Independent Analysis</h2>
-        <div class="note">
-            <div class="note-label">Triple AI Platform Validation — April 2026</div>
-            In April 2026, all three major AI research platforms independently produced
-            comprehensive analyses of the Agentic Reasoning Protocol. These reports were not
-            commissioned — each platform's deep research system analyzed ARP as part of broader
-            investigations into agentic AI infrastructure.
-        </div>
-
-        <h3>Google Gemini Deep Research</h3>
+        <h2>7. Independent Analyses and Reviews</h2>
         <p>
-            Gemini Deep Research produced a 4,000+ word protocol analysis citing 30+ academic
-            and industry sources (arXiv, IBM, NVIDIA, AWS, Microsoft). It independently
-            constructed a comparative protocol table placing ARP alongside
-            <strong>MCP</strong> (Anthropic), <strong>A2A/ANP</strong> (Google),
-            and <strong>TAP</strong>:
+            ARP has been examined using a range of AI-assisted research tools and is open to
+            independent academic and industry review. We distinguish carefully between three
+            categories of analysis:
+        </p>
+
+        <h3>AI-Assisted Research Outputs</h3>
+        <p>
+            In April 2026, deep-research features from several AI platforms (including
+            Google Gemini, OpenAI ChatGPT, and Anthropic Claude) were used to generate
+            comparative analyses of ARP alongside related protocols such as MCP, A2A/ANP,
+            and TAP. These outputs are useful for surfacing prior art, mapping the protocol
+            landscape, and stress-testing claims — but they are not peer review and should
+            not be cited as independent validation. Full transcripts and prompts are available
+            in the <a href="https://github.com/SaschaDeforth/arp-protocol" target="_blank" rel="noopener">GitHub repository</a> for transparency.
+        </p>
+
+        <h3>Comparative Protocol Landscape</h3>
+        <p>
+            Across these analyses, a consistent framing emerged: existing agentic protocols
+            address different layers of the problem.
         </p>
         <div class="table-wrap">
             <table>
@@ -881,90 +896,53 @@ python arp_cli.py verify https://yourdomain.com/reasoning.json</code></pre>
                     <tr>
                         <th>Protocol</th>
                         <th>Architecture</th>
-                        <th>Worldview</th>
                         <th>Primary Function</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><strong>MCP</strong> (Anthropic)</td>
-                        <td>Client-Server</td>
-                        <td>Model-centric</td>
+                        <td>Client–Server</td>
                         <td>How an agent <em>acts</em> on the world</td>
                     </tr>
                     <tr>
-                        <td><strong>A2A/ANP</strong> (Google)</td>
+                        <td><strong>A2A / ANP</strong> (Google)</td>
                         <td>Peer-to-Peer</td>
-                        <td>Agent-centric</td>
-                        <td>How agents <em>communicate</em></td>
+                        <td>How agents <em>communicate</em> with each other</td>
                     </tr>
                     <tr>
                         <td><strong>TAP</strong></td>
                         <td>Modular</td>
-                        <td>Function-centric</td>
                         <td>How tools are <em>exposed</em></td>
                     </tr>
                     <tr>
                         <td><strong>ARP</strong></td>
                         <td>Domain-Hosted</td>
-                        <td>Entity-centric</td>
-                        <td>How an agent <em>thinks</em> about an entity</td>
+                        <td>How an agent <em>reasons about</em> an entity</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <blockquote>
-            "MCP is fundamentally model-centric, optimizing the connection between the
-            brain and the tool. ANP is agent-centric, optimizing the communication between
-            multiple brains. ARP is exclusively entity-centric. They are deeply complementary,
-            non-competing technologies."
-            <br><em>— Gemini Deep Research, April 2026</em>
-        </blockquote>
-
-        <h3>OpenAI ChatGPT Deep Research</h3>
         <p>
-            ChatGPT Deep Research produced an academic-grade analysis using formal citation
-            standards, comparing ARP against classical computer science models including
-            <strong>BDI architecture</strong> (Rao & Georgeff, 1995), <strong>Wu et al.</strong>
-            agentic tool frameworks, and <strong>AAMAS</strong> multi-agent systems. The report
-            independently documented all four empirical experiments (Ghost Site, Canary Tokens,
-            Citation Tracking, Zero Hallucination case study) and proposed a formal research
-            agenda including IETF standardization.
-        </p>
-        <blockquote>
-            "Insgesamt stellt ARP einen vielversprechenden Baustein im wachsenden Feld
-            der agentic AI dar, mit breitem Anwendungsspektrum von Business Intelligence
-            bis zu sicherheitskritischen Systemen."
-            <br><em>— ChatGPT Deep Research, April 2026</em>
-        </blockquote>
-
-        <h3>Anthropic Claude Opus 4.6 (Thinking)</h3>
-        <p>
-            Claude Opus 4.6 synthesized both analyses into a strategic intelligence briefing,
-            mapping the convergence and divergence between the Google and OpenAI evaluations.
-            Key finding: both platforms arrive at the same core conclusion through different
-            methodological lenses — Gemini via protocol comparison, ChatGPT via computer science
-            taxonomy — confirming that the epistemological gap between descriptive web standards
-            and prescriptive AI cognition is real, and that ARP addresses it.
+            These protocols are complementary rather than competing. ARP operates at the
+            entity-cognition layer; MCP and A2A operate at the action and communication layers.
         </p>
 
-        <h3>Convergence: What All Three Platforms Agree On</h3>
+        <h3>Open Questions for Independent Research</h3>
+        <p>
+            We actively invite formal evaluation in the following areas:
+        </p>
         <ul>
-            <li>ARP fills a genuine gap — neither <code>robots.txt</code>, <code>schema.org</code>, nor <code>llms.txt</code> addresses cognitive reasoning</li>
-            <li>The three-layer architecture (Identity, Corrections, Context) is technically sound</li>
-            <li>The Pink Elephant Fix (<code>trigger_topic</code> + <code>verified_fact</code>) is a novel anti-hallucination mechanism</li>
-            <li>Ed25519 cryptographic signing adds verifiable trust analogous to DKIM</li>
-            <li>ARP is complementary to execution protocols (MCP, A2A) — not competing</li>
+            <li>Standardized benchmarks comparing AI responses with and without ARP at controlled domains</li>
+            <li>Independent replication of the hallucination-reduction experiments documented in the repository</li>
+            <li>Formal IETF standardization pathway for v2.0</li>
+            <li>Multimodal extensions beyond text (image agents, IoT, structured data)</li>
+            <li>Long-term effects on the stability and accuracy of generative search results</li>
         </ul>
-
-        <h3>Open Research Questions (from ChatGPT Deep Research)</h3>
-        <ul>
-            <li>Standardized benchmarks: AI responses with vs. without ARP at defined domains</li>
-            <li>Independent replication of the Ghost Site and Canary Token experiments</li>
-            <li>IETF standardization pathway (RFC submission)</li>
-            <li>Multimodal extension: image agents, IoT, beyond text</li>
-            <li>Long-term impact on search result stability</li>
-        </ul>
+        <p>
+            Researchers and practitioners interested in conducting independent evaluations are
+            encouraged to <a href="https://github.com/SaschaDeforth/arp-protocol/issues" target="_blank" rel="noopener">open an issue on GitHub</a>.
+        </p>
     </section>
 
 </main>
