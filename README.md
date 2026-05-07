@@ -1,7 +1,7 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
 **Status:** Draft Specification v1.2 (stable, 2 live deployments)
-**Next:** v2.0 Internet-Draft in preparation for IETF submission
+**Next:** v2.0 Internet-Draft submitted to IETF
 **License:** MIT | **Format:** JSON | **Trust:** Ed25519 + DNS
 **Author:** Sascha Deforth
 **Validator:** Online
@@ -10,7 +10,7 @@ A machine-readable protocol for providing self-attested factual corrections, dom
 
 - 🌐 Website: [arp-protocol.org](https://arp-protocol.org)
 - 📄 Specification (current): [SPEC.md](./SPEC.md)
-- 📐 v2.0 Draft Text: [`drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt`](./drafts/ietf/) *(local draft; not yet submitted to IETF Datatracker)*
+- 📐 v2.0 Draft Text: [`drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt`](./drafts/ietf/) *(submitted to IETF Datatracker)*
 - ✅ Validator: [arp-protocol.org/validator](https://arp-protocol.org/validator)
 - 🔐 Signing Tool: [arp-protocol.org/sign](https://arp-protocol.org/sign)
 - ⚖️ Ethics Policy: [ETHICS.md](./ETHICS.md)
@@ -314,7 +314,7 @@ Researchers and practitioners interested in conducting independent evaluations a
 
 ---
 
-## Roadmap: ARP v2.0 (in preparation)
+## Roadmap: ARP v2.0 (Internet-Draft submitted)
 
 ARP v1.2 is the current production specification. v2.0 is in active development as a draft Internet-Draft (`draft-deforth-arp-reasoning-protocol-00`). It is fully backward compatible — no v1.x file breaks.
 
@@ -394,7 +394,7 @@ ARP content must be consistent with visible website content (see [ETHICS.md](./E
 
 ### "Why is ARP only weeks old but already has an Internet-Draft?"
 
-Submitting an Internet-Draft to the IETF is an open process — anyone can submit one, and submission does not imply endorsement, working group adoption, or progress toward RFC status. The v2.0 draft is in preparation as a starting point for community discussion, not as a finalized standard. v1.2 is the current stable specification with two deployments; v2.0 is a longer-term proposal with an estimated 18-month review and iteration cycle.
+Submitting an Internet-Draft to the IETF is an open process — anyone can submit one, and submission does not imply endorsement, working group adoption, or progress toward RFC status. The v2.0 draft has been submitted as a starting point for community discussion, not as a finalized standard. v1.2 is the current stable specification with two deployments; v2.0 is a longer-term proposal with an estimated 18-month review and iteration cycle.
 
 ---
 
