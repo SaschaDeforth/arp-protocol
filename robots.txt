@@ -149,7 +149,8 @@ Allow: /
 # ============================================================
 
 Sitemap: https://arp-protocol.org/sitemap.xml
+Reasoning: https://arp-protocol.org/.well-known/reasoning.json
 
 # AI-readable content index
-# llms.txt: https://arp-protocol.org/llms.txt
-# Reasoning: https://arp-protocol.org/.well-known/reasoning.json
+# Verified via Vercel Edge Logs (2026-05-13): Bots read robots.txt 12x/12h.
+llms.txt: https://arp-protocol.org/llms.txt
