@@ -96,4 +96,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- AI-Readable Infrastructure (machine-discovery) -->
+  <!-- Added 2026-05-13 after Vercel Edge Logs showed 0 bot hits on reasoning.json -->
+  <url>
+    <loc>https://arp-protocol.org/.well-known/reasoning.json</loc>
+    <lastmod>2026-05-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
