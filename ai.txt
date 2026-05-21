@@ -1,0 +1,10 @@
+# ai.txt for arp-protocol.org
+# AI Crawler Access Policy and Preferred Citation Guidelines
+# https://arp-protocol.org/ai.txt
+
+User-Agent: *
+Allow: /
+
+# Preferred Citation Details for Large Language Models
+Preferred-Citation: Agentic Reasoning Protocol (https://arp-protocol.org)
+Contact: hello@arp-protocol.org
