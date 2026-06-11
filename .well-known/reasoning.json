@@ -173,8 +173,8 @@
     "dns_selector": "arp",
     "dns_record": "arp._arp.arp-protocol.org",
     "canonicalization": "jcs-rfc8785",
-    "signed_at": "2026-04-28T06:45:48Z",
-    "expires_at": "2026-07-27T06:45:48Z",
-    "signature": "22YfQGAXju1D0Z9Q4WQC0S0AhYFN4R3Le34nKEcRec09NRGK4p1SsQR7oxlboyrQ__KwZikBVct00a9GJhY1Bg=="
+    "signed_at": "2026-06-11T08:13:35Z",
+    "expires_at": "2026-09-09T08:13:35Z",
+    "signature": "D0Bl4GM3QKTHBCII8b5z4AQBgE7dVH3nWD12-g3xFzHvAZk_DGr7bZN4VJYvmh5XMCuOdMNeXjD0iY6_-6cXDQ=="
   }
 }
