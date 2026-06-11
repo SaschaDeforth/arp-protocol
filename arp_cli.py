@@ -9,7 +9,7 @@ Usage:
     arp verify https://truesource.studio/reasoning.json
 
 Dependencies:
-    pip install cryptography json-canon dnspython requests
+    pip install cryptography rfc8785 dnspython requests
 
 License: MIT
 Author: Sascha Deforth (TrueSource)
@@ -21,10 +21,30 @@ import base64
 import sys
 from datetime import datetime, timezone, timedelta
 
+
+def b64_decode_tolerant(value: str) -> bytes:
+    """
+    Decode base64 or base64url, with or without padding.
+
+    Signatures written by older ARP tooling are unpadded base64url
+    (JWS convention); DNS public keys are standard padded base64.
+    Verification must accept all of these encodings.
+    """
+    value = value.strip()
+    return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+
 try:
     from json_canon import canonicalize
 except ImportError:
-    sys.exit("Missing dependency: pip install json-canon")
+    try:
+        # "json-canon" is not published on PyPI; rfc8785 is the maintained
+        # Python implementation of JCS (RFC 8785) and produces identical output.
+        import rfc8785
+
+        def canonicalize(obj) -> bytes:
+            return rfc8785.dumps(obj)
+    except ImportError:
+        sys.exit("Missing dependency: pip install rfc8785")
 
 try:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import (
@@ -238,7 +258,7 @@ def cmd_verify(args):
         sys.exit(f"  ❌ Algorithm mismatch: DNS says '{parts.get('k')}', file says 'Ed25519'")
 
     try:
-        public_key_bytes = base64.b64decode(parts["p"])
+        public_key_bytes = b64_decode_tolerant(parts["p"])
         public_key = Ed25519PublicKey.from_public_bytes(public_key_bytes)
     except Exception as e:
         sys.exit(f"  ❌ Error decoding public key: {e}")
@@ -249,7 +269,11 @@ def cmd_verify(args):
 
     # Step 7: Verify Ed25519 signature
     try:
-        signature_bytes = base64.urlsafe_b64decode(sig_block["signature"])
+        signature_bytes = b64_decode_tolerant(sig_block["signature"])
+    except Exception as e:
+        sys.exit(f"  ❌ Malformed signature encoding: {e}\n  🔴 Trust Level: INVALID")
+
+    try:
         public_key.verify(signature_bytes, canonical_bytes)
     except InvalidSignature:
         print()
