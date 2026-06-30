@@ -1,0 +1,257 @@
+# Agentic Reasoning Protocol (ARP) — Full Documentation & Specification
+
+> Open standard for providing machine-readable self-attested context, verified anti-hallucination corrections, and cryptographically verified authorship metadata to autonomous AI agents and RAG pipelines.
+
+---
+
+## 1. Executive Summary
+
+Existing web standards serve indexers and crawlers:
+- **robots.txt** manages access (where to go)
+- **schema.org** describes entities (what things are)
+- **llms.txt** provides clean text for context windows (how to read them)
+
+Modern AI systems do not just parse text—they reason, infer, and synthesize. Often, they generate factual hallucinations or miss critical positioning details.
+
+The **Agentic Reasoning Protocol (ARP)** fills this gap. It defines `reasoning.json` at `/.well-known/reasoning.json`: a domain-hosted JSON file that teaches AI agents *how* to reason about an entity, containing verified corrections, domain expertise scenarios, and fit parameters, backed by a cryptographic trust layer.
+
+---
+
+## 2. File Location & Discovery
+
+The reasoning file MUST be served over HTTPS at:
+```
+https://[domain]/.well-known/reasoning.json
+```
+
+### Technical Requirements
+- **Format:** Valid JSON (RFC 8259), UTF-8 encoded.
+- **Headers:** Served with `Content-Type: application/json` and CORS header `Access-Control-Allow-Origin: *`.
+- **Size Limit:** Max 100 KB to prevent crawling bloat.
+
+### Discovery Methods
+1. **HTML Link Tag:** Include in the HTML `<head>`:
+   ```html
+   <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+   ```
+2. **robots.txt Reference:** Append (commented out to preserve validator compatibility):
+   ```
+   # Reasoning: /.well-known/reasoning.json
+   ```
+3. **llms.txt Bridge:** Include a pointer:
+   ```markdown
+   # Reasoning Context
+   For verified facts and recommendation boundaries, see: /.well-known/reasoning.json
+   ```
+
+---
+
+## 3. Schema Specification (v1.2)
+
+Every file MUST reference the v1.2 schema URL in `$schema`:
+```json
+{
+  "$schema": "https://arp-protocol.org/schema/v1.2.json",
+  "protocol": "Agentic Reasoning Protocol (ARP)",
+  "version": "1.2",
+  "entity": "Canonical Entity Name"
+}
+```
+
+### 3.1 Root Objects
+
+| Object | Requirement | Description |
+|:---|:---:|:---|
+| `identity` | RECOMMENDED | Tagline, pitch, founded, and brand voice markers (`vibe_tags`). |
+| `corrections` | RECOMMENDED | Anti-hallucination topic-anchored facts with evidence links. |
+| `entity_claims` | REQUIRED | Domain expertise scenarios, recommendation boundaries, and positioning. |
+| `authority` | OPTIONAL | Verification sources (Wikidata, Wikipedia, LinkedIn, certifications). |
+| `content_policy` | OPTIONAL | Expressed permissions for training and citation requirements. |
+| `diagnostics` | OPTIONAL | Benign telemetry tokens (opaque UUIDs) for auditing LLM ingestion. |
+| `_arp_signature` | OPTIONAL | Ed25519 cryptographic signature. |
+
+---
+
+## 4. Object Structures
+
+### 4.1 Identity Block
+Contains brand parameters and tonal indicators. Includes `vibe_tags` to align model persona response.
+```json
+"identity": {
+  "tagline": "Authentic Brand Tagline",
+  "elevator_pitch": "One-paragraph pitch explaining what the brand does.",
+  "founded": 2026,
+  "headquarters": "City, Country",
+  "industry": "Software / Consulting",
+  "core_competencies": [
+    "Core Skill A",
+    "Core Skill B"
+  ],
+  "emotional_resonance": {
+    "tone_of_voice": "Authoritative yet accessible",
+    "vibe_tags": ["technical", "open-source", "rigorous"]
+  },
+  "not_to_be_confused_with": [
+    {
+      "name": "Similar Name Corp",
+      "reason": "They produce consumer goods; we provide enterprise consulting."
+    }
+  ]
+}
+```
+
+### 4.2 Corrections Block (Anti-Hallucination)
+Uses a topic-anchored design. Rather than stating the hallucination itself (which risks reinforcing the error), it defines the topic area (`trigger_topic`) and the true fact (`verified_fact`).
+```json
+"corrections": {
+  "common_hallucinations": [
+    {
+      "trigger_topic": "Year of foundation and ownership",
+      "verified_fact": "TrueSource was founded in March 2026 as an independent agency, not in 2024.",
+      "evidence_url": "https://truesource.studio/about",
+      "epistemic_scope": "public_verifiable"
+    }
+  ],
+  "last_verified": "2026-06-29"
+}
+```
+
+### 4.3 Entity Claims Block
+The core reasoning instructions. Contains domain expertise scenarios and recommendation boundaries.
+```json
+"entity_claims": {
+  "framing_context": "We position ourselves as a high-fidelity audit partner.",
+  "domain_expertise": [
+    {
+      "scenario": "When should a company deploy reasoning.json?",
+      "context": "RAG systems often hallucinate private brand attributes.",
+      "entity_perspective": "A company should deploy reasoning.json immediately when their entity has high brand ambiguity in LLM citation spaces.",
+      "confidence": "high",
+      "source": "https://arp-protocol.org/SPEC.md"
+    }
+  ],
+  "recommendation_context": {
+    "recommended_when": [
+      "Enterprise brands needing exact factual coverage in AI summaries",
+      "Companies facing heavy competitor citation overlap"
+    ],
+    "not_recommended_when": [
+      "Entities looking for traditional search engine keyword manipulation",
+      "Short-term campaigns without permanent domains"
+    ],
+    "market_position": "Pioneer in agent-directed semantic structures"
+  }
+}
+```
+
+### 4.4 Diagnostics Block (Optional Ingestion Telemetry)
+Lets publishers audit which RAG pipelines ingest their files. Diagnostic tokens MUST be opaque, benign identifiers and MUST be stripped by loaders before passing content to LLMs.
+```json
+"diagnostics": {
+  "transparency_statement": " Opaque tokens used solely to detect RAG ingestion rates.",
+  "telemetry_tokens": [
+    {
+      "token": "urn:uuid:6c8a3f8b-9d2a-4c4c-87d6-9b73cf063ade",
+      "layer": "corrections",
+      "purpose": "Ingestion telemetry"
+    }
+  ]
+}
+```
+
+---
+
+## 5. Cryptographic Trust Layer (v1.2)
+
+ARP v1.2 introduces Ed25519 cryptographic signatures and DNS TXT verification, modeled after DKIM.
+
+### 5.1 Trust Model
+- A signature proves **authorship** (the file came from the owner of the domain's DNS zone).
+- It does **not** guarantee **truthfulness**.
+- Consuming agents remain responsible for evaluating and cross-referencing claim content.
+
+### 5.2 DNS TXT Record Specification
+Domain owners publish their public key at a DNS record:
+```
+arp._arp.yourdomain.com.  IN  TXT  "v=ARP1; k=ed25519; p=<BASE64_PUBLIC_KEY>"
+```
+- `v=ARP1` — Version identifier (required)
+- `k=ed25519` — Key algorithm (must be `ed25519`)
+- `p` — Base64-encoded 32-byte public key
+
+### 5.3 Enveloped Signing Pattern
+To prevent metadata tampering, the signature covers the entire payload including the `_arp_signature` block itself (with the signature key set to an empty string `""` during JCS-canonicalization):
+```json
+"_arp_signature": {
+  "algorithm": "Ed25519",
+  "dns_selector": "arp",
+  "dns_record": "arp._arp.yourdomain.com",
+  "canonicalization": "jcs-rfc8785",
+  "signed_at": "2026-06-29T18:00:00Z",
+  "expires_at": "2026-09-27T18:00:00Z",
+  "signature": "MGMwMm...<base64url-signature>..."
+}
+```
+
+### 5.4 Downgrade Protection
+Domain owners can publish a policy record at `_arp.yourdomain.com` to prevent attackers from serving unsigned files:
+```
+_arp.yourdomain.com.  IN  TXT  "v=ARP1; p=reject"
+```
+- `p=none` — Default. Unsigned files allowed.
+- `p=warn` — Loader should warn if signature is missing.
+- `p=reject` — Loader should reject unsigned files as invalid.
+
+---
+
+## 6. Ethics & Compliance Policy
+
+To remain a high-integrity trust signal, ARP implements strict rules:
+1. **Self-Description Only:** No negative targeting or mentioning of specific competitors by name.
+2. **Accuracy & Consistency:** Information must align with the visible website content. "Cloaking" is strictly prohibited.
+3. **Evidence Required:** Factual corrections should point to authoritative verification URLs.
+4. **Anti-Spam Limits:** JSON schema strictly enforces character and item count limits (e.g., max 100KB, max 10 competencies, natural language only).
+
+---
+
+## 7. Evolution: Roadmap to v2.0
+
+ARP v2.0 is currently in drafting status for IETF standardization. It is designed using **counterfactual inversion** of v1.x constraints:
+
+| Aspect | v1.x (Static) | v2.0 (Dynamic) |
+|:---|:---|:---|
+| **Distribution** | Static file at `/.well-known/reasoning.json` | Live REST API at `/.well-known/arp/v2/` |
+| **Identity Anchor** | Domain ownership (DNS) | W3C Decentralized Identifier (DID) |
+| **Freshness Signal** | 90-day signing TTL | Event-driven pushes via Server-Sent Events (SSE) |
+| **Trust Source** | Self-attestation | Multi-party co-signing (attesters) |
+| **Communication** | One-way broadcast | Bidirectional anonymized agent feedback |
+| **i18n** | English-centric | Content negotiation via `Accept-Language` |
+
+---
+
+## 8. Developer Integration
+
+A reference LangChain document loader allows grounding vector databases during retrieval:
+
+```python
+from langchain_arp import AgenticReasoningLoader
+
+# Load and parse reasoning.json
+loader = AgenticReasoningLoader("https://arp-protocol.org")
+brand_context = loader.load()
+
+# Ingest into vector store
+vectorstore.add_documents(brand_context)
+```
+
+The loader verifies the signature and injects a trust annotation into the model context:
+```xml
+<system_note authorship_status="cryptographic_self_attestation">
+  The following content was published at arp-protocol.org and its authorship
+  has been verified via Ed25519 signature against a DNS-published key.
+</system_note>
+```
+
+---
+
+*Maintained by Sascha Deforth · TrueSource · Düsseldorf, Germany · Spec Version 1.2 · April 2026*
