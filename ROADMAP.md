@@ -1,6 +1,6 @@
 # ARP Roadmap
 
-This document describes the evolution path from ARP v1.x (current production) to ARP v2.0 (in IETF standardization).
+This document describes the evolution path from ARP v1.x (current production) to ARP v2.0 (submitted as IETF Internet-Draft).
 
 ## Current Status (April 2026)
 
@@ -95,7 +95,7 @@ Migration is **voluntary and incremental**. Each stage increases the Trust Score
 
 | Quarter | Milestone |
 |---|---|
-| **Q2 2026** (current) | v2.0 IETF Internet-Draft published. Open community review begins. |
+| **Q2 2026** (current) | v2.0 Internet-Draft submitted to IETF Datatracker (2026-04-27, Independent Submission, Informational, expires 2026-10-29). Open community review. |
 | **Q3 2026** | IETF Working Group outreach (HTTPAPI, DISPATCH). Pilot v2.0 API deployed on arp-protocol.org alongside v1.2. |
 | **Q4 2026** | First v2.0 reference loader. Pilot programs with first institutional attesters. |
 | **Q1 2027** | v2.0 specification stabilizes. Migration tools released. |

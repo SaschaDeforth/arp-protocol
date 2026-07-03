@@ -2,31 +2,61 @@
 
 
 
-Internet Engineering Task Force                               S. Deforth
-Internet-Draft                                                TrueSource
-Intended status: Standards Track                           18 April 2026
-Expires: 20 October 2026
+Independent Submission                                        S. Deforth
+Internet-Draft                                               Independent
+Intended status: Informational                             27 April 2026
+Expires: 29 October 2026
 
 
- Agentic Reasoning Protocol (ARP): DNS-Bound Cryptographic Verification
-                   for Machine-Readable Entity Claims
-                          draft-deforth-arp-01
+              Agentic Reasoning Protocol (ARP) Version 2.0
+                draft-deforth-arp-reasoning-protocol-00
 
 Abstract
 
-   This document specifies the Agentic Reasoning Protocol (ARP), a
-   lightweight mechanism for cryptographically binding machine-readable
-   entity claims to domain ownership via DNS TXT records.  ARP enables
-   AI agents and Retrieval-Augmented Generation (RAG) pipelines to
-   verify that structured data published on a domain was authorized by
-   the domain owner, preventing narrative injection and entity spoofing
-   in generative search systems.
+   This document defines the Agentic Reasoning Protocol (ARP) version
+   2.0, a machine-readable protocol enabling entities (brands,
+   organizations, persons) to publish self-attested context, verified
+   factual corrections, domain expertise, and recommendation boundaries
+   directly to autonomous AI agents, RAG (Retrieval-Augmented
+   Generation) pipelines, and agentic AI systems.
 
-   ARP uses Ed25519 digital signatures [RFC8032], JSON Canonicalization
-   Scheme (JCS) [RFC8785], and DNS TXT records to establish a chain of
-   trust analogous to DomainKeys Identified Mail (DKIM) [RFC6376] but
-   designed specifically for the verification of semantic entity data
-   consumed by autonomous AI agents.
+   ARP v2.0 extends the static file model of v1.x with a live REST API,
+   bidirectional feedback channels, multi-party cryptographic
+   attestation, W3C Decentralized Identifier (DID) anchoring, Agent-to-
+   Agent (A2A) trust handshakes, event-driven freshness via Server-Sent
+   Events, and first-class internationalization support.
+
+   ARP complements existing web conventions (robots.txt [RFC9309],
+   schema.org, llms.txt) but is specifically designed for the reasoning
+   behavior of modern AI agents -- systems that do not merely index
+   content but synthesize, infer, and make decisions on behalf of users.
+
+   All examples in this document use example.com and "Example
+   Organization" per [RFC2606] and are purely illustrative.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   This Internet-Draft is submitted as an individual submission.  It
+   does not represent consensus of the IETF community.  The latest
+   revision of this draft can be found at
+   https://github.com/SaschaDeforth/arp-protocol.
+
+   Discussion of this document takes place on the GitHub repository
+   issue tracker at https://github.com/SaschaDeforth/arp-protocol/
+   issues.
+
+
+
+
+
+
+
+Deforth                  Expires 29 October 2026                [Page 1]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
 
 Status of This Memo
 
@@ -43,199 +73,247 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 20 October 2026.
+   This Internet-Draft will expire on 29 October 2026.
 
 Copyright Notice
 
    Copyright (c) 2026 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
-
-
-
-Deforth                  Expires 20 October 2026                [Page 1]
-
-Internet-Draft                     ARP                        April 2026
-
-
    This document is subject to BCP 78 and the IETF Trust's Legal
    Provisions Relating to IETF Documents (https://trustee.ietf.org/
    license-info) in effect on the date of publication of this document.
    Please review these documents carefully, as they describe your rights
-   and restrictions with respect to this document.  Code Components
-   extracted from this document must include Revised BSD License text as
-   described in Section 4.e of the Trust Legal Provisions and are
-   provided without warranty as described in the Revised BSD License.
+   and restrictions with respect to this document.
 
 Table of Contents
 
-   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
-     1.1.  Design Goals  . . . . . . . . . . . . . . . . . . . . . .   3
-     1.2.  Changes from draft-deforth-arp-00 . . . . . . . . . . . .   4
-   2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   5
-   3.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .   6
-   4.  DNS TXT Record Format . . . . . . . . . . . . . . . . . . . .   6
-     4.1.  Record Name . . . . . . . . . . . . . . . . . . . . . . .   6
-     4.2.  Record Value  . . . . . . . . . . . . . . . . . . . . . .   6
-     4.3.  Multiple Keys . . . . . . . . . . . . . . . . . . . . . .   7
-     4.4.  Key Size Constraints  . . . . . . . . . . . . . . . . . .   7
-     4.5.  Cross-Domain Delegation . . . . . . . . . . . . . . . . .   7
-   5.  Reasoning Payload . . . . . . . . . . . . . . . . . . . . . .   8
-     5.1.  File Location and Discovery . . . . . . . . . . . . . . .   8
-     5.2.  Required Fields . . . . . . . . . . . . . . . . . . . . .   8
-     5.3.  Optional Sections . . . . . . . . . . . . . . . . . . . .   9
-   6.  Canonicalization  . . . . . . . . . . . . . . . . . . . . . .  10
-   7.  Signing Procedure . . . . . . . . . . . . . . . . . . . . . .  10
-   8.  Verification Procedure  . . . . . . . . . . . . . . . . . . .  11
-     8.1.  Domain Binding Check  . . . . . . . . . . . . . . . . . .  11
-     8.2.  HTTP Redirect Handling  . . . . . . . . . . . . . . . . .  11
-     8.3.  Verification Algorithm  . . . . . . . . . . . . . . . . .  11
-     8.4.  Verification Result Codes . . . . . . . . . . . . . . . .  12
-   9.  Signature Block Format  . . . . . . . . . . . . . . . . . . .  13
-   10. Key Rotation  . . . . . . . . . . . . . . . . . . . . . . . .  14
-   11. Relationship to Existing Standards  . . . . . . . . . . . . .  14
-   12. Security Considerations . . . . . . . . . . . . . . . . . . .  15
-     12.1.  DNS Security . . . . . . . . . . . . . . . . . . . . . .  15
-     12.2.  Key Compromise . . . . . . . . . . . . . . . . . . . . .  15
-     12.3.  Replay and Staleness . . . . . . . . . . . . . . . . . .  15
-     12.4.  Content Truthfulness . . . . . . . . . . . . . . . . . .  16
-     12.5.  Narrative Injection without ARP  . . . . . . . . . . . .  16
-     12.6.  Cross-Domain Signing . . . . . . . . . . . . . . . . . .  16
-     12.7.  Keypair Separation . . . . . . . . . . . . . . . . . . .  16
-     12.8.  Domain Signing Policy  . . . . . . . . . . . . . . . . .  17
-     12.9.  Alternative Cryptographic Envelopes  . . . . . . . . . .  18
-   13. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  18
-     13.1.  Well-Known URI Registration  . . . . . . . . . . . . . .  18
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   4
+     1.1.  Motivation: The Reasoning Gap . . . . . . . . . . . . . .   4
+     1.2.  Design Philosophy: Counterfactual Inversion . . . . . . .   5
+     1.3.  Relationship to ARP v1.x  . . . . . . . . . . . . . . . .   5
+     1.4.  Relationship to Other Standards . . . . . . . . . . . . .   6
+   2.  Conventions and Terminology . . . . . . . . . . . . . . . . .   6
+   3.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .   7
+     3.1.  Architecture Layers . . . . . . . . . . . . . . . . . . .   7
+     3.2.  Backward Compatibility  . . . . . . . . . . . . . . . . .   8
+   4.  Entity Identity: W3C DID Anchoring  . . . . . . . . . . . . .   8
+     4.1.  DID Method Requirements . . . . . . . . . . . . . . . . .   8
+     4.2.  DID Document Requirements . . . . . . . . . . . . . . . .   9
+     4.3.  Multi-Domain Entity Support . . . . . . . . . . . . . . .   9
+   5.  File Location and Discovery . . . . . . . . . . . . . . . . .  10
+     5.1.  Well-Known URI  . . . . . . . . . . . . . . . . . . . . .  10
+     5.2.  API Base URI  . . . . . . . . . . . . . . . . . . . . . .  10
+     5.3.  HTML Auto-Discovery . . . . . . . . . . . . . . . . . . .  10
+     5.4.  CORS Headers  . . . . . . . . . . . . . . . . . . . . . .  10
 
 
 
-Deforth                  Expires 20 October 2026                [Page 2]
+Deforth                  Expires 29 October 2026                [Page 2]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-     13.2.  Underscored Node Name Registration . . . . . . . . . . .  18
-   14. References  . . . . . . . . . . . . . . . . . . . . . . . . .  18
-     14.1.  Normative References . . . . . . . . . . . . . . . . . .  19
-     14.2.  Informative References . . . . . . . . . . . . . . . . .  19
-   Appendix A.  Complete Example . . . . . . . . . . . . . . . . . .  20
-     A.1.  DNS TXT Record  . . . . . . . . . . . . . . . . . . . . .  20
-     A.2.  Reasoning Payload . . . . . . . . . . . . . . . . . . . .  20
-     A.3.  Verification Steps  . . . . . . . . . . . . . . . . . . .  21
-   Appendix B.  JSON Schema  . . . . . . . . . . . . . . . . . . . .  22
-   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  22
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  22
+   6.  REST API Specification  . . . . . . . . . . . . . . . . . . .  10
+     6.1.  Common Response Headers . . . . . . . . . . . . . . . . .  11
+     6.2.  GET /identity . . . . . . . . . . . . . . . . . . . . . .  11
+     6.3.  POST /query . . . . . . . . . . . . . . . . . . . . . . .  12
+     6.4.  GET /claims/{claim_id}  . . . . . . . . . . . . . . . . .  13
+     6.5.  GET /corrections  . . . . . . . . . . . . . . . . . . . .  13
+     6.6.  GET /expertise/{scenario_hash}  . . . . . . . . . . . . .  13
+     6.7.  GET /trust  . . . . . . . . . . . . . . . . . . . . . . .  14
+     6.8.  GET /subscribe (Server-Sent Events) . . . . . . . . . . .  14
+     6.9.  POST /feedback  . . . . . . . . . . . . . . . . . . . . .  14
+     6.10. POST /a2a/handshake . . . . . . . . . . . . . . . . . . .  14
+     6.11. GET /reasoning.json (Compatibility Alias) . . . . . . . .  14
+   7.  Bidirectional Feedback Protocol . . . . . . . . . . . . . . .  14
+     7.1.  Anonymization Requirements  . . . . . . . . . . . . . . .  15
+     7.2.  Feedback Aggregation  . . . . . . . . . . . . . . . . . .  15
+     7.3.  Automatic Claim Degradation . . . . . . . . . . . . . . .  15
+   8.  Multi-Party Attestation Model . . . . . . . . . . . . . . . .  15
+     8.1.  Attester Categories . . . . . . . . . . . . . . . . . . .  15
+     8.2.  Trust Level Hierarchy . . . . . . . . . . . . . . . . . .  16
+     8.3.  Attestation Object Schema . . . . . . . . . . . . . . . .  16
+     8.4.  Attester DID Requirements . . . . . . . . . . . . . . . .  17
+   9.  Cryptographic Trust Layer . . . . . . . . . . . . . . . . . .  17
+     9.1.  Ed25519 Signing . . . . . . . . . . . . . . . . . . . . .  17
+     9.2.  Enveloped Signature Pattern . . . . . . . . . . . . . . .  17
+     9.3.  DNS Binding . . . . . . . . . . . . . . . . . . . . . . .  18
+     9.4.  Domain Signing Policy . . . . . . . . . . . . . . . . . .  18
+   10. Internationalization (i18n) . . . . . . . . . . . . . . . . .  18
+     10.1.  Language Negotiation . . . . . . . . . . . . . . . . . .  18
+     10.2.  Claim i18n Object  . . . . . . . . . . . . . . . . . . .  18
+     10.3.  Translation Quality Signals  . . . . . . . . . . . . . .  19
+     10.4.  Mandatory Language Coverage  . . . . . . . . . . . . . .  19
+   11. Agent-to-Agent (A2A) Protocol Extension . . . . . . . . . . .  19
+     11.1.  A2A Trust Handshake  . . . . . . . . . . . . . . . . . .  19
+     11.2.  Reciprocal Claims Exchange . . . . . . . . . . . . . . .  20
+     11.3.  Session Integrity  . . . . . . . . . . . . . . . . . . .  20
+   12. JSON Schema v2.0  . . . . . . . . . . . . . . . . . . . . . .  20
+     12.1.  Root Object  . . . . . . . . . . . . . . . . . . . . . .  20
+     12.2.  Claim Object . . . . . . . . . . . . . . . . . . . . . .  21
+   13. Migration from ARP v1.x . . . . . . . . . . . . . . . . . . .  21
+   14. Anti-Spam and Content Integrity . . . . . . . . . . . . . . .  22
+   15. Security Considerations . . . . . . . . . . . . . . . . . . .  22
+     15.1.  Prompt Injection Defense . . . . . . . . . . . . . . . .  22
+     15.2.  Downgrade Attack Protection  . . . . . . . . . . . . . .  23
+     15.3.  A2A Session Hijacking  . . . . . . . . . . . . . . . . .  23
+     15.4.  Feedback Manipulation  . . . . . . . . . . . . . . . . .  23
+     15.5.  False Attestation  . . . . . . . . . . . . . . . . . . .  23
+   16. Privacy Considerations  . . . . . . . . . . . . . . . . . . .  23
+     16.1.  Agent Anonymization  . . . . . . . . . . . . . . . . . .  23
+
+
+
+Deforth                  Expires 29 October 2026                [Page 3]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+     16.2.  Regulatory Alignment . . . . . . . . . . . . . . . . . .  23
+   17. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  24
+     17.1.  Well-Known URI Registration  . . . . . . . . . . . . . .  24
+     17.2.  Link Relation Types  . . . . . . . . . . . . . . . . . .  24
+     17.3.  Media Type Registration  . . . . . . . . . . . . . . . .  24
+     17.4.  ARP Claim Type Registry  . . . . . . . . . . . . . . . .  25
+   18. Ethical Guidelines  . . . . . . . . . . . . . . . . . . . . .  25
+   19. References  . . . . . . . . . . . . . . . . . . . . . . . . .  26
+     19.1.  Normative References . . . . . . . . . . . . . . . . . .  26
+     19.2.  Informative References . . . . . . . . . . . . . . . . .  28
+   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  29
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  29
 
 1.  Introduction
 
-   The proliferation of Large Language Models (LLMs) and Retrieval-
-   Augmented Generation (RAG) systems has fundamentally altered how
-   information is discovered, synthesized, and presented to users.
-   Unlike traditional search engines, which return ranked lists of
-   hyperlinks for human evaluation, generative search engines produce
-   direct synthesized answers by extracting and compressing data from
-   multiple web sources.
+1.1.  Motivation: The Reasoning Gap
 
-   This architectural shift creates a critical trust gap: generative
-   engines heavily weight structured data signals (JSON-LD, semantic
-   HTML, Schema.org markup) when selecting sources for citation, but
-   currently have no mechanism to verify that such structured data was
-   actually authorized by the domain owner.  Any actor can publish well-
-   formed structured data on any domain they control, potentially
-   poisoning the knowledge graph of AI systems with fabricated entity
-   claims, false product information, or competitor sabotage.
+   The modern web has a rich ecosystem of machine-readable metadata
+   conventions:
 
-   The Agentic Reasoning Protocol (ARP) addresses this gap by providing
-   a DNS-anchored cryptographic verification mechanism analogous to DKIM
-   [RFC6376] for email.  ARP enables any consuming system to verify the
-   provenance and integrity of machine-readable entity claims before
-   incorporating them into synthesized responses.
+   *  robots.txt [RFC9309] controls crawler access.
 
-1.1.  Design Goals
+   *  schema.org describes entity semantics.
 
-   Lightweight  Verification requires only a DNS TXT lookup and a single
-      Ed25519 signature verification.  No PKI infrastructure,
-      certificate chains, or external services are required.
+   *  llms.txt provides clean Markdown ingestion for LLM context
+      windows.
 
-   DNS-Anchored  Trust is rooted in the existing global DNS
-      infrastructure, leveraging the same anchor used by DKIM, SPF, and
-      DMARC.
+   None of these conventions address how AI systems should REASON about
+   entities.  Modern AI agents (agentic AI, RAG pipelines, AI-powered
+   search, autonomous procurement agents) do not merely read the web --
+   they synthesize, infer, compare, and make decisions.  This reasoning
+   process is prone to hallucination and entirely outside the control of
+   the entities being reasoned about.
 
-   Agent-Native  The protocol is designed for consumption by autonomous
+   Documented failure modes include:
 
+   *  AI systems generating false facts about organizations, such as
+      incorrect founding dates, wrong business models, or non-existent
+      certifications.
+
+   *  AI agents making incorrect competitive comparisons based on stale
+      or synthesized training data.
+
+   *  Brands lacking any mechanism to provide verified corrections to AI
+      systems that have encoded false information during training.
+
+   *  Autonomous agents evaluating vendors without access to the
+      vendor's own authoritative context.
 
 
-Deforth                  Expires 20 October 2026                [Page 3]
+
+Deforth                  Expires 29 October 2026                [Page 4]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-      AI agents and automated crawlers, not human users.
+   ARP addresses this gap by defining a protocol through which entities
+   publish self-attested cognitive context: verified corrections, domain
+   expertise, recommendation boundaries, and trust-enabling metadata --
+   directly to AI agents and RAG pipelines.
 
-   Self-Contained  The signed payload and verification metadata are co-
-      located in a single JSON file, minimizing the number of network
-      requests required for verification.
+1.2.  Design Philosophy: Counterfactual Inversion
 
-   Domain-Bound  Entity claims are cryptographically bound to a specific
-      domain, preventing cross-domain replay attacks.
+   ARP v2.0 was designed using counterfactual inversion: each assumption
+   of v1.x was tested by asking "what if this assumption is wrong?"  The
+   six resulting inversions:
 
-   Open  The protocol is fully specified in this document and requires
-      no proprietary software or services.
+   (1)  *Static file -> Live API.* v1.x broadcast all claims to all
+        agents. v2.0 enables agents to query for specific context
+        relevant to their current task.
 
-1.2.  Changes from draft-deforth-arp-00
+   (2)  *Domain = Identity -> W3C DID.* v1.x bound entity identity to
+        domain ownership. v2.0 anchors identity to a W3C Decentralized
+        Identifier [W3C.DID-CORE], making it portable across domains and
+        domain changes.
 
-   *  SECURITY: Canonicalization now excludes only the signature field,
-      not the entire _arp_signature block.  This cryptographically binds
-      expires_at, signed_at, and dns_selector to the payload, preventing
-      zombie payload attacks (Section 6).
+   (3)  *90-day TTL -> Event-driven push.* v1.x relied on periodic re-
+        signing. v2.0 uses Server-Sent Events [W3C.SSE] to push updates
+        to subscribing agents.
 
-   *  SECURITY: Added REQUIRED "domain" field to the payload, binding
-      entity claims to a specific origin domain and preventing cross-
-      domain replay attacks (Section 5.2).
+   (4)  *Self-attestation -> Multi-party co-signing.* v1.x relied solely
+        on the entity's own signature. v2.0 introduces third-party
+        attesters (accreditation bodies, trade registries) who co-sign
+        individual claims.
 
-   *  SECURITY: Removed "dns_record" field from the signature block.
-      Verifiers MUST construct the DNS query name from the retrieval
-      domain, not from untrusted JSON data (Section 9).
+   (5)  *One-way broadcast -> Bidirectional feedback.* v1.x had no
+        feedback channel. v2.0 enables agents to return anonymized
+        confidence scores and hallucination flags.
 
-   *  SECURITY: Cross-domain signing now uses DNS CNAME delegation,
-      maintaining DNS sovereignty (Section 12.6).
+   (6)  *Implicit English -> i18n first-class.* v1.x had no
+        internationalization. v2.0 treats language as a fundamental
+        property of every claim.
 
-   *  BCP 190: Changed well-known location from /reasoning.json to
-      /.well-known/reasoning.json per RFC 8615 (Section 5.1).
+1.3.  Relationship to ARP v1.x
 
-   *  IANA: Added registration request for _arp underscored node name
-      per RFC 8552 (Section 13).
+   ARP v2.0 is fully backward compatible with ARP v1.x:
 
-   *  IANA: Added registration request for "reasoning.json" well-known
-      URI suffix per RFC 8615 (Section 13).
+   *  All v1.2 fields remain valid.
 
-   *  NEW: Added CORS requirements for browser-based verifiers
-      (Section 5.1).
+   *  /.well-known/reasoning.json is preserved as the compatibility
+      alias.
 
-   *  NEW: Added HTTP redirect handling requirements (Section 8.2).
-
-   *  NEW: Updated key rotation guidance to account for cached payloads
-      (Section 10).
-
-
-
+   *  v1.2 Ed25519 signatures remain valid at CRYPTOGRAPHIC level.
 
 
-Deforth                  Expires 20 October 2026                [Page 4]
+
+
+Deforth                  Expires 29 October 2026                [Page 5]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   *  NEW: Added discussion of JWS as future envelope option
-      (Section 12.7).
+   *  New fields are additive; v1.x implementations remain valid.
 
-   *  NEW: Added keypair separation guidance for multi-protocol
-      deployments (Section 12.8).
+   Loaders MUST NOT reject v1.2 files for missing v2.0 fields.
 
-   *  NEW: Added Domain Signing Policy for downgrade attack protection
-      via DNS TXT (Section 12.9).
+1.4.  Relationship to Other Standards
 
-2.  Terminology
+    +======================+==========================================+
+    | Standard             | Relationship to ARP                      |
+    +======================+==========================================+
+    | robots.txt [RFC9309] | ARP does not control crawler access      |
+    +----------------------+------------------------------------------+
+    | schema.org           | ARP extends with reasoning context layer |
+    +----------------------+------------------------------------------+
+    | llms.txt             | ARP provides structured claims; llms.txt |
+    |                      | provides raw text                        |
+    +----------------------+------------------------------------------+
+    | W3C DID              | ARP v2.0 uses DID as identity anchor     |
+    | [W3C.DID-CORE]       |                                          |
+    +----------------------+------------------------------------------+
+    | W3C VC [W3C.VC-DATA] | ARP attestation model is VC-inspired     |
+    +----------------------+------------------------------------------+
+    | DKIM [RFC6376]       | ARP signing follows DKIM model           |
+    +----------------------+------------------------------------------+
+    | DMARC [RFC7489]      | ARP domain policy follows DMARC          |
+    +----------------------+------------------------------------------+
+    | security.txt         | Both use /.well-known/ convention        |
+    | [RFC9116]            |                                          |
+    +----------------------+------------------------------------------+
+
+             Table 1: ARP v2.0 Relationship to Other Standards
+
+2.  Conventions and Terminology
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
@@ -243,88 +321,65 @@ Internet-Draft                     ARP                        April 2026
    14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-   Entity  The brand, organization, person, or concept described by an
-      ARP payload.
+   All examples use example.com and "Example Organization" as defined in
+   [RFC2606].  All attester DIDs use the form
+   did:web:attester.example.org.  These are illustrative only.
 
-   Entity Claims  Machine-readable self-attested statements published by
-      the entity about itself, including identity metadata, factual
-      corrections, domain expertise, and content policies.
+   Entity:  A brand, organization, person, or other named party that
+      publishes an ARP file or API endpoint.
 
-   Reasoning Payload  A JSON document containing the entity claims and
-      associated verification metadata.  Served at the well-known URL
-      path "/.well-known/reasoning.json" on the entity's domain.
-
-   Signer  The party that holds the Ed25519 private key and produces the
-      signature.  This SHOULD be the domain owner or an entity
-      explicitly authorized by the domain owner via DNS delegation.
-
-   Verifier  Any system that retrieves the reasoning payload and
-      validates the signature against the DNS-published public key.
-      Typical verifiers include AI agents, RAG pipelines, and search
-      engine crawlers.
-
-   DNS Selector  A label used to construct the DNS TXT record name,
-      enabling multiple keys on the same domain (e.g., for key rotation
-      or multi-tenant configurations).
-
-   Retrieval Domain  The domain from which the verifier originally
-      requested the reasoning payload, before any HTTP redirects.  This
-      is the authoritative domain for DNS verification.
+   Agent:  An autonomous AI system that queries ARP endpoints to inform
 
 
 
 
-
-
-
-Deforth                  Expires 20 October 2026                [Page 5]
+Deforth                  Expires 29 October 2026                [Page 6]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
+
+      reasoning, recommendations, or decisions.  Includes RAG pipelines,
+      agentic commerce systems, AI search engines, and agent-to-agent
+      systems.
+
+   Claim:  A discrete, addressable, self-attested assertion by an entity
+      about itself.  Identified by claim_id.
+
+   Attester:  A trusted third party who co-signs one or more claims.
+      Categories (ascending trust): community, institutional,
+      government, sovereign.
+
+   Trust Level:  A categorical assessment of cryptographic strength:
+      SOVEREIGN, ATTESTED, CRYPTOGRAPHIC, UNSIGNED, INVALID.
+
+   Trust Score:  A numeric value in [0.0, 1.0] derived from Trust Level,
+      for use in quantitative agent decision pipelines.
+
+   Pink Elephant Fix:  The v1.1 pattern that avoids stating false claims
+      by using trigger_topic (the affected topic area) paired with
+      verified_fact (the correct information).
+
+   A2A Handshake:  The ARP Agent-to-Agent protocol by which two AI
+      agents exchange and mutually verify entity claims on behalf of
+      their principals.
+
+   DID:  W3C Decentralized Identifier [W3C.DID-CORE].  A globally unique
+      identifier controlled by the subject.
+
+   SSE:  Server-Sent Events [W3C.SSE].  A unidirectional HTTP mechanism
+      by which a server pushes events to a persistent client connection.
+
+   RAG:  Retrieval-Augmented Generation.  An AI pattern where external
+      documents are retrieved and injected into an LLM context.
+
+   Scenario Hash:  A deterministic truncated SHA-256 digest of a
+      normalized user query, used to address cached expertise responses.
 
 3.  Protocol Overview
 
-   The ARP verification flow consists of four phases:
+3.1.  Architecture Layers
 
-   Phase 1 - Key Registration  The domain owner generates an Ed25519
-      keypair [RFC8032] and publishes the public key as a DNS TXT record
-      under a well-known subdomain: <selector>._arp.<domain>
-
-   Phase 2 - Payload Construction  The domain owner constructs a
-      reasoning payload containing entity claims, identity metadata,
-      content policies, and a REQUIRED "domain" field that binds the
-      payload to the publishing domain.
-
-   Phase 3 - Signing  The payload is canonicalized using JCS [RFC8785].
-      The canonicalization excludes only the "signature" field within
-      the _arp_signature block; all other signature metadata
-      (expires_at, signed_at, dns_selector) is included in the signed
-      data.  The canonical form is signed with the Ed25519 private key.
-
-   Phase 4 - Verification  A consuming AI agent retrieves the reasoning
-      payload, confirms the "domain" field matches the retrieval domain,
-      extracts the DNS selector, queries the corresponding DNS TXT
-      record for the public key, and validates the Ed25519 signature.
-
-4.  DNS TXT Record Format
-
-4.1.  Record Name
-
-   The DNS TXT record MUST be published at:
-
-     <selector>._arp.<domain>
-
-   where <selector> is a case-insensitive ASCII string matching the
-   pattern [a-zA-Z0-9._-]+ and <domain> is the fully qualified domain
-   name of the entity.  The default selector value is "arp", yielding
-   the record name:
-
-     arp._arp.example.com
-
-4.2.  Record Value
-
-   The TXT record value MUST be a semicolon-delimited string of
-   tag=value pairs.  The following tags are defined:
+   ARP v2.0 comprises four architectural layers:
 
 
 
@@ -333,711 +388,1108 @@ Internet-Draft                     ARP                        April 2026
 
 
 
-Deforth                  Expires 20 October 2026                [Page 6]
+
+Deforth                  Expires 29 October 2026                [Page 7]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-        +=====+==========+=======================================+
-        | Tag | Required | Description                           |
-        +=====+==========+=======================================+
-        | v   | REQUIRED | Protocol version.  MUST be "ARP1".    |
-        +-----+----------+---------------------------------------+
-        | k   | REQUIRED | Key algorithm.  MUST be "ed25519".    |
-        +-----+----------+---------------------------------------+
-        | p   | REQUIRED | Base64-encoded raw Ed25519 public key |
-        |     |          | (32 bytes, 44 characters encoded).    |
-        +-----+----------+---------------------------------------+
-        | t   | OPTIONAL | Unix timestamp of key publication.    |
-        +-----+----------+---------------------------------------+
-        | x   | OPTIONAL | Unix timestamp of key expiration.     |
-        +-----+----------+---------------------------------------+
+   +------------------------------------------------------------------+
+   |                        ENTITY LAYER                              |
+   |   DID Identity | i18n Claims | Attestations | Event Freshness    |
+   +------------------------------------------------------------------+
+                                 |
+                                 v
+   +------------------------------------------------------------------+
+   |                        TRUST LAYER                               |
+   |  SOVEREIGN(1.0) | ATTESTED(0.9) | CRYPTOGRAPHIC(0.7) |           |
+   |  UNSIGNED(0.3) | INVALID(0.0) | DNS Signing Policy               |
+   +------------------------------------------------------------------+
+                                 |
+                                 v
+   +------------------------------------------------------------------+
+   |                        API LAYER                                 |
+   |  GET /identity | POST /query | GET /trust | GET /subscribe |     |
+   |  POST /feedback | POST /a2a/handshake | GET /reasoning.json      |
+   +------------------------------------------------------------------+
+                   |                   |                   |
+                   v                   v                   v
+            +-----------+       +-----------+       +-----------+
+            | RAG Agent |       |  Commerce |       | Platform  |
+            |           |       |  Agent    |       | Grounding |
+            +-----------+       +-----------+       +-----------+
+                   |                                       |
+                   +------> POST /feedback (anon.) <-------+
 
-                                 Table 1
+3.2.  Backward Compatibility
+
+   An ARP v1.2-conformant file MUST be treated as a valid ARP v2.0
+   implementation with these defaults:
+
+   *  entity_did absent: Trust Level capped at CRYPTOGRAPHIC.
+
+   *  api_endpoint absent: Only /.well-known/reasoning.json available.
+
+   *  supported_languages absent: Defaults to ["en"].
+
+   *  feedback_policy absent: Defaults to {accepts_feedback: false}.
+
+4.  Entity Identity: W3C DID Anchoring
+
+4.1.  DID Method Requirements
+
+   ARP v2.0 uses W3C Decentralized Identifiers [W3C.DID-CORE] as the
+   primary identity anchor.  DIDs decouple entity identity from domain
+   ownership, enabling persistent identity across domain changes and
+   multi-domain presences.
+
+
+
+Deforth                  Expires 29 October 2026                [Page 8]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+   ARP v2.0 RECOMMENDS did:web [W3C.DID-WEB] as it leverages existing
+   HTTPS infrastructure.  Other resolvable DID methods MAY be used.
 
    Example:
 
-     v=ARP1; k=ed25519; p=MCowBQYDK2VwAyEA...
+   "entity_did": "did:web:example.com"
 
-4.3.  Multiple Keys
+4.2.  DID Document Requirements
 
-   A domain MAY publish multiple ARP TXT records using different
-   selectors (e.g., "arp" and "arp2026q3").  This supports key rotation
-   without service interruption.
+   The DID Document MUST be resolvable and MUST contain at least one
+   verificationMethod of type Ed25519VerificationKey2020 or
+   JsonWebKey2020.
 
-4.4.  Key Size Constraints
+   Example DID Document at https://example.com/.well-known/did.json:
 
-   Ed25519 public keys are 32 bytes (44 characters in Base64).  This
-   fits within the 255-byte DNS TXT record string limit defined in
-   [RFC1035] Section 3.3.14.
+   {
+     "@context": ["https://www.w3.org/ns/did/v1"],
+     "id": "did:web:example.com",
+     "verificationMethod": [
+       {
+         "id": "did:web:example.com#arp-key-1",
+         "type": "Ed25519VerificationKey2020",
+         "controller": "did:web:example.com",
+         "publicKeyMultibase": "z6MkfExample..."
+       }
+     ],
+     "assertionMethod": ["did:web:example.com#arp-key-1"],
+     "service": [
+       {
+         "id": "did:web:example.com#arp",
+         "type": "AgenticReasoningProtocol",
+         "serviceEndpoint":
+           "https://example.com/.well-known/arp/v2/"
+       }
+     ]
+   }
 
-4.5.  Cross-Domain Delegation
+   The service entry of type "AgenticReasoningProtocol" is RECOMMENDED
+   for agent auto-discovery.
 
-   When an authorized third party (e.g., a consultancy) signs a
-   reasoning payload on behalf of a domain owner, the domain owner MUST
-   delegate trust via a DNS CNAME record:
+4.3.  Multi-Domain Entity Support
 
-     arp._arp.client.com. CNAME arp._arp.agency.com.
-
-   This maintains the absolute sovereignty of the DNS trust anchor: the
-   domain owner explicitly authorizes the delegation, and the verifier
-   always queries the retrieval domain's DNS namespace first.  The
-   verifier follows the CNAME transparently and retrieves the delegated
-   public key.
+   An entity with multiple domains MAY use a single canonical DID.
+   Regional or subsidiary ARP implementations SHOULD reference it:
 
 
 
 
 
-Deforth                  Expires 20 October 2026                [Page 7]
+
+
+Deforth                  Expires 29 October 2026                [Page 9]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   This model mirrors DKIM's delegation approach and prevents attackers
-   from pointing unsigned JSON fields at arbitrary DNS records.
+   "domain_scope": {
+     "canonical_domain": "example.com",
+     "this_domain": "example.de",
+     "language_primary": "de",
+     "regional_corrections": []
+   }
 
-5.  Reasoning Payload
+5.  File Location and Discovery
 
-5.1.  File Location and Discovery
+5.1.  Well-Known URI
 
-   The reasoning payload MUST be served at the well-known URL defined in
-   [RFC8615]:
+   The compatibility file MUST be served at:
 
-     https://<domain>/.well-known/reasoning.json
+   https://{domain}/.well-known/reasoning.json
 
-   Implementations MAY additionally serve the payload at alternative
-   paths provided the well-known URL also exists.  Alternative paths MAY
-   be advertised via:
+   Requirements: valid JSON [RFC8259], UTF-8 encoding, Content-Type:
+   application/json, publicly accessible, maximum 100 KB.
 
-   *  A <link> element in the HTML head: <link rel="reasoning"
-      href="/.well-known/reasoning.json">
+5.2.  API Base URI
 
-   *  A reference in the site's /llms.txt file.
+   The v2.0 API MUST be served at:
 
-   *  A Reasoning-Json directive in robots.txt.
+   https://{domain}/.well-known/arp/v2/
 
-   The file MUST be served with Content-Type: application/json.
+   All endpoints in Section 6 are relative to this base URI.
 
-   Servers SHOULD include the HTTP header Access-Control-Allow-Origin: *
-   when serving the reasoning payload, to enable verification by
-   browser-based AI agents, extensions, and verifiable-credential
-   wallets that operate under Cross-Origin Resource Sharing (CORS)
-   restrictions.
+5.3.  HTML Auto-Discovery
 
-5.2.  Required Fields
+   Sites SHOULD include in HTML head:
 
-   The reasoning payload MUST contain the following top-level fields:
+   <link rel="reasoning" type="application/json"
+         href="/.well-known/reasoning.json">
+   <link rel="arp-api" type="application/json"
+         href="/.well-known/arp/v2/">
 
+5.4.  CORS Headers
 
+   All ARP endpoints MUST respond with:
 
+   Access-Control-Allow-Origin: *
+   Content-Type: application/json
 
+6.  REST API Specification
 
-
-
-
-
-
-
-
-
-
+   All endpoints use HTTPS [RFC9110].  Request and response bodies are
+   JSON [RFC8259] unless noted.  Text values use UTF-8.
 
 
 
-Deforth                  Expires 20 October 2026                [Page 8]
+
+
+Deforth                  Expires 29 October 2026               [Page 10]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-     +===============+========+=====================================+
-     | Field         | Type   | Description                         |
-     +===============+========+=====================================+
-     | $schema       | URI    | MUST reference the ARP JSON Schema  |
-     |               |        | [ARP-SCHEMA].                       |
-     +---------------+--------+-------------------------------------+
-     | protocol      | string | MUST be "Agentic Reasoning Protocol |
-     |               |        | (ARP)".                             |
-     +---------------+--------+-------------------------------------+
-     | version       | string | Semver-compatible version string    |
-     |               |        | (e.g., "1.2").                      |
-     +---------------+--------+-------------------------------------+
-     | domain        | string | REQUIRED.  The fully qualified      |
-     |               |        | domain name that is authoritative   |
-     |               |        | for these entity claims.  Verifiers |
-     |               |        | MUST confirm this matches the       |
-     |               |        | retrieval domain (Section 8).       |
-     +---------------+--------+-------------------------------------+
-     | entity        | string | Canonical name of the entity (max   |
-     |               |        | 200 chars).                         |
-     +---------------+--------+-------------------------------------+
-     | entity_claims | object | MUST contain at minimum a           |
-     |               |        | "framing_context" string.           |
-     +---------------+--------+-------------------------------------+
+6.1.  Common Response Headers
 
-                                 Table 2
+   All v2.0 responses MUST include:
 
-5.3.  Optional Sections
+   ARP-Version:  "2.0"
 
-   The payload MAY include:
+   ARP-Entity-DID:  e.g., "did:web:example.com"
 
-   *  *identity:* Brand identity, tagline, core competencies, emotional
-      resonance attributes, and disambiguation entries
-      ("not_to_be_confused_with").
+   ARP-Trust-Level:  SOVEREIGN | ATTESTED | CRYPTOGRAPHIC | UNSIGNED |
+      INVALID
 
-   *  *corrections:* Verified factual corrections for known AI
-      hallucinations about this entity, each with trigger_topic,
-      verified_fact, evidence_url, and epistemic_scope.
+   ARP-Signed-At:  ISO 8601 (omitted if UNSIGNED)
 
-   *  *verification:* Audit metadata including auditor identity and
-      timestamps.
+   ARP-Expires-At:  ISO 8601 (omitted if UNSIGNED)
 
-   *  *authority:* Trust signals including Wikipedia, Wikidata,
-      LinkedIn, Crunchbase URIs, awards, and certifications.
+6.2.  GET /identity
 
-   *  *content_policy:* AI training permissions (allowed, allowed-with-
-      attribution, disallowed, conditional), citation requirements, and
-      verification contact.
+   Returns the full entity identity object with Accept-Language
+   negotiation (Section 10.1).
+
+   GET /.well-known/arp/v2/identity HTTP/2
+   Host: example.com
+   Accept-Language: de, en;q=0.9
+
+   Response (200 OK):
 
 
 
-Deforth                  Expires 20 October 2026                [Page 9]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 11]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   *  *diagnostics:* RAG pipeline telemetry tokens for ingestion
-      auditing, with transparency statement.
+   {
+     "entity_did": "did:web:example.com",
+     "entity": "Example Organization",
+     "language": "de",
+     "identity": {
+       "tagline": "Example tagline",
+       "elevator_pitch": {
+         "de": "Kurze Beschreibung.",
+         "en": "Short description."
+       },
+       "founded": 2010,
+       "headquarters": "Example City, Country",
+       "core_competencies": [
+         "Competency Area A",
+         "Competency Area B"
+       ]
+     },
+     "_arp_signature": {
+       "algorithm": "Ed25519",
+       "trust_level": "ATTESTED",
+       "signed_at": "2026-04-27T10:00:00Z"
+     }
+   }
 
-6.  Canonicalization
+6.3.  POST /query
 
-   Before signing, the payload MUST be canonicalized according to the
-   JSON Canonicalization Scheme (JCS) as specified in [RFC8785].
-
-   Only the "signature" field within the _arp_signature block MUST be
-   excluded from canonicalization.  All other fields in _arp_signature
-   (algorithm, dns_selector, canonicalization, signed_at, expires_at)
-   are included in the signed data, cryptographically binding the
-   signature metadata to the payload.
-
-   Implementations MUST:
-
-   1.  Deep-copy the payload object.
-
-   2.  Remove ONLY the "signature" key from the _arp_signature object in
-       the copy.  All other _arp_signature fields MUST remain.
-
-   3.  Serialize the modified copy using JCS [RFC8785]: keys sorted
-       lexicographically, no whitespace, Unicode normalized per RFC 8785
-       Section 3.2.2.2.
-
-   4.  Encode the result as UTF-8 bytes.
-
-   This approach prevents "zombie payload" attacks where an attacker
-   modifies unauthenticated metadata fields (e.g., extending expires_at)
-   while keeping the original signature valid.
-
-7.  Signing Procedure
-
-   Given a complete reasoning payload and an Ed25519 private key (32
-   bytes), the signing procedure is:
-
-   1.   Set payload._arp_signature.algorithm = "Ed25519"
-
-   2.   Set payload._arp_signature.dns_selector = selector
-
-   3.   Set payload._arp_signature.canonicalization = "jcs-rfc8785"
-
-   4.   Set payload._arp_signature.signed_at = current UTC timestamp
-        (ISO 8601)
-
-   5.   Set payload._arp_signature.expires_at = signed_at + TTL
-
-   6.   payload_copy = deep_copy(payload)
+   The semantic query endpoint.  The agent describes its information
+   need; the entity responds with the most relevant subset of claims,
+   contextualized to the query.
 
 
 
-Deforth                  Expires 20 October 2026               [Page 10]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 12]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   7.   Remove ONLY "signature" from payload_copy._arp_signature
+   POST /.well-known/arp/v2/query HTTP/2
+   Host: example.com
+   Content-Type: application/json
+   Accept-Language: de, en;q=0.9
 
-   8.   canonical = JCS_Canonicalize(payload_copy)
+   {
+     "arp_version": "2.0",
+     "agent_id": "did:example:agent-001",
+     "query_context": {
+       "user_intent": "evaluate B2B software for a 50-person organization",
+       "required_claim_types": [
+         "recommendation_fit",
+         "compliance_certifications"
+       ],
+       "epistemic_filter": ["public_verifiable"],
+       "language": "de"
+     },
+     "session_token": "arp-sess-a1b2c3d4e5f6",
+     "agent_version": "ARP/2.0"
+   }
 
-   9.   canonical_bytes = UTF8_Encode(canonical)
+   The session_token is an opaque per-query identifier for feedback
+   correlation.  It MUST NOT contain personally identifiable
+   information.
 
-   10.  signature_bytes = Ed25519_Sign(private_key, canonical_bytes)
+   Agents MUST treat responses as entity self-attestation, not
+   authoritative fact.
 
-   11.  signature_b64url = Base64url_Encode(signature_bytes) per
-        [RFC4648] Section 5, no padding
+6.4.  GET /claims/{claim_id}
 
-   12.  Set payload._arp_signature.signature = signature_b64url
+   Returns a single claim with provenance, attestation history, and
+   version log.  Invalid claim_id returns 404.
 
-   The RECOMMENDED signature TTL is 90 days.
+6.5.  GET /corrections
 
-8.  Verification Procedure
+   Returns all active corrections.  Supports filtering by
+   epistemic_scope and language.
 
-8.1.  Domain Binding Check
+6.6.  GET /expertise/{scenario_hash}
 
-   Before any cryptographic verification, the verifier MUST confirm that
-   the "domain" field in the payload matches the domain from which the
-   payload was originally requested (the retrieval domain).  If the
-   values do not match, verification MUST fail with
-   FAIL_DOMAIN_MISMATCH.
+   Returns domain expertise for a specific scenario.  The scenario_hash
+   is a deterministic truncated SHA-256 digest of a normalized user
+   query, enabling efficient agent-side caching.
 
-8.2.  HTTP Redirect Handling
-
-   When the verifier encounters HTTP redirects (301, 302, 307, 308)
-   while retrieving the reasoning payload, the verifier MUST base the
-   DNS query and domain-binding check on the original requested domain,
-   NOT the final domain in the redirect chain.  This prevents
-   verification bypass via open redirect vulnerabilities.
-
-8.3.  Verification Algorithm
-
-   The complete verification algorithm is:
-
-   1.   Record the original retrieval domain before following any
-        redirects.
-
-   2.   Retrieve the payload from the well-known URL.
-
-   3.   Extract sig_block = payload._arp_signature
-
-   4.   Validate sig_block contains all REQUIRED fields (Section 9)
-
-   5.   Check: payload.domain == retrieval_domain.  If mismatch: FAIL
-        (FAIL_DOMAIN_MISMATCH)
+   Scenario Hash Generation (normative):
 
 
 
-Deforth                  Expires 20 October 2026               [Page 11]
+
+
+
+Deforth                  Expires 29 October 2026               [Page 13]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   6.   Check: sig_block.expires_at > current_time.  If expired: FAIL
-        (FAIL_EXPIRED)
+   1.  Normalize query: lowercase, trim whitespace, collapse internal
+       whitespace to a single space, remove Unicode category P
+       punctuation.
 
-   7.   Construct DNS name: sig_block.dns_selector + "._arp." +
-        retrieval_domain
+   2.  Encode normalized string as UTF-8.
 
-   8.   Query DNS TXT record at constructed name
+   3.  Compute SHA-256 [RFC6234].
 
-   9.   Parse TXT record value; extract p= tag (public key).  If no
-        record: FAIL (FAIL_NO_DNS)
+   4.  Hex-encode the first 16 bytes (lowercase), producing 32
+       characters.
 
-   10.  payload_copy = deep_copy(payload)
+6.7.  GET /trust
 
-   11.  Remove ONLY "signature" from payload_copy._arp_signature
+   Returns the entity's full trust manifest, including DID reference,
+   self-signature status, all current attestations, and the computed
+   trust score.
 
-   12.  canonical = JCS_Canonicalize(payload_copy)
+6.8.  GET /subscribe (Server-Sent Events)
 
-   13.  canonical_bytes = UTF8_Encode(canonical)
+   Provides a real-time event stream using the SSE protocol [W3C.SSE].
+   Defined event types: claim:updated, correction:new,
+   correction:removed, attestation:added, attestation:expired,
+   trust:level:changed, heartbeat.
 
-   14.  signature_bytes = Base64url_Decode(sig_block.signature)
+   Implementations MUST honor the Last-Event-ID header for stream
+   resumption.  Event IDs MUST be monotonically increasing.
 
-   15.  public_key_bytes = Base64_Decode(dns_public_key_value)
+6.9.  POST /feedback
 
-   16.  result = Ed25519_Verify(public_key_bytes, signature_bytes,
-        canonical_bytes)
+   Accepts anonymized feedback from agents about claim effectiveness.
+   Available only if feedback_policy.accepts_feedback is true.  Privacy
+   requirements are specified in Section 7.1 and Section 16.1.
 
-   17.  If result == valid: PASS.  If invalid: FAIL (FAIL_INVALID)
+6.10.  POST /a2a/handshake
 
-8.4.  Verification Result Codes
+   Initiates an Agent-to-Agent trust handshake.  Full specification in
+   Section 11.
 
-       +======================+===================================+
-       | Code                 | Description                       |
-       +======================+===================================+
-       | PASS                 | Domain matches, DNS key found,    |
-       |                      | signature valid, not expired.     |
-       +----------------------+-----------------------------------+
-       | FAIL_NO_ARP          | No _arp_signature block in        |
-       |                      | payload.                          |
-       +----------------------+-----------------------------------+
-       | FAIL_DOMAIN_MISMATCH | The "domain" field does not match |
-       |                      | the retrieval domain.             |
-       +----------------------+-----------------------------------+
-       | FAIL_NO_DNS          | No DNS TXT record at              |
-       |                      | selector._arp.domain.             |
-       +----------------------+-----------------------------------+
-       | FAIL_EXPIRED         | Signature expired (expires_at <   |
-       |                      | current time).                    |
-       +----------------------+-----------------------------------+
+6.11.  GET /reasoning.json (Compatibility Alias)
+
+   Returns a v1.2-format JSON document for backward compatibility.
+   Implementations SHOULD include an X-ARP-Upgrade response header
+   pointing to the v2.0 API base URI.
+
+7.  Bidirectional Feedback Protocol
 
 
 
-Deforth                  Expires 20 October 2026               [Page 12]
+
+
+
+Deforth                  Expires 29 October 2026               [Page 14]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-       | FAIL_INVALID         | Ed25519 signature verification    |
-       |                      | failed.                           |
-       +----------------------+-----------------------------------+
-       | FAIL_UNSIGNED_POLICY | No _arp_signature present, but    |
-       |                      | domain publishes p=reject policy. |
-       +----------------------+-----------------------------------+
+7.1.  Anonymization Requirements
 
-                                 Table 3
+   Agents MUST NOT include in feedback payloads:
 
-9.  Signature Block Format
+   *  User query text or prompt content.
 
-   The _arp_signature block is a JSON object embedded in the reasoning
-   payload with the following fields:
+   *  User personally identifiable information.
 
-   +==================+==========+========+============================+
-   | Field            | Required | Type   | Description                |
-   +==================+==========+========+============================+
-   | algorithm        | REQUIRED | string | MUST be "Ed25519".         |
-   +------------------+----------+--------+----------------------------+
-   | dns_selector     | REQUIRED | string | Selector label for DNS     |
-   |                  |          |        | TXT lookup (max 50         |
-   |                  |          |        | chars).                    |
-   +------------------+----------+--------+----------------------------+
-   | canonicalization | REQUIRED | string | MUST be "jcs-rfc8785".     |
-   +------------------+----------+--------+----------------------------+
-   | signed_at        | REQUIRED | string | ISO 8601 UTC timestamp     |
-   |                  |          |        | of signing.                |
-   +------------------+----------+--------+----------------------------+
-   | expires_at       | REQUIRED | string | ISO 8601 UTC               |
-   |                  |          |        | expiration timestamp.      |
-   |                  |          |        | RECOMMENDED TTL: 90        |
-   |                  |          |        | days.                      |
-   +------------------+----------+--------+----------------------------+
-   | signature        | REQUIRED | string | Base64url-encoded          |
-   |                  |          |        | Ed25519 signature (86      |
-   |                  |          |        | chars without              |
-   |                  |          |        | padding).  This is the     |
-   |                  |          |        | ONLY field excluded        |
-   |                  |          |        | from canonicalization.     |
-   +------------------+----------+--------+----------------------------+
+   *  Browser fingerprint or device data.
 
-                                  Table 4
+   *  IP addresses or geographic identifiers.
 
-   Note: The "dns_record" field present in draft-deforth-arp-00 has been
-   removed.  Verifiers MUST construct the DNS query name from the
-   retrieval domain and dns_selector, never from untrusted JSON data.
+   Entities MUST NOT:
 
+   *  Store session_token values beyond the aggregation window.
 
+   *  Correlate session_tokens with individual users.
 
+   *  Expose individual feedback records to third parties.
+
+7.2.  Feedback Aggregation
+
+   Entities SHOULD aggregate feedback metrics per claim over a rolling
+   30-day window.  Metrics MUST only surface after the min_feedback_pool
+   threshold is reached.
+
+7.3.  Automatic Claim Degradation
+
+   Trigger: median confidence_alignment below 0.4 over 30 days AND
+   feedback_count at or above min_feedback_pool.  The claim's confidence
+   field is automatically downgraded one level.  Reversal requires
+   explicit re-attestation by the entity owner.
+
+8.  Multi-Party Attestation Model
+
+8.1.  Attester Categories
+
+   community:  Peer entities or industry associations without formal
+      accreditation.  Lowest trust category.
+
+   institutional:  Formally accredited certification bodies, trade
+      associations with legal standing, professional or audit
+      organizations.  Trust Score: ATTESTED (0.90).
+
+   government:  Official government registries with statutory authority:
+      commercial registries, financial regulators, intellectual property
+      offices.  Trust Score: ATTESTED (0.90) to SOVEREIGN (1.00).
 
 
-Deforth                  Expires 20 October 2026               [Page 13]
+
+
+Deforth                  Expires 29 October 2026               [Page 15]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-10.  Key Rotation
+   sovereign:  Qualified trust service providers under applicable
+      supranational frameworks.  Trust Score: SOVEREIGN (1.00).
 
-   To rotate keys without service disruption:
+8.2.  Trust Level Hierarchy
 
-   1.  Generate a new Ed25519 keypair.
+       +===============+=======+===================================+
+       | Trust Level   | Score | Condition                         |
+       +===============+=======+===================================+
+       | SOVEREIGN     | 1.00  | At least one sovereign attester   |
+       +---------------+-------+-----------------------------------+
+       | ATTESTED      | 0.90  | At least one institutional or     |
+       |               |       | government attester; no sovereign |
+       +---------------+-------+-----------------------------------+
+       | CRYPTOGRAPHIC | 0.70  | Valid Ed25519 self-signature; no  |
+       |               |       | third-party attesters             |
+       +---------------+-------+-----------------------------------+
+       | UNSIGNED      | 0.30  | No valid signature                |
+       +---------------+-------+-----------------------------------+
+       | INVALID       | 0.00  | Forged or tampered signature      |
+       +---------------+-------+-----------------------------------+
 
-   2.  Publish the new public key under a new DNS selector (e.g.,
-       "arp2026q3._arp.example.com").
+                  Table 2: ARP v2.0 Trust Level Hierarchy
 
-   3.  Re-sign the reasoning payload with the new key, updating
-       dns_selector accordingly.
+   An EXPIRED self-signature falls back to UNSIGNED, not INVALID.
 
-   4.  Keep the old DNS TXT record published until the expires_at
-       timestamp of the last payload signed with the old key has passed.
-       This prevents verification failures for agents holding cached
-       copies of the previous payload.
+8.3.  Attestation Object Schema
 
-   5.  After the old payload's expires_at date has passed, remove the
-       old DNS TXT record.
+   Required fields: attester_did, attester_name, attester_type,
+   attested_at, expires_at, claim_scope, signature.  Recommended:
+   evidence_url.
 
-   Verifiers SHOULD support checking multiple selectors.  The
-   RECOMMENDED rotation interval is 90 days, aligned with the default
-   signature TTL.
-
-11.  Relationship to Existing Standards
-
-    +==============+==================================================+
-    | Standard     | Relationship to ARP                              |
-    +==============+==================================================+
-    | DKIM         | ARP adapts the DNS-anchored key publication and  |
-    | [RFC6376]    | CNAME delegation models from DKIM for entity     |
-    |              | claim verification rather than email             |
-    |              | authentication.                                  |
-    +--------------+--------------------------------------------------+
-    | C2PA v2.2    | C2PA verifies media provenance via embedded      |
-    | [C2PA]       | manifests.  ARP verifies textual entity claim    |
-    |              | provenance via DNS.  Complementary, non-         |
-    |              | overlapping scope.                               |
-    +--------------+--------------------------------------------------+
-    | W3C          | VCs require an Issuer-Holder-Verifier ecosystem. |
-    | Verifiable   | ARP provides a simpler two-party (Publisher-     |
-    | Credentials  | Verifier) model for public entity claims.        |
-    | 2.0 [W3C-VC] |                                                  |
-    +--------------+--------------------------------------------------+
-    | AIVS v1.0    | AIVS verifies what an agent DID (session/action  |
-    | [AIVS] (W3C  | integrity).  ARP verifies what an agent READS    |
-    | Community    | (content provenance).  Complementary: AIVS audit |
-    | Group)       | logs plus ARP content verification form a full   |
-
+   {
+     "attester_did": "did:web:attester.example.org",
+     "attester_name": "Example Accreditation Body",
+     "attester_type": "institutional",
+     "attested_at": "2026-01-15T09:00:00Z",
+     "expires_at": "2028-01-15T09:00:00Z",
+     "claim_scope": ["clm-founded-001", "clm-industry-001"],
+     "evidence_url":
+       "https://attester.example.org/verify/EX-12345",
+     "signature": {
+       "algorithm": "Ed25519",
+       "public_key_did_ref":
+         "did:web:attester.example.org#key-1",
+       "canonicalization": "jcs-rfc8785",
+       "value": "base64url..."
+     }
+   }
 
 
-Deforth                  Expires 20 October 2026               [Page 14]
+
+Deforth                  Expires 29 October 2026               [Page 16]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-    |              | end-to-end trust chain for agentic systems.      |
-    +--------------+--------------------------------------------------+
-    | IETF SCITT   | ARP signed payloads could be registered as SCITT |
-    |              | transparency statements for append-only          |
-    |              | auditability.                                    |
-    +--------------+--------------------------------------------------+
-    | Schema.org   | Schema.org describes entity attributes.  ARP     |
-    |              | cryptographically binds those attributes to      |
-    |              | verified domain ownership.                       |
-    +--------------+--------------------------------------------------+
+8.4.  Attester DID Requirements
 
-                                  Table 5
+   Loaders MUST verify attestation signatures by:
 
-12.  Security Considerations
+   1.  Resolving attester_did to its DID Document.
 
-12.1.  DNS Security
+   2.  Retrieving the public key from public_key_did_ref.
 
-   ARP's trust anchor is the DNS TXT record.  Without DNSSEC, an
-   attacker who can poison DNS responses can substitute a fraudulent
-   public key.  Implementations SHOULD use DNSSEC-validated resolvers
-   where available.  Implementations SHOULD also cache DNS responses
-   according to the record's TTL to reduce lookup frequency.
+   3.  JCS-canonicalizing [RFC8785] the signed claim content.
 
-12.2.  Key Compromise
+   4.  Verifying the Ed25519 signature.
 
-   If an Ed25519 private key is compromised, the attacker can sign
-   arbitrary payloads that will validate against the DNS-published key.
-   Domain owners MUST:
+   5.  Confirming expires_at has not passed.
 
-   *  Store private keys with restricted file permissions (0600).
+   Failed verification MUST treat the attestation as absent.
 
-   *  Rotate keys immediately on suspected compromise.
+9.  Cryptographic Trust Layer
 
-   *  Use the expires_at field to limit the validity window of any
-      signature.
+9.1.  Ed25519 Signing
 
-   *  Consider hardware security modules (HSMs) or secure enclaves for
-      high-value domains.
+   Ed25519 [RFC8032] is REQUIRED for all ARP signatures.
 
-12.3.  Replay and Staleness
+   DNS TXT record format (inherited from v1.2):
 
-   Verifiers SHOULD check the expires_at timestamp and reject expired
-   signatures.  The RECOMMENDED TTL is 90 days.  Verifiers MAY also
-   check the signed_at timestamp against the HTTP Last-Modified header
-   to detect stale payloads served from cache.
+   <selector>._arp.<domain>. IN TXT
+     "v=ARP1; k=ed25519; p=<base64-pubkey>"
+
+   Where:
+
+   *  "v=ARP1" identifies the ARP protocol version.
+
+   *  "k=ed25519" identifies the key algorithm.
+
+   *  "p=<key>" is the standard Base64-encoded [RFC4648] 32-byte Ed25519
+      public key.
+
+9.2.  Enveloped Signature Pattern
+
+   The Enveloped Signature Pattern is REQUIRED.  The signature MUST
+   cover the payload AND _arp_signature metadata.
+
+   Signing procedure:
+
+   1.  Populate _arp_signature with all metadata fields.
+
+   2.  Set "signature" field to "".
+
+   3.  JCS-canonicalize [RFC8785] the entire root object.
 
 
 
-
-
-
-Deforth                  Expires 20 October 2026               [Page 15]
+Deforth                  Expires 29 October 2026               [Page 17]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-12.4.  Content Truthfulness
+   4.  Sign with Ed25519 private key.
 
-   ARP verifies PROVENANCE (who authorized the data), not TRUTH (whether
-   the data is factually correct).  A domain owner can sign factually
-   incorrect claims that will pass ARP verification.  AI systems
-   consuming ARP-verified payloads SHOULD still cross-reference entity
-   claims against independent sources.  The epistemic_scope field in
-   entity claims is designed to help AI systems distinguish between
-   publicly verifiable facts and proprietary internal claims.
+   5.  Base64url-encode the result; set as "signature" value.
 
-12.5.  Narrative Injection without ARP
+   Verification reverses steps 3-5.
 
-   Without ARP verification, any actor can publish reasoning payloads
-   containing arbitrary entity claims on any domain they control.
-   Regulatory frameworks such as the EU AI Act [EU-AI-ACT] Article 19
-   require audit trails for high-risk AI systems but do not prescribe
-   verification formats for ingested content.  Empirical research has
-   demonstrated that RAG systems will cite well-structured entity claims
-   from previously unknown domains as primary sources within 24 hours,
-   regardless of domain history, traffic, or backlinks.  ARP provides
-   the verification layer that allows consuming systems to differentiate
-   between authorized and unauthorized entity claims.
+9.3.  DNS Binding
 
-12.6.  Cross-Domain Signing
+   DNS-based verification is valid for backward compatibility.  The DID
+   Document public key is the PREFERRED mechanism in v2.0.
 
-   Cross-domain signing MUST use the DNS CNAME delegation model
-   described in Section 4.5.  The verifier always queries the retrieval
-   domain's DNS namespace and follows CNAME records transparently.  This
-   maintains the absolute sovereignty of the DNS trust anchor and
-   prevents attacks where unsigned JSON fields are used to redirect
-   trust to attacker-controlled DNS.
+9.4.  Domain Signing Policy
 
-   Consuming systems MAY choose to treat CNAME-delegated signatures with
-   lower confidence than direct (same-domain) signatures.
+   Entities MAY publish a policy at:
 
-12.7.  Keypair Separation
+   _arp.example.com. IN TXT "v=ARP1; p=<policy>"
 
-   When ARP is deployed alongside other verification systems that also
-   use Ed25519 (e.g., AIVS [AIVS] for agent session integrity),
-   implementations MUST NOT reuse the same Ed25519 keypair across
-   different verification functions.  Sharing a single keypair between
-   content signing (ARP) and session signing (AIVS) creates a single
-   point of failure: compromise of one key compromises both trust
-   domains.
+        +===============+========================================+
+        | Policy        | Meaning                                |
+        +===============+========================================+
+        | p=none        | No enforcement.  Default if absent.    |
+        +---------------+----------------------------------------+
+        | p=warn        | Log warning if file unsigned.          |
+        +---------------+----------------------------------------+
+        | p=reject      | Unsigned file treated as INVALID.      |
+        +---------------+----------------------------------------+
+        | p=require-did | As p=reject; entity_did MUST be        |
+        |               | present and DID document MUST resolve. |
+        +---------------+----------------------------------------+
 
+              Table 3: ARP v2.0 Domain Signing Policy Values
 
+10.  Internationalization (i18n)
 
+10.1.  Language Negotiation
 
+   All endpoints MUST support HTTP Accept-Language per [RFC7231]
+   Section 5.3.5.
+
+   Servers MUST parse Accept-Language with quality value weighting,
+   select best match from supported_languages, include ARP-Content-
+   Language in response, and fall back to "en" if no match and "en" is
+   supported.
+
+10.2.  Claim i18n Object
 
 
 
-Deforth                  Expires 20 October 2026               [Page 16]
+
+
+
+Deforth                  Expires 29 October 2026               [Page 18]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   Implementations SHOULD use separate Ed25519 keypairs for each trust
-   function.  Where a unified identity anchor is desired,
-   implementations MAY use a DID Document (e.g., did:web) to bind
-   multiple function-specific public keys to a single domain identity:
+   {
+     "claim_id": "clm-pitch-001",
+     "type": "identity.elevator_pitch",
+     "i18n": {
+       "en": {
+         "value": "Short description of the organization.",
+         "translated_by": "human",
+         "verified_at": "2026-04-01",
+         "quality": "reviewed"
+       },
+       "de": {
+         "value": "Kurze Beschreibung der Organisation.",
+         "translated_by": "human",
+         "verified_at": "2026-04-01",
+         "quality": "reviewed"
+       },
+       "fr": {
+         "value": "Breve description.",
+         "translated_by": "machine",
+         "verified_at": null,
+         "quality": "draft"
+       }
+     }
+   }
 
-   *  An "assertionMethod" key for ARP content provenance verification.
+10.3.  Translation Quality Signals
 
-   *  An "authentication" key for agent session signing (e.g., AIVS).
+   draft:  Machine-translated, unreviewed.  Agents SHOULD reduce
+      confidence weighting.
 
-   This approach preserves key isolation while enabling cross-protocol
-   identity resolution.  The DID Document itself can be anchored to the
-   domain via the did:web method, which resolves to /.well-known/
-   did.json on the entity's domain.
+   reviewed:  Reviewed by a fluent human speaker.
 
-12.8.  Domain Signing Policy
+   certified:  Certified by a sworn or legally recognized translator.
 
-   To protect against downgrade attacks — where an attacker strips the
-   _arp_signature block from a signed file and modifies the content —
-   domain owners MAY publish a Domain Signing Policy via DNS TXT record
-   at the bare _arp node:
+10.4.  Mandatory Language Coverage
 
-     _arp.example.com.  IN  TXT  "v=ARP1; p=reject"
+   Conformant implementations MUST provide claims in the entity's
+   declared language_primary, and English ("en") if language_primary is
+   not English.
 
-   The following policy values are defined:
+11.  Agent-to-Agent (A2A) Protocol Extension
 
-         +========+==========+===================================+
-         | Policy | Value    | Meaning                           |
-         +========+==========+===================================+
-         | none   | Default  | No enforcement; unsigned files    |
-         |        |          | are treated normally.             |
-         +--------+----------+-----------------------------------+
-         | warn   | Advisory | Verifiers SHOULD log a warning if |
-         |        |          | the payload is unsigned.          |
-         +--------+----------+-----------------------------------+
-         | reject | Strict   | Verifiers MUST treat unsigned     |
-         |        |          | payloads as FAIL_UNSIGNED_POLICY. |
-         +--------+----------+-----------------------------------+
+11.1.  A2A Trust Handshake
 
-                                  Table 6
+   Two ARP-aware agents exchange verified entity context on behalf of
+   their respective principals.  Design principles:
 
-   Verification flow for unsigned payloads:
-
-   1.  Verifier encounters a reasoning payload without an _arp_signature
-       block.
-
-   2.  Verifier queries the DNS TXT record at _arp.<retrieval_domain>.
+   *  Mutual authentication via DID.
 
 
 
-
-
-Deforth                  Expires 20 October 2026               [Page 17]
+Deforth                  Expires 29 October 2026               [Page 19]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   3.  If a record with p=reject is present, the verifier MUST reject
-       the unsigned payload (FAIL_UNSIGNED_POLICY).
+   *  Nonce-based replay protection.
 
-   4.  If no policy record exists, the verifier treats the payload as
-       unsigned (no cryptographic trust, but not rejected).
+   *  Explicit session expiration.
 
-   This follows the same progressive enforcement model as DMARC
-   (p=reject) [RFC6376] and HTTP Strict Transport Security (HSTS).
+   *  Optional reciprocal claims exchange.
 
-12.9.  Alternative Cryptographic Envelopes
+11.2.  Reciprocal Claims Exchange
 
-   This specification defines a custom _arp_signature block for
-   simplicity and clarity.  Future versions MAY consider adopting JSON
-   Web Signature (JWS) [RFC7515] with the Unencoded Payload Option
-   [RFC7797] as an alternative envelope format.  This would provide
-   cryptographic agility and enable use of battle-tested standard
-   libraries, while preserving the human-readable cleartext JSON payload
-   that JCS canonicalization achieves.  The dns_selector, expires_at,
-   and signed_at fields would map to the JWS Protected Header.
+   If reciprocal_request is present, the initiating agent SHOULD submit
+   a separate request to its own ARP endpoint.  The reciprocal exchange
+   MUST use a new HTTP request and MUST NOT reuse the session_nonce.
 
-13.  IANA Considerations
+11.3.  Session Integrity
 
-13.1.  Well-Known URI Registration
+   Required controls:
 
-   This document requests IANA to register the following well-known URI
-   suffix in the "Well-Known URIs" registry established by [RFC8615]:
+   *  Nonces MUST be cryptographically random, minimum 128 bits.
 
-   URI Suffix  reasoning.json
+   *  Each nonce MUST be used for exactly one session.
 
-   Change Controller  IETF
+   *  Servers MUST reject replayed nonces within the expiry window.
 
-   Reference  Section 5.1 of [this document]
+   *  Both messages MUST be signed by the respective agent's DID key.
 
-   Status  permanent
+   *  The session_nonce MUST appear in both message signatures.
 
-13.2.  Underscored Node Name Registration
+   *  Agents MUST verify the counterparty's DID before accepting any
+      claims.
 
-   This document requests IANA to register the following entry in the
-   "Underscored and Globally Scoped DNS Node Names" registry established
-   by [RFC8552]:
+   *  Agents MUST reject handshakes from unresolvable DIDs.
 
-   RR Type  TXT
+12.  JSON Schema v2.0
 
-   _NODE NAME  _arp
+12.1.  Root Object
 
-   Reference  Section 4.1 of [this document]
+   The root object of a v2.0 ARP document fields.  Required (R),
+   Optional (O), New in v2.0 (N), Required at ATTESTED+ (R*).
 
-14.  References
+   *  $schema (uri, R): Schema URL value "https://arp-
+      protocol.org/schema/v2.0.json"
+
+   *  protocol (string, R): "Agentic Reasoning Protocol (ARP)"
+
+   *  version (string, R): "2.0"
+
+   *  entity_did (did-uri, R*): W3C DID.  Required for ATTESTED+
+
+   *  entity (string, R): Canonical name.  Max 200 characters
 
 
 
-Deforth                  Expires 20 October 2026               [Page 18]
+Deforth                  Expires 29 October 2026               [Page 20]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-14.1.  Normative References
+   *  api_endpoint (uri, R*): v2.0 API base URI
 
-   [RFC1035]  Mockapetris, P., "Domain names - implementation and
-              specification", STD 13, RFC 1035, DOI 10.17487/RFC1035,
-              November 1987, <https://www.rfc-editor.org/info/rfc1035>.
+   *  language_primary (string, R): ISO 639-1 primary language
+
+   *  supported_languages (string[], R): ISO 639-1 codes.  Min: ["en"]
+
+   *  identity (object, O): Brand identity (v1.x compatible)
+
+   *  corrections (object, O): Factual corrections
+
+   *  entity_claims (object, R): Self-attested context
+
+   *  attestations (object[], N): Third-party co-signatures
+
+   *  feedback_policy (object, N): Agent feedback configuration
+
+   *  webhook (object, N): Push event configuration
+
+   *  _arp_signature (object, O): Ed25519 signature block
+
+12.2.  Claim Object
+
+   Individual claims fields:
+
+   *  claim_id (string, R): Unique identifier "clm-{cat}-{seq}"
+
+   *  type (string, R): Type from registry or "x-" prefix
+
+   *  epistemic_scope (string, O): "public_verifiable" |
+      "proprietary_internal" | "industry_standard"
+
+   *  confidence (string, O): "high" | "medium" | "low"
+
+   *  i18n (object, O): Per-language values
+
+   *  value (any, O): Single-language fallback
+
+   *  attestations (string[], O): Attester DID references
+
+   *  evidence_url (uri, O): External verification URL
+
+13.  Migration from ARP v1.x
+
+   All v1.2 fields are preserved.  No field is removed.  Migration is
+   voluntary and incremental.
+
+   Stage 0 -- Unchanged (no action required):  Trust Level:
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 21]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+      CRYPTOGRAPHIC (0.70). v2.0 loaders serve the compatibility alias
+      transparently.
+
+   Stage 1 -- Add entity_did + api_endpoint:  Generate a did:web DID,
+      publish the DID Document, deploy GET /identity and GET /trust.
+      Update $schema to v2.0.json.
+
+   Stage 2 -- Add i18n + POST /query:  Add i18n to localizable fields.
+      Implement POST /query and GET /corrections.  Declare
+      supported_languages.
+
+   Stage 3 -- Obtain first institutional attestation:  Trust Level
+      becomes ATTESTED (0.90).  Obtain co-signatures from at least one
+      institutional attester for three or more claims.
+
+   Stage 4 -- Activate webhooks + feedback:  Implement GET /subscribe
+      (SSE) and POST /feedback.  Set feedback_policy.accepts_feedback to
+      true.
+
+   Stage 5 -- Government or sovereign attestation (optional):  Trust
+      Level becomes SOVEREIGN (1.00) for attested claims.  RECOMMENDED
+      for regulated industries.
+
+14.  Anti-Spam and Content Integrity
+
+   Inherited limits from v1.1/v1.2: text fields 50-500 characters, array
+   fields 8-20 items, static file maximum 100 KB, query response bodies
+   maximum 200 KB.
+
+   Recommended rate limits: POST /query 100 requests/minute per IP and
+   1000/day per agent_id.  POST /feedback 10 submissions/session_token
+   per hour and 100/day per agent_did.
+
+   Prohibited content includes prompt injection patterns, claims about
+   named third parties or competitors, false corrections, cloaking
+   (different content served to AI vs humans), discriminatory content,
+   and A2A handshakes with fabricated DIDs.
+
+15.  Security Considerations
+
+15.1.  Prompt Injection Defense
+
+   ARP content is injected into LLM contexts.  Loader implementations
+   MUST:
+
+   *  Sandbox ARP content within trust boundary markers.
+
+   *  Strip control characters and instruction patterns.
+
+
+
+Deforth                  Expires 29 October 2026               [Page 22]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+   *  Label ARP-sourced content as lower-privilege than system
+      instructions.
+
+15.2.  Downgrade Attack Protection
+
+   An attacker could strip _arp_signature from a response.  Mitigations:
+   p=reject DNS policy, SSE trust:level:changed events, and agent
+   caching of last-known Trust Level per DID.
+
+15.3.  A2A Session Hijacking
+
+   Protected by DID authentication, cryptographic nonces, and expiry
+   windows.  Sessions failing nonce verification MUST be rejected.
+
+15.4.  Feedback Manipulation
+
+   Rate limits constrain bulk attacks.  Agent DID signing enables
+   reputation tracking.  Entities MUST NOT accept feedback for claim_ids
+   that do not exist.
+
+15.5.  False Attestation
+
+   Loaders MUST verify all attestation signatures.  Unverifiable
+   attestations MUST be treated as absent.  Forged signatures constitute
+   non-repudiable cryptographic fraud.
+
+16.  Privacy Considerations
+
+16.1.  Agent Anonymization
+
+   Agents MUST NOT transmit in feedback payloads: user query text or
+   prompt content, user PII, device fingerprint or network identifiers.
+
+   The session_token is a single-use opaque identifier.  Entities MUST
+   treat it as an opaque correlation key, not user identity.
+
+16.2.  Regulatory Alignment
+
+   This protocol is designed to support compliance with applicable
+   regulatory frameworks, including AI transparency requirements (e.g.,
+   EU AI Act Article 50 [EU-AI-ACT]), data protection obligations, and
+   consumer protection law.
+
+   This document makes no representations about compliance with any
+   specific national law.  Implementors are solely responsible for their
+   own legal analysis.
+
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 23]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+17.  IANA Considerations
+
+17.1.  Well-Known URI Registration
+
+   This document requests the following registrations in the "Well-Known
+   URIs" registry [RFC8615]:
+
+   URI Suffix:  reasoning.json
+
+   Change Controller:  IETF
+
+   Reference:  This document, Section 5.1
+
+   Status:  Permanent
+
+   URI Suffix:  arp/v2/
+
+   Change Controller:  IETF
+
+   Reference:  This document, Section 5.2
+
+   Status:  Permanent
+
+17.2.  Link Relation Types
+
+   This document requests the following registrations in the "Link
+   Relations" registry [RFC8288]:
+
+   Relation Name:  reasoning
+
+   Description:  Refers to an ARP file for AI agent consumption.
+
+   Reference:  This document
+
+   Relation Name:  arp-api
+
+   Description:  Refers to the ARP v2.0 API base URI.
+
+   Reference:  This document
+
+17.3.  Media Type Registration
+
+   Type name:  application
+
+   Subtype name:  vnd.arp+json
+
+   Required parameters:  version (e.g., "2.0")
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 24]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+   Optional parameters:  lang (ISO 639-1)
+
+   Encoding:  UTF-8
+
+   Security considerations:  See Section 15
+
+17.4.  ARP Claim Type Registry
+
+   The "ARP Claim Types" registry is established by this document.  New
+   types require "Specification Required" [RFC8126] review.  Custom
+   types for single implementations use the "x-" prefix.
+
+      +==========================+=================================+
+      | Claim Type               | Description                     |
+      +==========================+=================================+
+      | identity.entity_name     | Canonical legal name            |
+      +--------------------------+---------------------------------+
+      | identity.elevator_pitch  | One-paragraph description       |
+      +--------------------------+---------------------------------+
+      | identity.founded         | Year of founding                |
+      +--------------------------+---------------------------------+
+      | identity.headquarters    | Primary location                |
+      +--------------------------+---------------------------------+
+      | identity.industry        | Primary industry sector         |
+      +--------------------------+---------------------------------+
+      | correction.general       | General factual correction      |
+      +--------------------------+---------------------------------+
+      | expertise.scenario       | Domain expertise for a scenario |
+      +--------------------------+---------------------------------+
+      | recommendation.fit       | Recommendation fit assessment   |
+      +--------------------------+---------------------------------+
+      | recommendation.not_fit   | Negative recommendation signal  |
+      +--------------------------+---------------------------------+
+      | compliance.certification | Certification or accreditation  |
+      +--------------------------+---------------------------------+
+      | compliance.regulation    | Applicable regulatory framework |
+      +--------------------------+---------------------------------+
+      | market.positioning       | Self-attested market position   |
+      +--------------------------+---------------------------------+
+      | market.decision_factors  | Key evaluation criteria         |
+      +--------------------------+---------------------------------+
+
+             Table 4: Initial ARP Claim Type Registry Entries
+
+18.  Ethical Guidelines
+
+
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 25]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+   (1)  *Truthfulness.* All claim content MUST accurately reflect the
+        entity.  False corrections constitute misinformation injection
+        into AI systems.
+
+   (2)  *Self-description only.* ARP MUST describe only the publishing
+        entity.  Claims about third parties are prohibited.
+
+   (3)  *No negative targeting.* market_positioning MUST NOT name
+        specific third parties or competitors.
+
+   (4)  *Evidence first.* Corrections SHOULD include evidence_url
+        pointing to an independently verifiable source.
+
+   (5)  *Consistency.* ARP content MUST be consistent with human-visible
+        content.  Cloaking is prohibited.
+
+   (6)  *User benefit.* not_recommended_when exists to serve users
+        honestly, not to serve brand interests.
+
+   (7)  *Feedback integrity.* Entities MUST NOT submit feedback for the
+        purpose of gaming Trust Scores.
+
+   (8)  *Attester honesty.* Claiming attestations not actually granted
+        constitutes cryptographic fraud detectable via signature
+        verification.
+
+   Cryptographic non-repudiation: A signed ARP document is a
+   timestamped, non-repudiable assertion of authorship and accuracy.
+   The signer accepts legal liability for signed content under
+   applicable consumer protection, competition, and digital services
+   law.
+
+19.  References
+
+19.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
+   [RFC2606]  Eastlake 3rd, D. and A. Panitz, "Reserved Top Level DNS
+              Names", BCP 32, RFC 2606, DOI 10.17487/RFC2606, June 1999,
+              <https://www.rfc-editor.org/info/rfc2606>.
+
    [RFC4648]  Josefsson, S., "The Base16, Base32, and Base64 Data
               Encodings", RFC 4648, DOI 10.17487/RFC4648, October 2006,
               <https://www.rfc-editor.org/info/rfc4648>.
+
+
+
+Deforth                  Expires 29 October 2026               [Page 26]
+
+Internet-Draft                  ARP v2.0                      April 2026
+
+
+   [RFC6234]  Eastlake 3rd, D. and T. Hansen, "US Secure Hash Algorithms
+              (SHA and SHA-based HMAC and HKDF)", RFC 6234,
+              DOI 10.17487/RFC6234, May 2011,
+              <https://www.rfc-editor.org/info/rfc6234>.
+
+   [RFC7231]  Fielding, R., Ed. and J. Reschke, Ed., "Hypertext Transfer
+              Protocol (HTTP/1.1): Semantics and Content", RFC 7231,
+              DOI 10.17487/RFC7231, June 2014,
+              <https://www.rfc-editor.org/info/rfc7231>.
 
    [RFC8032]  Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
               Signature Algorithm (EdDSA)", RFC 8032,
               DOI 10.17487/RFC8032, January 2017,
               <https://www.rfc-editor.org/info/rfc8032>.
 
+   [RFC8126]  Cotton, M., Leiba, B., and T. Narten, "Guidelines for
+              Writing an IANA Considerations Section in RFCs", BCP 26,
+              RFC 8126, DOI 10.17487/RFC8126, June 2017,
+              <https://www.rfc-editor.org/info/rfc8126>.
+
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
-   [RFC8552]  Crocker, D., "Scoped Interpretation of DNS Resource
-              Records through "Underscored" Naming of Attribute Leaves",
-              BCP 222, RFC 8552, DOI 10.17487/RFC8552, March 2019,
-              <https://www.rfc-editor.org/info/rfc8552>.
+   [RFC8259]  Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
+              Interchange Format", STD 90, RFC 8259,
+              DOI 10.17487/RFC8259, December 2017,
+              <https://www.rfc-editor.org/info/rfc8259>.
+
+   [RFC8288]  Nottingham, M., "Web Linking", RFC 8288,
+              DOI 10.17487/RFC8288, October 2017,
+              <https://www.rfc-editor.org/info/rfc8288>.
 
    [RFC8615]  Nottingham, M., "Well-Known Uniform Resource Identifiers
               (URIs)", RFC 8615, DOI 10.17487/RFC8615, May 2019,
@@ -1048,172 +1500,108 @@ Internet-Draft                     ARP                        April 2026
               DOI 10.17487/RFC8785, June 2020,
               <https://www.rfc-editor.org/info/rfc8785>.
 
-14.2.  Informative References
-
-   [AIVS]     Stone, B., "Agentic Integrity Verification Specification
-              v1.0", W3C Community Group Draft, March 2026,
-              <https://github.com/bkauto3/Conduit/blob/main/spec/
-              AIVS.md>.
-
-   [ARP-SCHEMA]
-              Deforth, S., "ARP v1.2 JSON Schema", April 2026,
-              <https://arp-protocol.org/schema/v1.2.json>.
+   [RFC9110]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
+              Ed., "HTTP Semantics", STD 97, RFC 9110,
+              DOI 10.17487/RFC9110, June 2022,
+              <https://www.rfc-editor.org/info/rfc9110>.
 
 
 
-Deforth                  Expires 20 October 2026               [Page 19]
+
+
+Deforth                  Expires 29 October 2026               [Page 27]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   [C2PA]     Coalition for Content Provenance and Authenticity, "C2PA
-              Technical Specification v2.2", 2025,
-              <https://c2pa.org/specifications/specifications/2.2/specs/
-              C2PA_Specification.html>.
+   [RFC9309]  Koster, M., Illyes, G., Zeller, H., and L. Sassman,
+              "Robots Exclusion Protocol", RFC 9309,
+              DOI 10.17487/RFC9309, September 2022,
+              <https://www.rfc-editor.org/info/rfc9309>.
 
-   [EU-AI-ACT]
-              European Parliament, "Regulation (EU) 2024/1689 laying
-              down harmonised rules on artificial intelligence", 2024.
+   [W3C.DID-CORE]
+              Sporny, M., Guy, A., Sabadello, M., and D. Reed,
+              "Decentralized Identifiers (DIDs) v1.0", July 2022,
+              <https://www.w3.org/TR/did-core/>.
+
+   [W3C.DID-WEB]
+              Caballero, J., Xu, C., and M. Prorock, "The did:web Method
+              Specification", 2024,
+              <https://w3c-ccg.github.io/did-method-web/>.
+
+   [W3C.VC-DATA]
+              Sporny, M., Longley, D., Chadwick, D., and O. Steele,
+              "Verifiable Credentials Data Model v2.0", February 2025,
+              <https://www.w3.org/TR/vc-data-model-2.0/>.
+
+   [W3C.SSE]  Hickson, I., "Server-Sent Events", February 2015,
+              <https://www.w3.org/TR/eventsource/>.
+
+19.2.  Informative References
 
    [RFC6376]  Crocker, D., Ed., Hansen, T., Ed., and M. Kucherawy, Ed.,
               "DomainKeys Identified Mail (DKIM) Signatures", STD 76,
               RFC 6376, DOI 10.17487/RFC6376, September 2011,
               <https://www.rfc-editor.org/info/rfc6376>.
 
-   [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
-              Signature (JWS)", RFC 7515, DOI 10.17487/RFC7515, May
-              2015, <https://www.rfc-editor.org/info/rfc7515>.
+   [RFC7489]  Kucherawy, M., Ed. and E. Zwicky, Ed., "Domain-based
+              Message Authentication, Reporting, and Conformance
+              (DMARC)", RFC 7489, DOI 10.17487/RFC7489, March 2015,
+              <https://www.rfc-editor.org/info/rfc7489>.
 
-   [RFC7797]  Jones, M., "JSON Web Signature (JWS) Unencoded Payload
-              Option", RFC 7797, DOI 10.17487/RFC7797, February 2016,
-              <https://www.rfc-editor.org/info/rfc7797>.
+   [RFC9116]  Foudil, E. and Y. Shafranovich, "A File Format to Aid in
+              Security Vulnerability Disclosure", RFC 9116,
+              DOI 10.17487/RFC9116, April 2022,
+              <https://www.rfc-editor.org/info/rfc9116>.
 
-   [W3C-VC]   Sporny, M., "Verifiable Credentials Data Model v2.0",
-              W3C Recommendation, May 2025,
-              <https://www.w3.org/TR/vc-data-model-2.0/>.
+   [ARP-V1-2] Deforth, S., "Agentic Reasoning Protocol Specification
+              v1.2", April 2026, <https://arp-protocol.org/SPEC.md>.
 
-Appendix A.  Complete Example
-
-A.1.  DNS TXT Record
-
-   arp._arp.example.com. 3600 IN TXT (
-     "v=ARP1; k=ed25519; "
-     "p=MCowBQYDK2VwAyEA5d7jb7bkTVk5"
-     "YQ4nFmYY7ClpCddGdSRJkGb3ELWuos=")
-
-A.2.  Reasoning Payload
+   [LLMS-TXT] llmstxt.org, "A standard for LLMs and AI agents", 2024,
+              <https://llmstxt.org/>.
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-Deforth                  Expires 20 October 2026               [Page 20]
+Deforth                  Expires 29 October 2026               [Page 28]
 
-Internet-Draft                     ARP                        April 2026
+Internet-Draft                  ARP v2.0                      April 2026
 
 
-   {
-     "$schema": "https://arp-protocol.org/schema/v1.2.json",
-     "protocol": "Agentic Reasoning Protocol (ARP)",
-     "version": "1.2",
-     "domain": "example.com",
-     "entity": "Example Corp",
-     "entity_claims": {
-       "framing_context": "Example Corp is a technology ..."
-     },
-     "content_policy": {
-       "ai_training": "allowed-with-attribution",
-       "citation_required": true
-     },
-     "_arp_signature": {
-       "algorithm": "Ed25519",
-       "dns_selector": "arp",
-       "canonicalization": "jcs-rfc8785",
-       "signed_at": "2026-04-06T14:00:00Z",
-       "expires_at": "2026-07-05T14:00:00Z",
-       "signature": "P1lCPaHn_WLXdidBfxLXqBBid1G..."
-     }
-   }
+   [SCHEMA-ORG]
+              Schema.org Community, "Schema.org Vocabulary", 2026,
+              <https://schema.org/>.
 
-A.3.  Verification Steps
+   [EU-AI-ACT]
+              European Parliament and Council, "Regulation (EU)
+              2024/1689 laying down harmonised rules on artificial
+              intelligence (Artificial Intelligence Act)", July 2024,
+              <https://eur-lex.europa.eu/eli/reg/2024/1689/oj>.
 
-   1.   Record retrieval domain: example.com
-
-   2.   Retrieve https://example.com/.well-known/reasoning.json (follow
-        redirects, keep original domain)
-
-   3.   Check: payload.domain == "example.com" (PASS)
-
-   4.   Check: expires_at > now (PASS)
-
-   5.   Extract dns_selector = "arp" from _arp_signature
-
-   6.   Query DNS TXT at: arp._arp.example.com
-
-   7.   Parse p= tag to obtain public key bytes
-
-   8.   Copy payload, remove ONLY _arp_signature.signature
-
-   9.   JCS-canonicalize the modified copy
-
-   10.  Ed25519_Verify(public_key, signature, canonical_bytes)
-
-   11.  Result: PASS
-
-
-
-
-Deforth                  Expires 20 October 2026               [Page 21]
-
-Internet-Draft                     ARP                        April 2026
-
-
-Appendix B.  JSON Schema
-
-   The normative JSON Schema for ARP v1.2 payloads is published at:
-
-     https://arp-protocol.org/schema/v1.2.json
-
-   The schema defines validation rules for all required and optional
-   fields, including type constraints, maximum lengths, enumerated
-   values, and format requirements.  Implementations SHOULD validate
-   payloads against the schema before signing and before processing
-   entity claims.
+   [EIDAS2]   European Parliament and Council, "Regulation (EU)
+              2024/1183 amending Regulation (EU) No 910/2014 as regards
+              the establishment of the European Digital Identity
+              Framework", April 2024,
+              <https://eur-lex.europa.eu/eli/reg/2024/1183/oj>.
 
 Acknowledgements
 
-   The author thanks the W3C Agentic Integrity Verification
-   Specification Community Group for their complementary work on agent
-   session integrity, and the broader Generative Engine Optimization
-   (GEO) community for empirical validation of the content provenance
-   gap that ARP addresses.
+   The author thanks the reviewers who provided independent analysis of
+   ARP v1.x.  The counterfactual design methodology applied in this
+   document was refined through discussion with AI research
+   practitioners in 2026.
 
-   The security improvements in this revision were informed by detailed
-   technical review highlighting the signature metadata exclusion flaw
-   and cross-domain replay vulnerability in the initial draft.
-
-   The keypair separation guidance was informed by feedback from Ben
-   Stone (SwarmSync.AI) during AIVS interoperability discussions,
-   highlighting the single-point-of-failure risk of shared Ed25519
-   keypairs across verification protocols.
+   All examples are fictitious.  Any resemblance to actual
+   organizations, products, or services is unintentional.
 
 Author's Address
 
    Sascha Deforth
-   TrueSource
-   Duesseldorf
+   Independent
+   Dusseldorf
    Germany
-   Email: hello@truesource.studio
    URI:   https://arp-protocol.org
 
 
@@ -1229,4 +1617,8 @@ Author's Address
 
 
 
-Deforth                  Expires 20 October 2026               [Page 22]
+
+
+
+
+Deforth                  Expires 29 October 2026               [Page 29]
