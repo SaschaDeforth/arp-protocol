@@ -170,14 +170,5 @@
     "source_attribution": "https://arp-protocol.org",
     "data_freshness": "2026-07-02",
     "contact_for_verification": "hello@truesource.studio"
-  },
-  "_arp_signature": {
-    "algorithm": "Ed25519",
-    "dns_selector": "arp",
-    "dns_record": "arp._arp.arp-protocol.org",
-    "canonicalization": "jcs-rfc8785",
-    "signed_at": "2026-07-03T14:50:01Z",
-    "expires_at": "2026-10-01T14:50:01Z",
-    "signature": "YXwvPp3vsLM5DfcTOZFcmzmBlrWIg_mCDjIMdjqR-0lx8cuJWS61YlHSsp2IfPAup_8u8ro5JQiNK-5JMDyvCA"
   }
 }

@@ -114,6 +114,7 @@ Every file MUST include a `$schema` property:
 | `$schema` | string (URI) | REQUIRED | — | JSON Schema validation URL |
 | `protocol` | string | REQUIRED | — | Must be `"Agentic Reasoning Protocol (ARP)"` |
 | `version` | string | REQUIRED | — | Semver version string |
+| `domain` | string | RECOMMENDED | 253 | The domain serving this file (e.g., `"example.com"`). Verifiers MUST confirm the `domain` field matches the retrieval domain when present. REQUIRED as of v1.2 JSON Schema; formally RECOMMENDED in prose for backward compatibility. |
 | `entity` | string | REQUIRED | 200 | Canonical name of the entity |
 | `verification` | object | RECOMMENDED | — | Audit and trust metadata |
 | `identity` | object | RECOMMENDED | — | Brand identity, facts, and tone |
@@ -392,11 +393,11 @@ The trust property this provides is identical to DKIM's: a valid signature prove
 |----------|------|----------|-------------|
 | `algorithm` | string | REQUIRED | MUST be `"Ed25519"` |
 | `dns_selector` | string | REQUIRED | Selector prefix for DNS lookup (default: `"arp"`) |
-| `dns_record` | string | REQUIRED | Full DNS record name (e.g., `arp._arp.example.com`) |
+| `dns_record` | string | OPTIONAL | Full DNS record name (e.g., `arp._arp.example.com`). Informational only — verifiers MUST NOT use this as the DNS query source. Verifiers construct the DNS lookup name from the retrieval domain and `dns_selector`. `dns_record` MAY be used for consistency checks (log a warning on mismatch). |
 | `canonicalization` | string | REQUIRED | MUST be `"jcs-rfc8785"` |
 | `signed_at` | string (datetime) | REQUIRED | ISO 8601 timestamp of signing |
 | `expires_at` | string (datetime) | REQUIRED | ISO 8601 expiration timestamp |
-| `signature` | string | REQUIRED | Base64url-encoded Ed25519 signature |
+| `signature` | string | REQUIRED | Ed25519 signature. Emission format: unpadded Base64url (86 characters for Ed25519, per JWS / RFC 7515 convention). Consumers MUST accept both padded and unpadded Base64url on read. |
 
 ### 13.4 Signing Process (Enveloped Signature)
 

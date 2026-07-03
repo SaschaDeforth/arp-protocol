@@ -1,6 +1,6 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
-**Status:** Draft Specification v1.2 (stable, 2 live deployments)
+**Status:** Draft Specification v1.2 (stable, 3 live deployments)
 **Next:** v2.0 Internet-Draft submitted to IETF
 **License:** MIT | **Format:** JSON | **Trust:** Ed25519 + DNS
 **Author:** Sascha Deforth
@@ -350,7 +350,7 @@ The v2.0 specification defines a 6-stage incremental migration. Stage 0 is "do n
 
 | Quarter | Milestone |
 |---------|-----------|
-| Q2 2026 (current) | v2.0 draft circulated for community review prior to IETF submission |
+| Q2 2026 (current) | v2.0 Internet-Draft submitted to IETF Datatracker (2026-04-27, Independent Submission, Informational) |
 | Q3 2026 | IETF Working Group outreach (HTTPAPI, DISPATCH); pilot v2.0 API |
 | Q4 2026 | First reference implementation; first institutional attester pilots |
 | 2027 | v2.0 promoted to "production" if and when at least one major AI platform implements native retrieval |
