@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """
-ARP Protocol CLI — Cryptographic Trust Layer (v1.3.0)
+ARP Protocol CLI — Cryptographic Trust Layer (v1.3.1)
 Command-line tool for generating keys, signing and verifying reasoning.json files.
+
+v1.3.1 Changes:
+  - SECURITY: the legacy Payload-only verification fallback was REMOVED.
+    In that pattern the _arp_signature metadata (expires_at, dns_selector,
+    algorithm) was NOT covered by the signature — a holder of a legacy-signed
+    file could extend its validity or redirect the DNS selector at will and
+    still get a CRYPTOGRAPHIC verdict. Only the Enveloped Pattern (SPEC §13.4)
+    is accepted now. Files signed with CLI <= 1.2 must be re-signed.
 
 v1.3.0 Changes:
   - Enveloped Signature Pattern: _arp_signature metadata (with signature:"")
     is included in the canonical bytes, matching SPEC §13.4 and the Browser Signer.
   - Unpadded base64url output (86 characters for Ed25519, JWS convention).
   - Tolerant decoding: accepts padded and unpadded base64/base64url on read.
-  - Legacy fallback: verifier tries Payload-only if Enveloped fails, reports
-    LEGACY_PAYLOAD_ONLY with re-sign guidance.
   - Domain-Binding: verify constructs the DNS name from the retrieval domain
     (or --domain flag for local files), never trusts dns_record as query source.
   - --pubkey flag for offline / CI verification against a local public key file.
@@ -117,7 +123,7 @@ def cmd_keys(args):
     print()
     print("╔══════════════════════════════════════════════════╗")
     print("║  ARP Cryptographic Trust Layer — Key Generator   ║")
-    print("║                    v1.3.0                        ║")
+    print("║                    v1.3.1                        ║")
     print("╚══════════════════════════════════════════════════╝")
     print()
     print(f"  ✅ Private Key saved to: {args.out_key}")
@@ -198,7 +204,7 @@ def cmd_sign(args):
     print()
     print("╔══════════════════════════════════════════════════╗")
     print("║  ARP Cryptographic Trust Layer — File Signed     ║")
-    print("║  Enveloped Signature Pattern (v1.3.0)            ║")
+    print("║  Enveloped Signature Pattern (v1.3.1)            ║")
     print("╚══════════════════════════════════════════════════╝")
     print()
     print(f"  ✅ Signed file saved to: {out_file}")
@@ -225,7 +231,12 @@ def _extract_domain_from_url(url: str) -> str:
 
 def _resolve_public_key_dns(dns_name: str):
     """Resolve public key from DNS TXT record. Returns (public_key, txt_value) or exits."""
-    import dns.resolver
+    try:
+        import dns.resolver
+    except ImportError:
+        sys.exit("Missing dependency: pip install dnspython\n"
+                 "  (only needed for DNS-based verification; "
+                 "use --pubkey for offline verification)")
 
     print(f"  🔍 Looking up DNS: {dns_name}")
     try:
@@ -291,13 +302,17 @@ def _load_public_key_file(path: str):
 
 def _verify_signature(public_key, data: dict, sig_block: dict) -> str:
     """
-    Attempt signature verification. Returns 'enveloped', 'payload_only', or raises.
+    Verify the signature. Returns 'enveloped' or raises InvalidSignature.
 
-    Tries the normative Enveloped Pattern first (SPEC §13.4):
+    Only the normative Enveloped Pattern (SPEC §13.4) is accepted:
     set signature to "", canonicalize the ENTIRE object.
 
-    If that fails, falls back to the legacy Payload-only pattern
-    (CLI ≤1.2) and returns 'payload_only'.
+    The legacy payload-only pattern (CLI ≤1.2) was REMOVED in v1.3.1.
+    Reason: in that pattern the _arp_signature metadata (expires_at,
+    dns_selector, algorithm) is NOT covered by the signature, so an
+    attacker could extend validity or redirect the DNS selector at will
+    while the file still verified. Files signed with CLI ≤1.2 must be
+    re-signed.
     """
     signature_bytes = b64_decode_tolerant(sig_block["signature"])
 
@@ -310,20 +325,13 @@ def _verify_signature(public_key, data: dict, sig_block: dict) -> str:
         public_key.verify(signature_bytes, canonical_enveloped)
         return "enveloped"
     except InvalidSignature:
-        pass
-
-    # --- Attempt 2: Legacy Payload-only (CLI ≤1.2) ---
-    payload = {k: v for k, v in data.items() if k != "_arp_signature"}
-    canonical_payload = canonicalize(payload)
-
-    try:
-        public_key.verify(signature_bytes, canonical_payload)
-        return "payload_only"
-    except InvalidSignature:
-        pass
-
-    # Both failed
-    raise InvalidSignature("Verification failed under both enveloped and payload-only patterns")
+        raise InvalidSignature(
+            "Enveloped signature verification failed (SPEC §13.4). "
+            "If this file was signed with CLI <= 1.2 (payload-only pattern), "
+            "re-sign it with CLI v1.3+ or the Browser Signer — the legacy "
+            "pattern is no longer accepted (it left the signature metadata "
+            "unprotected)."
+        )
 
 
 def cmd_verify(args):
@@ -446,18 +454,8 @@ def cmd_verify(args):
     print("  ╚══════════════════════════════════════════════════╝")
     print()
 
-    if method == "payload_only":
-        print("  ⚠️  Verification Method: LEGACY_PAYLOAD_ONLY")
-        print("     This file was signed with CLI ≤1.2 (payload-only pattern).")
-        print("     The signature metadata (expires_at, dns_selector, etc.) is")
-        print("     NOT cryptographically protected.")
-        print()
-        print("     👉 ACTION: Re-sign this file with CLI v1.3+ or the Browser Signer")
-        print("        to upgrade to the Enveloped Signature Pattern.")
-        print()
-    else:
-        print(f"  ✅ Verification Method: Enveloped Signature (SPEC §13.4)")
-        print()
+    print(f"  ✅ Verification Method: Enveloped Signature (SPEC §13.4)")
+    print()
 
     print(f"  🛡️  Trust Level:  {'UNSIGNED (expired)' if expired else 'CRYPTOGRAPHIC'}")
     print(f"  🌐 Domain:       {domain}")
@@ -485,7 +483,7 @@ def cmd_verify(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="ARP Protocol CLI — Cryptographic Trust Layer (v1.3.0)",
+        description="ARP Protocol CLI — Cryptographic Trust Layer (v1.3.1)",
         epilog="Docs: https://arp-protocol.org | License: MIT",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
