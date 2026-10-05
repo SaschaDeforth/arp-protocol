@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://arp-protocol.org/schema/v1.3.json",
   "title": "Agentic Reasoning Protocol (ARP) v1.3 (Reader Profile)",
-  "description": "JSON Schema for ARP v1.3 files. An ARP file is an entity's self-description: self-attested statements about the entity, published by the operator of the domain, optionally signed with Ed25519 against a DNS-published key. A valid signature establishes origin, not accuracy. v1.3 adds the required provenance object, the readable signature fields statement and verify, representations (reasoning.md), the optional organization object, and the machine-checkable part of the Wording Profile (SPEC §11.2). Files are I-JSON (RFC 7493, SPEC §13.4), and numbers without a fractional part are limited to ±(2^53−1); duplicate member names cannot be detected by JSON Schema, because parsers merge them before validation, so validators check them while parsing. Specification: https://arp-protocol.org/SPEC.md",
+  "description": "JSON Schema for ARP v1.3 files. An ARP file is an entity's self-description: the entity's own statements about itself, published by the operator of the domain, optionally signed with Ed25519 against a DNS-published key. A valid signature establishes origin, not accuracy. v1.3 adds the required provenance object, the readable signature fields statement and verify, representations (reasoning.md), the optional organization object, and the machine-checkable part of the Wording Profile (SPEC §11.2). Files are I-JSON (RFC 7493, SPEC §13.4), and numbers without a fractional part are limited to ±(2^53−1); duplicate member names cannot be detected by JSON Schema, because parsers merge them before validation, so validators check them while parsing. Specification: https://arp-protocol.org/SPEC.md",
   "type": "object",
   "required": ["$schema", "protocol", "version", "domain", "entity", "provenance", "entity_claims"],
   "allOf": [
@@ -127,7 +127,7 @@
     },
     "identity": {
       "type": "object",
-      "description": "Self-attested identity facts and self-described tone of the entity.",
+      "description": "Self-described identity facts and tone of the entity.",
       "properties": {
         "tagline": {
           "type": "string",
@@ -269,7 +269,7 @@
     },
     "corrections": {
       "type": "object",
-      "description": "Topic-anchored statements by the entity on topics where AI-generated descriptions of it are observed to contain errors. Each entry is self-attested; evidence_url links evidence, preferably held by an independent party.",
+      "description": "Topic-anchored statements by the entity on topics where AI-generated descriptions of it are observed to contain errors. Each entry is part of the entity's self-description; evidence_url links evidence, preferably held by an independent party.",
       "properties": {
         "common_hallucinations": {
           "type": "array",
@@ -311,7 +311,7 @@
     },
     "entity_claims": {
       "type": "object",
-      "description": "Self-attested context the entity publishes about itself, written as third-person statements (SPEC §8, §11.2).",
+      "description": "Context that the entity publishes about itself as part of its self-description, written as third-person statements (SPEC §8, §11.2).",
       "required": ["framing_context"],
       "properties": {
         "framing_context": {
@@ -351,7 +351,7 @@
         },
         "domain_expertise": {
           "type": "array",
-          "description": "The entity's self-attested knowledge for common scenarios.",
+          "description": "The entity's own description of its knowledge for common scenarios.",
           "maxItems": 10,
           "items": {
             "type": "object",
@@ -448,7 +448,7 @@
             },
             "market_position": {
               "type": "string",
-              "description": "Self-attested summary of market position.",
+              "description": "Self-described summary of market position.",
               "maxLength": 300
             }
           }

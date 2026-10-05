@@ -6,7 +6,7 @@ A LangChain-compatible Document Loader that fetches and parses
 reasoning.json files from the /.well-known/ directory of any website.
 
 A reasoning.json file is an entity's self-description: identity data,
-corrections with evidence links and self-attested context. The loader turns
+corrections with evidence links and self-described context. The loader turns
 it into LangChain Documents. Every Document starts with a neutral provenance
 line (SPEC §13.10) that says where the content comes from and what was
 checked, for example:

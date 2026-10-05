@@ -67,7 +67,7 @@
         "@type": "CreativeWork",
         "name": "Agentic Reasoning Protocol (ARP)",
         "alternateName": "reasoning.json",
-        "description": "An open file format for an entity's self-description at /.well-known/reasoning.json, with sourced corrections, self-attested context and an optional Ed25519 signature whose public key is published in DNS.",
+        "description": "An open file format for an entity's self-description at /.well-known/reasoning.json, with sourced corrections, self-described context and an optional Ed25519 signature whose public key is published in DNS.",
         "url": "https://arp-protocol.org",
         "author": {
             "@type": "Person",
@@ -134,7 +134,7 @@
             The Agentic Reasoning Protocol (ARP) is an open file format by Sascha Deforth for an
             entity's self-description. It was first published in March 2026 under the MIT license.
             A domain owner places the file at <code>/.well-known/reasoning.json</code>; it holds identity
-            data, corrections with evidence links, and self-attested context.
+            data, corrections with evidence links, and self-described context.
         </p>
         <p>
             ARP is an individual draft, not a standard. The v2.0 Internet-Draft is an individual
@@ -275,9 +275,9 @@
             correction is used is decided by the reading system.
         </p>
 
-        <h3>Layer 3: Self-Attested Context</h3>
+        <h3>Layer 3: Self-Described Context</h3>
         <p>
-            The <code>entity_claims</code> object contains self-attested context, that is, the
+            The <code>entity_claims</code> object contains self-described context, that is, the
             entity's own perspective:
         </p>
         <ul>
@@ -630,7 +630,7 @@ Source: example.com — self-description (ARP). Signature check failed (key_revo
                     <tr>
                         <td>Valid, non-expired signature that covers the metadata; key present; <code>domain</code> matches the retrieval domain</td>
                         <td><strong style="color: #00ffcc;">CRYPTOGRAPHIC</strong></td>
-                        <td>Authorship verified against the DNS-published key: the domain operator published exactly this file. The statements remain self-attested.</td>
+                        <td>Authorship verified against the DNS-published key: the domain operator published exactly this file. The statements remain the entity's self-description.</td>
                     </tr>
                     <tr>
                         <td>Expired signature (key not revoked)</td>
@@ -810,7 +810,7 @@ python arp_cli.py verify https://yourdomain.com/.well-known/reasoning.json</code
                     </tr>
                     <tr>
                         <td><strong>Trust source</strong></td>
-                        <td>Self-attestation only</td>
+                        <td>Entity's own signature only</td>
                         <td>Multi-party co-signing (institutional, government, sovereign)</td>
                     </tr>
                     <tr>

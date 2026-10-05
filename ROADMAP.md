@@ -20,7 +20,7 @@ v1.3 is designed to make ARP files readable and correctly attributable for bots,
 
 Open for a later version: v1.3 keeps the member names `verified_fact` and `last_verified` for compatibility, although item 5 of the Wording Profile (SPEC §11.2) otherwise excludes such terms unless the text names who checked what. Whether a later version renames them (for example to `stated_fact` and `last_reviewed`, with a transition period in which verifiers read both) is undecided.
 
-The following sections describe the v2.0 draft as designed in April 2026; they have not been revised for v1.3.
+The following sections describe the v2.0 draft as designed in April 2026; they have not been revised for v1.3. Only the label of inversion 4 was reworded editorially on 2026-10-05 (SPEC.md, changelog "v1.3 editorial").
 
 ## How v2.0 Was Designed
 
@@ -44,7 +44,7 @@ ARP v2.0 was designed through **counterfactual inversion** — a method where ea
 **Inversion:** What if claims could change in real time and agents knew immediately?
 **v2.0 result:** Server-Sent Events (SSE) at `GET /subscribe`. Agents receive `claim:updated`, `correction:new`, and `trust:level:changed` events as they happen.
 
-### 4. Self-attestation → Multi-party co-signing
+### 4. Entity's own signature → Multi-party co-signing
 
 **v1.x assumption:** The entity's own cryptographic signature is the primary trust source.
 **Inversion:** What if external parties could co-sign individual claims?

@@ -203,7 +203,7 @@
         <h2>RQ5: Trust Model Adversarial Analysis</h2>
         <p><strong>Source:</strong> ChatGPT Deep Research, Gemini Deep Research</p>
         <p>
-            What are the attack surfaces of a self-attested reasoning file, and which of them
+            What are the attack surfaces of a reasoning file that holds a self-description, and which of them
             does cryptographic signing (since v1.2) address?
         </p>
         <h3>Threat Vectors</h3>
@@ -218,7 +218,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>False self-attestation</td>
+                        <td>False self-description</td>
                         <td>Good faith (same as schema.org)</td>
                         <td>Ed25519 signature attributes the file to the domain operator; it does not show that the statements are true</td>
                     </tr>

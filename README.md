@@ -6,7 +6,7 @@
 **Author:** Sascha Deforth
 **Validator:** Online
 
-A machine-readable file format in which a domain owner publishes a self-description of an entity — self-attested facts, factual corrections, domain context, and recommendation context — for AI agents and RAG pipelines, optionally with an Ed25519 signature that shows who published it. A signature establishes origin, not accuracy.
+A machine-readable file format in which a domain owner publishes a self-description of an entity — the entity's own statements of fact, factual corrections, domain context, and recommendation context — for AI agents and RAG pipelines, optionally with an Ed25519 signature that shows who published it. A signature establishes origin, not accuracy.
 
 - 🌐 Website: [arp-protocol.org](https://arp-protocol.org)
 - 📄 Specification (current, v1.3): [SPEC.md](./SPEC.md)
@@ -73,7 +73,7 @@ It defines four layers, plus the `provenance` statement:
 
 | Layer | Field | Purpose |
 |-------|-------|---------|
-| 🧠 Identity | `identity` | Self-attested facts, competencies, tone |
+| 🧠 Identity | `identity` | Self-described facts, competencies, tone |
 | 🛡️ Corrections | `corrections` | The entity's statements, with evidence links, on topics where AI frequently errs |
 | ⚙️ Entity Claims | `entity_claims` | Domain expertise, recommendation context, market positioning |
 | 🔐 Cryptographic Trust | `_arp_signature` | Ed25519 signatures verified via DNS TXT records |
@@ -241,7 +241,7 @@ vectorstore.add_documents(brand_context)
 
 **Intended benefits** (pending independent benchmarking):
 
-- Provide entity-attested grounding facts at retrieval time
+- Provide grounding facts from the entity's self-description at retrieval time
 - Reduce reliance on post-generation correction for documented topics
 - Make trust signals (cryptographic authorship) machine-readable
 
@@ -377,7 +377,7 @@ v2.0 was designed using counterfactual inversion — testing each v1.x assumptio
 | Distribution | Static file at `/.well-known/reasoning.json` | Live REST API at `/.well-known/arp/v2/` |
 | Identity anchor | Domain ownership (DNS) | W3C Decentralized Identifier (DID) |
 | Freshness signal | 90-day re-signing TTL | Server-Sent Events (SSE) push |
-| Trust source | Self-attestation only | Multi-party co-signing (institutional, government) |
+| Trust source | Entity's own signature only | Multi-party co-signing (institutional, government) |
 | Communication | One-way broadcast | Bidirectional with anonymized agent feedback |
 | Internationalization | Implicit English | First-class i18n with HTTP Accept-Language |
 

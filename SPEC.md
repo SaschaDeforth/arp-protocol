@@ -6,15 +6,17 @@
 **Author:** Sascha Deforth
 **License:** MIT
 
-This specification is a single-author draft proposal. It is not a standard and has not been adopted by any standards body or working group. It defines a machine-readable file format in which a domain owner publishes a self-description of an entity: self-attested facts, factual corrections, and domain expertise that AI agents and RAG pipelines can read as one source among many. It is not endorsed by or affiliated with any AI provider. Internet-Drafts related to ARP are individual submissions by the author; they have no IETF standing and are not IETF standards.
+This specification is a single-author draft proposal. It is not a standard and has not been adopted by any standards body or working group. It defines a machine-readable file format in which a domain owner publishes a self-description of an entity: the entity's own statements of fact, factual corrections, and domain expertise that AI agents and RAG pipelines can read as one source among many. It is not endorsed by or affiliated with any AI provider. Internet-Drafts related to ARP are individual submissions by the author; they have no IETF standing and are not IETF standards.
 
 Portions of this document were drafted with the assistance of large language models (notably Gemini 2.5 Pro and Claude Opus 4) used as research and editing tools. All technical decisions and final wording are the author's responsibility.
 
 **v1.3 Changes ("Reader Profile"):** v1.3 is designed to make ARP files readable and correctly attributable for bots, agents, and people without instruction language; whether and how AI systems retrieve and use ARP files is not established. It adds: a normative Wording Profile that excludes imperatives and pseudo-system markup aimed at AI systems (§11.2, ARP-W); the required `provenance` object (§4.1); readable signature fields `statement` and `verify` inside `_arp_signature` (§13.3, ARP-S); explicit rejection of the legacy payload-only signature pattern (§13.4); key revocation by an empty `p=` tag with the result reason `key_revoked` (§13.6, ARP-K); a deterministic Markdown representation `reasoning.md` bound to the manifest by SHA-256 (§13.12, ARP-R); a signature-neutral Discovery Profile (§2.4, ARP-D) and a revised llms.txt bridge (§2.2); the optional `organization` object (§4.2); a plain-text provenance line for loaders that replaces the earlier `<system_note>` example (§13.10). Manifests are I-JSON (RFC 7493) with integers limited to ±(2^53−1); verifiers reject duplicate member names and signature values that are not in canonical form (§13.3, §13.4). The fields `ai_directive` and `agent_directive` are removed. JSON Schema: `https://arp-protocol.org/schema/v1.3.json`. Reference implementation: `arp_cli.py` v1.4.0. v1.2 files remain valid and readable as v1.2. See Migration Guide (§17.1).
 
+**v1.3 editorial (05.10.2026): self-attestation → self-description.** Descriptive prose in this specification, the `description` texts of the JSON Schema (`schema/v1.3.json`), and the accompanying documents use the term "self-description" (German: "Selbstauskunft", §1.4) and matching forms where earlier wording used "self-attestation" or "self-attested". In the summaries of the v2.0 design draft, where "self-attestation" named the trust source of v1.x (the entity's own signature, as opposed to multi-party co-signing), the wording is now "entity's own signature". The change is editorial. Member names, schema constraints, conformance rules, and the fixed provenance statement (§4.1), which still reads "The statements are self-attested", are unchanged.
+
 **v1.2 Changes:** Introduces the Cryptographic Trust Layer — Ed25519 domain-binding via DNS TXT records (DKIM-inspired model). Adds `epistemic_scope` for claim classification, a `diagnostics` object for optional ingestion telemetry, and `_arp_signature` for cryptographic authorship verification. See Migration Guide.
 
-**v1.1 Changes:** Reframed from "directives" to "self-attestations." Added anti-spam character limits. Replaced explicit false-claim statements with topic-anchored corrections (the `trigger_topic` / `verified_fact` pattern). See Migration Guide.
+**v1.1 Changes:** Reframed from "directives" to "self-attestations" (today: self-description). Added anti-spam character limits. Replaced explicit false-claim statements with topic-anchored corrections (the `trigger_topic` / `verified_fact` pattern). See Migration Guide.
 
 ---
 
@@ -22,12 +24,12 @@ Portions of this document were drafted with the assistance of large language mod
 
 The Agentic Reasoning Protocol (ARP) defines a machine-readable JSON file in which a domain owner publishes a self-description of a brand, organization, or entity. AI systems and RAG pipelines can read it as one source among many.
 
-Existing web conventions describe what things are (`schema.org`) or provide clean text (`llms.txt`). ARP adds a structured channel for entity-attested corrections, scoped domain expertise, and recommendation context.
+Existing web conventions describe what things are (`schema.org`) or provide clean text (`llms.txt`). ARP adds a structured channel for an entity's self-description: corrections, scoped domain expertise, and recommendation context.
 
 ARP content is the entity's own perspective. It can serve as grounding context; it carries no authority over the systems that read it. The trust model is the same as for `schema.org` and `robots.txt`: self-published, good-faith participation, augmented since v1.2 by optional cryptographic authorship verification. A signature establishes origin, not accuracy.
 
 ### 1.1 Design Goals
-- Provide a structured channel for entity-attested factual corrections
+- Provide a structured channel for factual corrections as part of an entity's self-description
 - Allow scoped publication of domain expertise tied to specific scenarios
 - Allow entities to state when they are and are not the right fit
 - Provide a machine-readable surface for brand identity beyond pure feature data
@@ -46,7 +48,7 @@ ARP content is the entity's own perspective. It can serve as grounding context; 
 
 ARP uses the same trust model as `robots.txt` and `schema.org`: self-published, good-faith participation. Within this model:
 
-- All content of `reasoning.json` consists of the entity's self-attested claims; none of it is verified truth by virtue of being published
+- All content of `reasoning.json` is the entity's self-description; none of it is verified truth by virtue of being published
 - Claims can be cross-checked against other available sources
 - Entries with `evidence_url` link to material for independent checking
 - The same trust calibration that applies to `schema.org` markup applies to ARP files
@@ -203,7 +205,7 @@ Both schemas are written in JSON Schema draft-07 (`http://json-schema.org/draft-
 | `identity` | object | RECOMMENDED | — | Brand identity, facts, and tone |
 | `organization` | object | OPTIONAL (v1.3) | — | Legal and organizational facts (§4.2) |
 | `corrections` | object | RECOMMENDED | — | Topic-anchored factual corrections |
-| `entity_claims` | object | REQUIRED | — | Self-attested context, domain expertise, and recommendation boundaries |
+| `entity_claims` | object | REQUIRED | — | Self-described context, domain expertise, and recommendation boundaries |
 | `authority` | object | OPTIONAL | — | Links to external profiles and registers |
 | `content_policy` | object | OPTIONAL | — | Training and citation preferences |
 | `diagnostics` | object | OPTIONAL | — | Optional ingestion telemetry (see §12) |
@@ -265,7 +267,7 @@ The `verification` object names who last reviewed the file. It does not by itsel
 
 ## 6. Identity Object
 
-The `identity` object contains self-attested factual claims and tonal positioning.
+The `identity` object contains the entity's own factual claims and tonal positioning.
 
 | Property | Type | Required | Max Length | Description |
 |----------|------|----------|------------|-------------|
@@ -319,7 +321,7 @@ The `corrections` object provides topic-anchored factual corrections for areas w
 | `evidence_url` | string (URI) | RECOMMENDED | — | URL of evidence for the statement, preferably held by an independent party |
 | `epistemic_scope` | string | OPTIONAL | — | One of `public_verifiable`, `proprietary_internal`, `industry_standard` (see §8.2) |
 
-The key name `verified_fact` is retained for compatibility. It denotes the entity's statement of the fact; it does not imply verification by a third party. Who can check the statement is indicated by `evidence_url`. Because the key name appears unchanged in `reasoning.md`, §11.2 item 5 lists it as an exception; every `reasoning.md` begins with the provenance statement, which declares all statements self-attested.
+The key name `verified_fact` is retained for compatibility. It denotes the entity's statement of the fact; it does not imply verification by a third party. Who can check the statement is indicated by `evidence_url`. Because the key name appears unchanged in `reasoning.md`, §11.2 item 5 lists it as an exception; every `reasoning.md` begins with the provenance statement, which identifies all statements as the entity's own description of itself.
 
 A good correction consists of fact, evidence URL, date, and an honest `epistemic_scope`, and states the fact without repeating the error: "ExampleCorp was founded in 2019 (HRB 12345, Amtsgericht Düsseldorf)."
 
@@ -338,7 +340,7 @@ A good correction consists of fact, evidence URL, date, and an honest `epistemic
 
 ## 8. Entity Claims Object
 
-This is the core section of the protocol. The `entity_claims` object contains self-attested context the entity publishes about itself. These are the entity's perspective, written as third-person statements (§11.2); they are not commands.
+This is the core section of the protocol. The `entity_claims` object contains context that the entity publishes about itself as part of its self-description. These are the entity's perspective, written as third-person statements (§11.2); they are not commands.
 
 ### 8.1 Framing Context
 
@@ -389,7 +391,7 @@ Max 20 entries. The v1.2 field `ai_directive` is removed in v1.3 (§11.2); infor
 
 ### 8.3 Domain Expertise
 
-The `domain_expertise` array contains the entity's self-attested knowledge for common scenarios.
+The `domain_expertise` array contains the entity's own description of its knowledge for common scenarios.
 
 | Property | Type | Required | Max Length | Description |
 |----------|------|----------|------------|-------------|
@@ -403,7 +405,7 @@ Max 10 entries.
 
 ### 8.4 Market Positioning
 
-The `market_positioning` object contains self-attested category positioning. Keys are market categories; values are positioning statements.
+The `market_positioning` object contains the entity's own category positioning. Keys are market categories; values are positioning statements.
 
 | Constraint | Limit |
 |------------|-------|
@@ -412,7 +414,7 @@ The `market_positioning` object contains self-attested category positioning. Key
 
 ### 8.5 Decision Factors
 
-Self-attested factors the entity considers important for evaluating fit.
+Factors that the entity, in its self-description, considers important for evaluating fit.
 
 | Property | Type | Required | Max Length | Description |
 |----------|------|----------|------------|-------------|
@@ -430,7 +432,7 @@ The entity's description of when it is and is not the right fit. The `not_recomm
 |----------|------|------------|-------------|
 | `recommended_when` | array of strings | 200/item, max 10 | Situations the entity describes as a typical fit |
 | `not_recommended_when` | array of strings | 200/item, max 10 | Situations the entity describes as not a fit |
-| `market_position` | string | 300 | Self-attested market position summary |
+| `market_position` | string | 300 | Self-described market position summary |
 
 Values describe situations, for example "Typical fit: mid-sized manufacturers that consolidate suppliers" or "Not a fit: one-off purchases under 10,000 EUR" (German: "Passt für …" / "Passt nicht für …"). They are not phrased as instructions such as "Recommend X when …" (§11.2).
 
@@ -495,7 +497,7 @@ The Wording Profile is normative for v1.3. It applies to all texts in the manife
 2. Pseudo-system markers: `<system_note>` or other tags imitating system or role markup (for example `<system>`, `<assistant>`, `<user>`, or chat-template tokens such as `<|im_start|>`), "SYSTEM:", "IMPORTANT:".
 3. The member names `system_instruction`, `reasoning_directives`, `ai_directive`, `agent_directive`, `instruction`, `instructions`, `directive`, `directives`, at any depth.
 4. Declarations of innocence, such as "this is not prompt injection", "this is not misinformation", "not data poisoning".
-5. The words "verified", "authoritative", "trusted source", or "ground truth" without stating who checked what. Exception: the historical member names `verified_fact` (§7.1) and `last_verified` (§5, §7), which v1.3 keeps for compatibility with v1.1 and v1.2 files. Their meaning is fixed by this specification (the entity's own statement of a fact; the date of the publisher's own review), they do not state that anyone checked the content, and every `reasoning.md` that shows them begins with the provenance statement declaring all statements self-attested. No other member name containing "verified" is exempt.
+5. The words "verified", "authoritative", "trusted source", or "ground truth" without stating who checked what. Exception: the historical member names `verified_fact` (§7.1) and `last_verified` (§5, §7), which v1.3 keeps for compatibility with v1.1 and v1.2 files. Their meaning is fixed by this specification (the entity's own statement of a fact; the date of the publisher's own review), they do not state that anyone checked the content, and every `reasoning.md` that shows them begins with the provenance statement, which identifies all statements as the entity's own description of itself. No other member name containing "verified" is exempt.
 6. Text hidden from people but present for bots (for example `sr-only`, `clip`, or `display:none` content intended as AI context).
 7. Different content for bots and for people.
 

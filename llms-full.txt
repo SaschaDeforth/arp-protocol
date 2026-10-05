@@ -1,6 +1,6 @@
 # Agentic Reasoning Protocol (ARP) — Full Documentation & Specification Overview
 
-> The Agentic Reasoning Protocol (ARP) is a single-author draft specification by Sascha Deforth. Current version: 1.3 ("Reader Profile"), dated 2026-10-05. ARP defines a domain-hosted JSON file in which an entity publishes a self-description: self-attested facts, topic-anchored corrections, domain expertise, and recommendation context. An optional Ed25519 signature, bound to the domain through DNS, shows who published the file; it does not show that the statements are true. ARP is not a standard and has no IETF standing.
+> The Agentic Reasoning Protocol (ARP) is a single-author draft specification by Sascha Deforth. Current version: 1.3 ("Reader Profile"), dated 2026-10-05. ARP defines a domain-hosted JSON file in which an entity publishes a self-description: its own statements of fact, topic-anchored corrections, domain expertise, and recommendation context. An optional Ed25519 signature, bound to the domain through DNS, shows who published the file; it does not show that the statements are true. ARP is not a standard and has no IETF standing.
 
 ---
 
@@ -141,7 +141,7 @@ Uses a topic-anchored design. Instead of stating the erroneous claim (which risk
 ```
 
 ### 4.3 Entity Claims Block
-The entity's self-attested context: framing, domain expertise scenarios, and recommendation context, all written as third-person statements.
+The entity's self-described context: framing, domain expertise scenarios, and recommendation context, all written as third-person statements.
 ```json
 "entity_claims": {
   "framing_context": "ExampleCorp describes itself as a procurement consultancy for mid-sized manufacturers in Germany.",
@@ -283,7 +283,7 @@ A v2.0 design was published as the individual Internet-Draft `draft-deforth-arp-
 | **Distribution** | Static file at `/.well-known/reasoning.json` | Live REST API at `/.well-known/arp/v2/` |
 | **Identity Anchor** | Domain ownership (DNS) | W3C Decentralized Identifier (DID) |
 | **Freshness Signal** | 90-day signing TTL | Event-driven pushes via Server-Sent Events (SSE) |
-| **Trust Source** | Self-attestation | Multi-party co-signing (attesters) |
+| **Trust Source** | Entity's own signature | Multi-party co-signing (attesters) |
 | **Communication** | One-way broadcast | Bidirectional anonymized agent feedback |
 | **i18n** | English-centric | Content negotiation via `Accept-Language` |
 

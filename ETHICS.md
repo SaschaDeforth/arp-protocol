@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-The `reasoning.json` protocol provides machine-readable self-attested context that may influence how AI systems interpret, reason about, and recommend brands, products, and services. Because the publisher controls what enters this channel, the protocol depends on responsible use to be useful at all.
+The `reasoning.json` protocol provides a machine-readable self-description that may influence how AI systems interpret, reason about, and recommend brands, products, and services. Because the publisher controls what enters this channel, the protocol depends on responsible use to be useful at all.
 
 This Ethics Policy defines guidelines for the responsible use of `reasoning.json` so that it serves users rather than manipulates them.
 

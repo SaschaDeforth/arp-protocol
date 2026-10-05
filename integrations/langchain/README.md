@@ -2,7 +2,7 @@
 
 A LangChain-compatible Document Loader for `reasoning.json` files (ARP v1.3, "Reader Profile").
 
-A `reasoning.json` file is an entity's self-description: identity data, corrections with evidence links and self-attested context. The loader turns it into Documents and states in every Document where the content comes from and what was checked.
+A `reasoning.json` file is an entity's self-description: identity data, corrections with evidence links and self-described context. The loader turns it into Documents and states in every Document where the content comes from and what was checked.
 
 ## Installation
 
