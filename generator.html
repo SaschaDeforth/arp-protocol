@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator — reasoning.json v1.2</title>
-    <meta name="description" content="Generate a reasoning.json file for your brand. Fill in the form, get a valid v1.2 ARP file ready to sign and deploy.">
+    <title>Generator — reasoning.json v1.3</title>
+    <meta name="description" content="Generate a reasoning.json file (ARP v1.3) for an entity's self-description: provenance, identity, sourced corrections, reasoning.md and publishing snippets. Runs in the browser.">
     <meta name="robots" content="index, follow">
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="describedby" type="application/json" href="/.well-known/reasoning.json">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <style>
         /* --- Generator-specific styles --- */
         .gen-section {
@@ -267,18 +269,82 @@
         .correction-block .field-group {
             margin-bottom: 10px;
         }
+        .provenance-preview {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--code-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 8px 12px;
+            line-height: 1.5;
+        }
+
+        .options-row {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 8px 0 0;
+        }
+
+        .options-text {
+            flex: 1 1 0;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .lint-list {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+
+        .lint-item {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .lint-item:last-child { border-bottom: none; }
+
+        .lint-item code {
+            font-size: 12px;
+        }
+
+        .lint-ok { color: #1a7f37; }
+        .lint-error { color: #cf222e; font-weight: 600; }
+        .lint-warning { color: #9a6700; font-weight: 600; }
+
+        .lint-excerpt {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .self-description {
+            margin-top: 8px;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 640px) {
+            .gen-row, .gen-row-3 { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <nav class="nav">
     <div class="nav-inner">
-        <a href="index.html" class="nav-logo">reasoning.json</a>
+        <a href="/" class="nav-logo">reasoning.json</a>
         <div class="nav-links">
-            <a href="index.html#specification" class="nav-link">Specification</a>
-            <a href="validator.html" class="nav-link">Validator</a>
-            <a href="generator.html" class="nav-link" style="color: var(--text); font-weight: 600;">Generator</a>
-            <a href="index.html#ethics" class="nav-link">Ethics</a>
+            <a href="/#specification" class="nav-link">Specification</a>
+            <a href="/validator" class="nav-link">Validator</a>
+            <a href="/generator" class="nav-link" style="color: var(--text); font-weight: 600;">Generator</a>
+            <a href="/sign/" class="nav-link">Sign</a>
+            <a href="/#ethics" class="nav-link">Ethics</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link">GitHub</a>
         </div>
     </div>
@@ -289,10 +355,14 @@
     <header class="header">
         <h1>Generate your <code>reasoning.json</code></h1>
         <p class="header-desc">
-            Fill in the form to create a valid v1.2 reasoning file. Sign it with the <a href="/sign/" style="color: var(--accent);">ARP Signer</a> and deploy to <code>/.well-known/reasoning.json</code>.
+            Creates an ARP v1.3 file with an entity's own statements about itself (self-description), plus the readable
+            <code>reasoning.md</code> and the snippets that make both files findable. Statements are written in the third person,
+            e.g. “Acme Corp was founded in 2019 (HRB 12345).” Signing is optional: <a href="/sign/" style="color: var(--accent);">ARP Signer</a>
+            or <code>arp_cli</code> v1.4.0.
         </p>
         <div class="header-meta">
-            <span>Schema: v1.2</span>
+            <span>Spec: ARP v1.3</span>
+            <span>Schema: v1.3</span>
             <span>Client-side only — your data never leaves your browser</span>
         </div>
     </header>
@@ -304,10 +374,47 @@
             <span class="gen-section-badge required">REQUIRED</span>
         </div>
         <div class="gen-section-body">
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label" for="gen-entity">Entity Name <span class="field-counter" id="cnt-entity">0/200</span></label>
+                    <div class="field-hint">The canonical name of the brand or organization.</div>
+                    <input type="text" id="gen-entity" class="gen-input" placeholder="e.g. Acme Corp" maxlength="200" oninput="updateCounter('entity', 200); updateProvenancePreview()">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="gen-domain">Domain</label>
+                    <div class="field-hint">The domain that serves <code>/.well-known/reasoning.json</code>.</div>
+                    <input type="text" id="gen-domain" class="gen-input" placeholder="e.g. example.com" oninput="updateProvenancePreview()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Provenance (Required) ── -->
+    <div class="gen-section">
+        <div class="gen-section-header" onclick="toggleSection(this)">
+            <span class="gen-section-title">📄 Provenance (publisher)</span>
+            <span class="gen-section-badge required">REQUIRED</span>
+        </div>
+        <div class="gen-section-body">
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label" for="gen-publisher">Publisher <span class="field-counter" id="cnt-publisher">0/200</span></label>
+                    <div class="field-hint">The party responsible for the domain, as named in its legal notice.</div>
+                    <input type="text" id="gen-publisher" class="gen-input" placeholder="e.g. Acme Corp GmbH" maxlength="200" oninput="updateCounter('publisher', 200); updateProvenancePreview()">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="gen-publisher-url">Legal notice URL</label>
+                    <div class="field-hint">Imprint or legal information page (https).</div>
+                    <input type="url" id="gen-publisher-url" class="gen-input" placeholder="https://example.com/legal-notice">
+                </div>
+            </div>
             <div class="field-group">
-                <label class="field-label">Entity Name <span class="field-counter" id="cnt-entity">0/200</span></label>
-                <div class="field-hint">The canonical name of your brand or organization.</div>
-                <input type="text" id="gen-entity" class="gen-input" placeholder="e.g. Acme Corp" maxlength="200" oninput="updateCounter('entity', 200)">
+                <label class="field-label" for="gen-published">Published</label>
+                <input type="date" id="gen-published" class="gen-input" style="max-width: 220px;">
+            </div>
+            <div class="field-group">
+                <label class="field-label">provenance.statement (fixed wording)</label>
+                <div id="provenance-preview" class="provenance-preview"></div>
             </div>
         </div>
     </div>
@@ -320,31 +427,35 @@
         </div>
         <div class="gen-section-body">
             <div class="field-group">
-                <label class="field-label">Elevator Pitch <span class="field-counter" id="cnt-pitch">0/500</span></label>
-                <div class="field-hint">One-paragraph description of what your entity does. Focus on facts, not marketing.</div>
+                <label class="field-label" for="gen-pitch">Elevator Pitch <span class="field-counter" id="cnt-pitch">0/500</span></label>
+                <div class="field-hint">One paragraph in the third person about what the entity does. Facts, not marketing.</div>
                 <textarea id="gen-pitch" class="gen-textarea" placeholder="Acme Corp provides supply chain analytics for mid-market manufacturers..." maxlength="500" oninput="updateCounter('pitch', 500)"></textarea>
             </div>
             <div class="field-group">
-                <label class="field-label">Tagline <span class="field-counter" id="cnt-tagline">0/120</span></label>
+                <label class="field-label" for="gen-tagline">Tagline <span class="field-counter" id="cnt-tagline">0/120</span></label>
                 <input type="text" id="gen-tagline" class="gen-input" placeholder="e.g. Making supply chains visible." maxlength="120" oninput="updateCounter('tagline', 120)">
             </div>
             <div class="gen-row">
                 <div class="field-group">
-                    <label class="field-label">Headquarters <span class="field-counter" id="cnt-hq">0/100</span></label>
-                    <input type="text" id="gen-hq" class="gen-input" placeholder="San Francisco, CA" maxlength="100" oninput="updateCounter('hq', 100)">
+                    <label class="field-label" for="gen-legal">Legal Entity <span class="field-counter" id="cnt-legal">0/200</span></label>
+                    <input type="text" id="gen-legal" class="gen-input" placeholder="Acme Corp GmbH" maxlength="200" oninput="updateCounter('legal', 200)">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Founded</label>
-                    <input type="number" id="gen-founded" class="gen-input" placeholder="2020">
+                    <label class="field-label" for="gen-hq">Headquarters <span class="field-counter" id="cnt-hq">0/100</span></label>
+                    <input type="text" id="gen-hq" class="gen-input" placeholder="Düsseldorf, Germany" maxlength="100" oninput="updateCounter('hq', 100)">
                 </div>
             </div>
-            <div class="gen-row">
+            <div class="gen-row-3">
                 <div class="field-group">
-                    <label class="field-label">Industry <span class="field-counter" id="cnt-industry">0/100</span></label>
+                    <label class="field-label" for="gen-founded">Founded</label>
+                    <input type="number" id="gen-founded" class="gen-input" placeholder="2020">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="gen-industry">Industry <span class="field-counter" id="cnt-industry">0/100</span></label>
                     <input type="text" id="gen-industry" class="gen-input" placeholder="Enterprise Software" maxlength="100" oninput="updateCounter('industry', 100)">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Employees <span class="field-counter" id="cnt-employees">0/50</span></label>
+                    <label class="field-label" for="gen-employees">Employees <span class="field-counter" id="cnt-employees">0/50</span></label>
                     <input type="text" id="gen-employees" class="gen-input" placeholder="50-200" maxlength="50" oninput="updateCounter('employees', 50)">
                 </div>
             </div>
@@ -358,13 +469,13 @@
                 <button class="btn-add" onclick="addListItem('list-competencies', 'Competency', 10, 80)">+ Add competency</button>
             </div>
             <div class="field-group">
-                <label class="field-label">Tone of Voice <span class="field-counter" id="cnt-tone">0/200</span></label>
+                <label class="field-label" for="gen-tone">Tone of Voice <span class="field-counter" id="cnt-tone">0/200</span></label>
                 <input type="text" id="gen-tone" class="gen-input" placeholder="Professional, data-driven, jargon-free." maxlength="200" oninput="updateCounter('tone', 200)">
             </div>
             <div class="field-group">
-                <label class="field-label">Vibe Tags (max 8)</label>
-                <div class="field-hint">Emotional brand markers. Comma-separated.</div>
-                <input type="text" id="gen-vibe" class="gen-input" placeholder="enterprise-grade, innovative, transparent, trusted">
+                <label class="field-label" for="gen-vibe">Vibe Tags (max 8)</label>
+                <div class="field-hint">Short tonal markers. Comma-separated.</div>
+                <input type="text" id="gen-vibe" class="gen-input" placeholder="pragmatic, transparent, engineering-led">
             </div>
         </div>
     </div>
@@ -372,12 +483,14 @@
     <!-- ── Corrections ── -->
     <div class="gen-section">
         <div class="gen-section-header" onclick="toggleSection(this)">
-            <span class="gen-section-title">🛡️ Corrections (Anti-Hallucination)</span>
+            <span class="gen-section-title">🛡️ Corrections</span>
             <span class="gen-section-badge required">RECOMMENDED</span>
         </div>
         <div class="gen-section-body">
             <div class="field-hint" style="margin-bottom: 12px;">
-                Add topics where AI frequently makes errors about your entity. Use <strong>trigger_topic</strong> (the area of error) and <strong>verified_fact</strong> (the truth). Do NOT repeat the false claim — this is the "Pink Elephant" fix.
+                Topics where AI answers about the entity have been observed to be wrong. <strong>trigger_topic</strong> names the topic;
+                <strong>verified_fact</strong> states the correct fact in the third person, ideally with a source outside the own domain
+                (register, press, standards body). The false claim is not repeated (“Pink Elephant” fix, SPEC §7.1).
             </div>
             <div id="corrections-list">
                 <div class="correction-block">
@@ -386,12 +499,22 @@
                         <input type="text" class="gen-input correction-topic" placeholder="e.g. Company type and business model" maxlength="200">
                     </div>
                     <div class="field-group">
-                        <label class="field-label">Verified Fact</label>
-                        <input type="text" class="gen-input correction-fact" placeholder="e.g. Acme Corp is a consulting firm, not a software company." maxlength="300">
+                        <label class="field-label">Fact (verified_fact)</label>
+                        <input type="text" class="gen-input correction-fact" placeholder="e.g. Acme Corp is a consulting firm; it does not sell software licenses." maxlength="300">
                     </div>
-                    <div class="field-group">
-                        <label class="field-label">Evidence URL</label>
-                        <input type="url" class="gen-input correction-url" placeholder="https://example.com/about">
+                    <div class="gen-row">
+                        <div class="field-group">
+                            <label class="field-label">Evidence URL</label>
+                            <input type="url" class="gen-input correction-url" placeholder="https://www.handelsregister.de/...">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Epistemic scope</label>
+                            <select class="gen-select correction-scope">
+                                <option value="public_verifiable">public_verifiable</option>
+                                <option value="proprietary_internal">proprietary_internal</option>
+                                <option value="industry_standard">industry_standard</option>
+                            </select>
+                        </div>
                     </div>
                     <button class="btn-remove" onclick="this.closest('.correction-block').remove()">✕ Remove</button>
                 </div>
@@ -408,25 +531,25 @@
         </div>
         <div class="gen-section-body">
             <div class="field-group">
-                <label class="field-label">Framing Context <span class="field-counter" id="cnt-framing">0/500</span></label>
-                <div class="field-hint">How your entity describes its own positioning. This is NOT a system instruction — it's a self-attestation.</div>
-                <textarea id="gen-framing" class="gen-textarea" placeholder="Acme Corp positions itself as a mid-market alternative to enterprise BI suites..." maxlength="500" oninput="updateCounter('framing', 500)"></textarea>
+                <label class="field-label" for="gen-framing">Framing Context <span class="field-counter" id="cnt-framing">0/500</span></label>
+                <div class="field-hint">How the entity describes its own positioning, as a third-person statement — comparable to an “About” paragraph.</div>
+                <textarea id="gen-framing" class="gen-textarea" placeholder="Acme Corp describes itself as a mid-market alternative to enterprise BI suites..." maxlength="500" oninput="updateCounter('framing', 500)"></textarea>
             </div>
             <div class="field-group">
-                <label class="field-label">Recommended When (max 10)</label>
-                <div class="field-hint">Scenarios where your entity IS the right fit.</div>
+                <label class="field-label">Typical fit — recommended_when (max 10)</label>
+                <div class="field-hint">Situations the entity describes as a good fit.</div>
                 <div id="list-recommend" class="list-builder">
-                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. User needs real-time supply chain visibility" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. Mid-market manufacturers that need real-time supply chain visibility" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
                 </div>
-                <button class="btn-add" onclick="addListItem('list-recommend', 'Scenario', 10, 200)">+ Add scenario</button>
+                <button class="btn-add" onclick="addListItem('list-recommend', 'Situation', 10, 200)">+ Add situation</button>
             </div>
             <div class="field-group">
-                <label class="field-label">NOT Recommended When (max 10)</label>
-                <div class="field-hint">Scenarios where your entity is NOT the right fit. This builds trust with AI systems.</div>
+                <label class="field-label">Not a fit — not_recommended_when (max 10)</label>
+                <div class="field-hint">Situations the entity describes as not a fit.</div>
                 <div id="list-not-recommend" class="list-builder">
-                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. User is a solo freelancer with no supply chain" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
+                    <div class="list-item-row"><input type="text" class="gen-input" placeholder="e.g. Solo freelancers without a supply chain" maxlength="200"><button class="btn-remove" onclick="removeListItem(this)">✕</button></div>
                 </div>
-                <button class="btn-add" onclick="addListItem('list-not-recommend', 'Scenario', 10, 200)">+ Add scenario</button>
+                <button class="btn-add" onclick="addListItem('list-not-recommend', 'Situation', 10, 200)">+ Add situation</button>
             </div>
         </div>
     </div>
@@ -434,48 +557,84 @@
     <!-- ── Authority ── -->
     <div class="gen-section">
         <div class="gen-section-header" onclick="toggleSection(this)">
-            <span class="gen-section-title">🔗 Authority & Trust</span>
+            <span class="gen-section-title">🔗 Sources</span>
             <span class="gen-section-badge">OPTIONAL</span>
         </div>
         <div class="gen-section-body collapsed">
             <div class="gen-row">
                 <div class="field-group">
-                    <label class="field-label">Official Website</label>
+                    <label class="field-label" for="gen-website">Official Website</label>
                     <input type="url" id="gen-website" class="gen-input" placeholder="https://example.com">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Wikipedia</label>
-                    <input type="url" id="gen-wikipedia" class="gen-input" placeholder="https://en.wikipedia.org/wiki/...">
+                    <label class="field-label" for="gen-wikidata">Wikidata QID</label>
+                    <input type="text" id="gen-wikidata" class="gen-input" placeholder="Q123456">
                 </div>
             </div>
             <div class="gen-row">
                 <div class="field-group">
-                    <label class="field-label">LinkedIn</label>
-                    <input type="url" id="gen-linkedin" class="gen-input" placeholder="https://linkedin.com/company/...">
+                    <label class="field-label" for="gen-wikipedia">Wikipedia</label>
+                    <input type="url" id="gen-wikipedia" class="gen-input" placeholder="https://en.wikipedia.org/wiki/...">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Crunchbase</label>
+                    <label class="field-label" for="gen-linkedin">LinkedIn</label>
+                    <input type="url" id="gen-linkedin" class="gen-input" placeholder="https://linkedin.com/company/...">
+                </div>
+            </div>
+            <div class="gen-row">
+                <div class="field-group">
+                    <label class="field-label" for="gen-crunchbase">Crunchbase</label>
                     <input type="url" id="gen-crunchbase" class="gen-input" placeholder="https://crunchbase.com/organization/...">
                 </div>
             </div>
         </div>
     </div>
 
+    <label class="options-row">
+        <input type="checkbox" id="opt-representation" checked>
+        <span class="options-text">Also create <code>reasoning.md</code> and record its SHA-256 in <code>representations</code> (recommended)</span>
+    </label>
+
     <!-- Actions -->
     <div class="gen-actions">
         <button class="btn btn-primary" onclick="generate()">🧠 Generate reasoning.json</button>
-        <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy to Clipboard</button>
-        <button class="btn btn-secondary" onclick="downloadOutput()">⬇ Download Unsigned</button>
-        <button id="btn-to-signer" class="btn btn-primary" onclick="goToSigner()" style="display: none; background: #1a7f37; border-color: #1a7f37;">🔐 Next: Cryptographically Sign →</button>
+        <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy JSON</button>
+        <button class="btn btn-secondary" onclick="downloadOutput()">⬇ reasoning.json</button>
+        <button id="btn-download-md" class="btn btn-secondary" onclick="downloadMarkdown()" style="display: none;">⬇ reasoning.md</button>
+        <button id="btn-to-signer" class="btn btn-primary" onclick="goToSigner()" style="display: none; background: #1a7f37; border-color: #1a7f37;">Next: sign (optional) →</button>
     </div>
 
     <!-- Output -->
     <div id="output-box" class="output-box">
         <div class="output-header">
-            <span>reasoning.json (v1.2 — unsigned draft)</span>
+            <span>reasoning.json (v1.3 — unsigned)</span>
             <span id="output-size">0 bytes</span>
         </div>
         <div id="output-content" class="output-content"></div>
+    </div>
+
+    <div id="lint-box" class="output-box">
+        <div class="output-header">
+            <span>Wording check (ARP-W)</span>
+            <span id="lint-count"></span>
+        </div>
+        <div id="lint-content" class="lint-list"></div>
+    </div>
+
+    <div id="md-box" class="output-box">
+        <div class="output-header">
+            <span>/.well-known/reasoning.md</span>
+            <span id="md-hash"></span>
+        </div>
+        <div id="md-content" class="output-content"></div>
+    </div>
+
+    <div id="snippets-box" class="output-box">
+        <div class="output-header">
+            <span>Making both files findable (ARP-D)</span>
+            <span>same for signed and unsigned files</span>
+        </div>
+        <div id="snippets-content" class="output-content"></div>
     </div>
 
 </div>
@@ -484,14 +643,16 @@
     <div class="footer-inner">
         <div class="footer-col">
             <div class="footer-col-title">Protocol</div>
-            <a href="index.html">Specification</a>
-            <a href="index.html#ethics">Ethics Policy</a>
-            <a href="validator.html">Validator</a>
-            <a href="generator.html">Generator</a>
+            <a href="/">Specification</a>
+            <a href="/#ethics">Ethics Policy</a>
+            <a href="/validator">Validator</a>
+            <a href="/generator">Generator</a>
+            <a href="/sign/">Signer</a>
         </div>
         <div class="footer-col">
             <div class="footer-col-title">Resources</div>
             <a href="https://github.com/SaschaDeforth/arp-protocol">GitHub</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">CLI (arp_cli)</a>
             <a href="https://linkedin.com/in/deforth">LinkedIn</a>
         </div>
         <div class="footer-col">
@@ -502,14 +663,25 @@
         </div>
     </div>
     <div class="footer-bottom">
-        © 2026 Sascha Deforth. Built in Düsseldorf.
+        © 2026 Sascha Deforth. Built in Grevenbroich near Düsseldorf.
+        <div class="self-description">Self-description (ARP): <a href="https://arp-protocol.org/.well-known/reasoning.json">https://arp-protocol.org/.well-known/reasoning.json</a></div>
     </div>
 </footer>
 
+<script src="/script.js"></script>
 <script>
 // ========================================================
-// reasoning.json Generator — v1.2
+// reasoning.json Generator — ARP v1.3 ("Reader Profile")
+// Output: provenance (fixed statement), third-person texts checked with the
+// shared wording rules (ARP-W), reasoning.md (ARP-R) with SHA-256, and the
+// discovery snippets (ARP-D). Canonicalization, rules and rendering: script.js.
 // ========================================================
+
+const T = window.ARPTools;
+
+function esc(value) {
+    return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 function toggleSection(header) {
     const body = header.nextElementSibling;
@@ -563,12 +735,22 @@ function addCorrection() {
             <input type="text" id="gen-${idTopic}" class="gen-input correction-topic" placeholder="e.g. Founding date and history" maxlength="200" oninput="updateCounter('${idTopic}', 200)">
         </div>
         <div class="field-group">
-            <label class="field-label">Verified Fact <span class="field-counter" id="cnt-${idFact}">0/300</span></label>
-            <input type="text" id="gen-${idFact}" class="gen-input correction-fact" placeholder="The verified truth about this topic." maxlength="300" oninput="updateCounter('${idFact}', 300)">
+            <label class="field-label">Fact (verified_fact) <span class="field-counter" id="cnt-${idFact}">0/300</span></label>
+            <input type="text" id="gen-${idFact}" class="gen-input correction-fact" placeholder="The correct fact, in the third person, with a source." maxlength="300" oninput="updateCounter('${idFact}', 300)">
         </div>
-        <div class="field-group">
-            <label class="field-label">Evidence URL</label>
-            <input type="url" class="gen-input correction-url" placeholder="https://example.com/proof">
+        <div class="gen-row">
+            <div class="field-group">
+                <label class="field-label">Evidence URL</label>
+                <input type="url" class="gen-input correction-url" placeholder="https://example.org/source">
+            </div>
+            <div class="field-group">
+                <label class="field-label">Epistemic scope</label>
+                <select class="gen-select correction-scope">
+                    <option value="public_verifiable">public_verifiable</option>
+                    <option value="proprietary_internal">proprietary_internal</option>
+                    <option value="industry_standard">industry_standard</option>
+                </select>
+            </div>
         </div>
         <button class="btn-remove" onclick="this.closest('.correction-block').remove()">✕ Remove</button>
     `;
@@ -585,20 +767,51 @@ function val(id) {
     return el ? el.value.trim() : '';
 }
 
-let lastOutput = '';
+function today() {
+    return new Date().toISOString().split('T')[0];
+}
 
-function generate() {
+function updateProvenancePreview() {
+    const entity = val('gen-entity') || '{entity}';
+    const publisher = val('gen-publisher') || '{publisher}';
+    const domain = T.normalizeDomain(val('gen-domain')) || '{domain}';
+    document.getElementById('provenance-preview').textContent = T.provenanceStatement(entity, publisher, domain);
+}
+
+let lastOutput = '';
+let lastMarkdown = '';
+
+async function generate() {
     const entity = val('gen-entity');
-    if (!entity) {
-        alert('Entity name is required.');
+    const domain = T.normalizeDomain(val('gen-domain'));
+    const publisher = val('gen-publisher');
+    const publisherUrl = val('gen-publisher-url');
+    const published = val('gen-published') || today();
+    const framing = val('gen-framing');
+
+    const missing = [];
+    if (!entity) missing.push('Entity name');
+    if (!domain || !T.isValidDomain(domain)) missing.push('Domain (e.g. example.com)');
+    if (!publisher) missing.push('Publisher');
+    if (!/^https:\/\/\S+$/.test(publisherUrl)) missing.push('Legal notice URL (https)');
+    if (!framing) missing.push('Framing context');
+    if (missing.length) {
+        alert('Required for ARP v1.3:\n\n• ' + missing.join('\n• '));
         return;
     }
 
     const result = {
-        "$schema": "https://arp-protocol.org/schema/v1.2.json",
-        "protocol": "Agentic Reasoning Protocol (ARP)",
-        "version": "1.2",
-        "entity": entity
+        "$schema": T.SCHEMA_URL,
+        "protocol": T.PROTOCOL,
+        "version": T.SPEC_VERSION,
+        "domain": domain,
+        "entity": entity,
+        "provenance": {
+            "statement": T.provenanceStatement(entity, publisher, domain),
+            "publisher": publisher,
+            "publisher_url": publisherUrl,
+            "published": published
+        }
     };
 
     // Identity
@@ -608,13 +821,15 @@ function generate() {
     const tagline = val('gen-tagline');
     if (tagline) identity.tagline = tagline;
     const founded = val('gen-founded');
-    if (founded) identity.founded = parseInt(founded);
+    if (founded) identity.founded = parseInt(founded, 10);
     const hq = val('gen-hq');
     if (hq) identity.headquarters = hq;
     const industry = val('gen-industry');
     if (industry) identity.industry = industry;
     const employees = val('gen-employees');
     if (employees) identity.employees = employees;
+    const legal = val('gen-legal');
+    if (legal) identity.legal_entity = legal;
 
     const competencies = getListValues('list-competencies');
     if (competencies.length > 0) identity.core_competencies = competencies;
@@ -638,30 +853,29 @@ function generate() {
         const topic = block.querySelector('.correction-topic').value.trim();
         const fact = block.querySelector('.correction-fact').value.trim();
         const url = block.querySelector('.correction-url').value.trim();
+        const scope = block.querySelector('.correction-scope');
         if ((topic && !fact) || (!topic && fact)) {
             missingFields = true;
         } else if (topic && fact) {
             const entry = { trigger_topic: topic, verified_fact: fact };
             if (url) entry.evidence_url = url;
+            if (scope && scope.value) entry.epistemic_scope = scope.value;
             corrections.push(entry);
         }
     });
     if (missingFields) {
-        alert('Warning: A correction is missing either a Trigger Topic or a Verified Fact. Please fix or remove it before generating.');
+        alert('A correction is missing either a Trigger Topic or a Fact. Please fix or remove it before generating.');
         return;
     }
     if (corrections.length > 0) {
         result.corrections = {
             common_hallucinations: corrections,
-            last_verified: new Date().toISOString().split('T')[0]
+            last_verified: today()
         };
     }
 
     // Entity Claims
-    const claims = {};
-    const framing = val('gen-framing');
-    if (framing) claims.framing_context = framing;
-
+    const claims = { framing_context: framing };
     const recWhen = getListValues('list-recommend');
     const notRecWhen = getListValues('list-not-recommend');
     if (recWhen.length > 0 || notRecWhen.length > 0) {
@@ -669,13 +883,14 @@ function generate() {
         if (recWhen.length > 0) claims.recommendation_context.recommended_when = recWhen;
         if (notRecWhen.length > 0) claims.recommendation_context.not_recommended_when = notRecWhen;
     }
+    result.entity_claims = claims;
 
-    result.entity_claims = Object.keys(claims).length > 0 ? claims : { framing_context: "" };
-
-    // Authority
+    // Sources
     const authority = {};
     const website = val('gen-website');
     if (website) authority.official_website = website;
+    const wikidata = val('gen-wikidata');
+    if (wikidata) authority.wikidata = wikidata;
     const wikipedia = val('gen-wikipedia');
     if (wikipedia) authority.wikipedia = wikipedia;
     const linkedin = val('gen-linkedin');
@@ -684,23 +899,68 @@ function generate() {
     if (crunchbase) authority.crunchbase = crunchbase;
     if (Object.keys(authority).length > 0) result.authority = authority;
 
+    // Readable representation (ARP-R): render, hash, record
+    const withMarkdown = document.getElementById('opt-representation').checked;
+    lastMarkdown = '';
+    let hash = '';
+    if (withMarkdown) {
+        lastMarkdown = T.renderMarkdown(result);
+        hash = await T.sha256Hex(lastMarkdown);
+        result.representations = [T.representationEntry(domain, hash)];
+    }
+
     // Output
-    lastOutput = JSON.stringify(result, null, 2);
+    lastOutput = JSON.stringify(result, null, 2) + '\n';
     const outputBox = document.getElementById('output-box');
-    const outputContent = document.getElementById('output-content');
     outputBox.classList.add('visible');
-    outputContent.textContent = lastOutput;
+    document.getElementById('output-content').textContent = lastOutput;
     document.getElementById('output-size').textContent = new Blob([lastOutput]).size + ' bytes';
+
+    // Wording check (same rules as the Validator and arp_cli lint)
+    const findings = T.lint(result);
+    const errors = findings.filter(f => f.severity === 'error');
+    const lintBox = document.getElementById('lint-box');
+    lintBox.classList.add('visible');
+    document.getElementById('lint-count').textContent = findings.length
+        ? `${errors.length} error(s) · ${findings.length - errors.length} warning(s)` : 'no findings';
+    document.getElementById('lint-content').innerHTML = findings.length
+        ? findings.map(f => `
+            <div class="lint-item">
+                <span class="${f.severity === 'error' ? 'lint-error' : 'lint-warning'}">${esc(f.severity === 'error' ? 'ERROR' : 'WARNING')} ${esc(f.rule)}</span>
+                in <code>${esc(f.path)}</code>
+                <span class="lint-excerpt">${esc(f.excerpt)}</span>
+                ${esc(f.message)}
+            </div>`).join('')
+        : '<div class="lint-item lint-ok">✓ No findings — same rules as arp_cli lint v1.4.0 (ARP-W, ARP-P, ARP-S, ARP-R).</div>';
+
+    const mdBox = document.getElementById('md-box');
+    if (withMarkdown) {
+        mdBox.classList.add('visible');
+        document.getElementById('md-content').textContent = lastMarkdown;
+        document.getElementById('md-hash').textContent = 'sha256 ' + hash.slice(0, 16) + '…';
+        document.getElementById('btn-download-md').style.display = 'inline-block';
+    } else {
+        mdBox.classList.remove('visible');
+        document.getElementById('btn-download-md').style.display = 'none';
+    }
+
+    document.getElementById('snippets-box').classList.add('visible');
+    document.getElementById('snippets-content').textContent = T.discoverySnippets(domain, entity, published);
 
     outputBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Show Signer handoff button
-    document.getElementById('btn-to-signer').style.display = 'inline-block';
+    // Signer handoff only for files without wording errors
+    document.getElementById('btn-to-signer').style.display = errors.length ? 'none' : 'inline-block';
 }
 
 function goToSigner() {
     if (!lastOutput) return;
-    sessionStorage.setItem('unsigned_arp_payload', lastOutput);
+    try {
+        sessionStorage.setItem('unsigned_arp_payload', lastOutput);
+    } catch (e) {
+        // Storage blocked (private mode, site data disabled): the Signer opens empty
+        alert('The browser blocks session storage, so the file cannot be handed over. Copy or download it and paste it into the Signer.');
+    }
     window.location.href = '/sign/';
 }
 
@@ -714,19 +974,31 @@ function copyOutput() {
     });
 }
 
+function download(text, filename, type) {
+    const blob = new Blob([text], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 function downloadOutput() {
     if (!lastOutput) {
         alert('Generate a file first.');
         return;
     }
-    const blob = new Blob([lastOutput], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'reasoning.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    download(lastOutput, 'reasoning.json', 'application/json');
 }
+
+function downloadMarkdown() {
+    if (!lastMarkdown) return;
+    download(lastMarkdown, 'reasoning.md', 'text/markdown');
+}
+
+document.getElementById('gen-published').value = today();
+updateProvenancePreview();
 </script>
 
 <!-- Vercel Web Analytics (cookieless, GDPR-compliant) -->

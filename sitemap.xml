@@ -2,39 +2,51 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://arp-protocol.org/</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://arp-protocol.org/layer0/</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://arp-protocol.org/validator</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/generator</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/sign/</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/SPEC.md</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/ETHICS.md</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://arp-protocol.org/schema/v1.3.json</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/schema/v1.2.json</loc>
@@ -56,52 +68,57 @@
   </url>
   <url>
     <loc>https://arp-protocol.org/integrations/langchain/</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/examples/consulting.json</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/examples/saas.json</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/examples/ecommerce.json</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/examples/truesource.json</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://arp-protocol.org/llms.txt</loc>
-    <lastmod>2026-04-07</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://arp-protocol.org/research.html</loc>
-    <lastmod>2026-04-11</lastmod>
+    <loc>https://arp-protocol.org/research</loc>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- AI-Readable Infrastructure (machine-discovery) -->
-  <!-- Added 2026-05-13 after Vercel Edge Logs showed 0 bot hits on reasoning.json -->
+  <!-- Self-description (ARP); lastmod = publication date, after re-signing = date of signed_at -->
   <url>
     <loc>https://arp-protocol.org/.well-known/reasoning.json</loc>
-    <lastmod>2026-05-13</lastmod>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://arp-protocol.org/.well-known/reasoning.md</loc>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARP Signer — Zero-Knowledge Browser Cryptography</title>
-    <meta name="description" content="Cryptographically sign your reasoning.json with Ed25519 + RFC 8785 canonicalization. 100% browser-based — no data or private keys ever leave your device.">
+    <title>ARP Signer — Ed25519 signing in the browser</title>
+    <meta name="description" content="Sign a reasoning.json (ARP v1.3) with Ed25519 and RFC 8785 canonicalization, including the signature statement, verify pointers and the reasoning.md hash. Runs locally in the browser.">
     <meta name="author" content="Sascha Deforth">
     <link rel="canonical" href="https://arp-protocol.org/sign/">
-    <meta property="og:title" content="ARP Signer — Zero-Knowledge Browser Cryptography">
-    <meta property="og:description" content="Sign your reasoning.json with Ed25519 + DNS binding. Everything happens locally in your browser.">
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="describedby" type="application/json" href="/.well-known/reasoning.json">
+    <meta property="og:title" content="ARP Signer — Ed25519 signing in the browser">
+    <meta property="og:description" content="Sign a reasoning.json with Ed25519 and a public key in DNS. The signature shows the origin of the file, not the accuracy of its statements.">
     <meta property="og:url" content="https://arp-protocol.org/sign/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="ARP Signer — Zero-Knowledge Browser Cryptography">
-    <meta name="twitter:description" content="DKIM-inspired signing for AI agents. Sign your reasoning.json entirely in the browser.">
+    <meta name="twitter:title" content="ARP Signer — Ed25519 signing in the browser">
+    <meta name="twitter:description" content="DKIM-style signing of reasoning.json files, locally in the browser.">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/style.css">
     <style>
         /* Signer-specific styles extending the ARP design system */
         .signer-grid {
@@ -293,6 +295,73 @@
             .form-row { grid-template-columns: 1fr; }
             .download-grid { grid-template-columns: 1fr; }
         }
+        .notice-box {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-muted);
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .notice-box ul, .error-msg ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+            text-align: left;
+        }
+
+        .error-msg code, .notice-box code {
+            font-size: 12px;
+        }
+
+        .selfcheck {
+            margin-top: 16px;
+            font-size: 13px;
+            font-family: var(--font-mono);
+        }
+
+        .selfcheck.ok { color: #1a7f37; }
+        .selfcheck.bad { color: #cf222e; }
+
+        .snippets {
+            margin-top: 8px;
+            max-height: 320px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .results-panel details summary {
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .btn-download-md {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .btn-download-md:hover {
+            background: var(--code-bg);
+        }
+
+        .self-description {
+            margin-top: 8px;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
     </style>
 </head>
 <body>
@@ -303,9 +372,9 @@
         <a href="/" class="nav-logo">reasoning.json</a>
         <div class="nav-links">
             <a href="/#specification" class="nav-link">Specification</a>
-            <a href="/validator.html" class="nav-link">Validator</a>
-            <a href="/generator.html" class="nav-link">Generator</a>
-            <a href="/sign/" class="nav-link" style="color: #1a7f37; font-weight: 700;">🔐 Sign</a>
+            <a href="/validator" class="nav-link">Validator</a>
+            <a href="/generator" class="nav-link">Generator</a>
+            <a href="/sign/" class="nav-link" style="color: #1a7f37; font-weight: 700;">Sign</a>
             <a href="/#integration" class="nav-link">Integration</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
         </div>
@@ -317,17 +386,20 @@
     <header class="header">
         <h1>ARP Signer</h1>
         <p class="header-desc">
-            Cryptographically bind your <code>reasoning.json</code> to your domain via Ed25519 and 
-            <a href="https://tools.ietf.org/html/rfc8785">RFC 8785</a> (JCS).
-            <strong>No data or private keys are ever sent to a server.</strong>
+            Signs a <code>reasoning.json</code> (ARP v1.3) with Ed25519 over the
+            <a href="https://www.rfc-editor.org/rfc/rfc8785">RFC 8785</a> (JCS) canonical form of the whole file, signature metadata included
+            (Enveloped Pattern, SPEC §13.4). The Signer adds the fixed signature statement, the <code>verify</code> pointers and the
+            SHA-256 of <code>reasoning.md</code>. The signature shows who published the file and that it is unchanged;
+            it does not show that the statements are true.
         </p>
         <div class="header-meta">
             <span class="badge-zk">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                100% Zero-Knowledge · Browser Cryptography
+                Runs locally in the browser
             </span>
             <span>Algorithm: Ed25519</span>
             <span>Canonicalization: RFC 8785 (JCS)</span>
+            <span>File and private key stay in the browser; the Ed25519 library is loaded from esm.sh</span>
         </div>
     </header>
 
@@ -350,15 +422,23 @@
                         </div>
                         <div>
                             <label for="selector" class="form-label">DNS Selector</label>
-                            <input type="text" id="selector" class="form-input" value="arp">
+                            <input type="text" id="selector" class="form-input" value="">
                         </div>
                     </div>
+                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+                        New keys get a new selector (pattern <code>arpYYMM</code>, e.g. <code id="selectorExample">arp2610</code>).
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ttl" class="form-label">Validity (days)</label>
+                    <input type="number" id="ttl" class="form-input" value="90" min="1" max="365" style="max-width: 120px;">
                 </div>
 
                 <div class="form-group">
                     <div class="form-label-row">
                         <label for="keyInput" class="form-label">Existing Private Key (Optional)</label>
-                        <span style="font-size: 11px; color: var(--text-dim);">Re-sign without changing DNS</span>
+                        <span style="font-size: 11px; color: var(--text-dim);">Re-sign with the key behind an existing selector</span>
                     </div>
                     <input type="file" id="keyInput" class="form-input" accept=".pem" style="padding: 6px 8px;">
                     <div id="keyStatus" style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Leave blank to generate a new keypair.</div>
@@ -366,18 +446,19 @@
 
                 <div class="form-group">
                     <div class="form-label-row">
-                        <label for="jsonInput" class="form-label">Unsigned reasoning.json</label>
-                        <a href="/generator.html" style="font-size: 12px;">Need one? Use the Generator →</a>
+                        <label for="jsonInput" class="form-label">reasoning.json (v1.3, or v1.2 with provenance)</label>
+                        <a href="/generator" style="font-size: 12px;">No file yet? The Generator creates one →</a>
                     </div>
-                    <textarea id="jsonInput" class="form-textarea" placeholder="Paste your reasoning.json here or drag &amp; drop a file..."></textarea>
+                    <textarea id="jsonInput" class="form-textarea" spellcheck="false" placeholder="Paste your reasoning.json here or drag &amp; drop a file..."></textarea>
                 </div>
 
                 <button id="btnSign" class="btn-sign">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                    Generate Keys &amp; Sign Payload
+                    Check &amp; Sign
                 </button>
 
                 <div id="errorMsg" class="error-msg"></div>
+                <div id="noticeMsg" class="notice-box"></div>
             </div>
 
             <!-- Right: Results -->
@@ -385,12 +466,12 @@
                 <div class="success-bar"></div>
                 <h3>
                     <span class="step-number">2</span>
-                    Cryptographic Binding Successful
+                    Signed
                 </h3>
 
-                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">A. Publish your DNS TXT Record</h4>
+                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">A. DNS TXT record</h4>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    AI agents will query this public key to verify your domain authority.
+                    Verifiers (<code>arp_cli verify</code>, the <a href="/validator">Validator</a>) look up the public key under this name.
                 </p>
 
                 <div class="dns-record">
@@ -399,20 +480,51 @@
                     <div><span class="dns-label">Value:</span> <span id="dnsValue" class="dns-value"></span></div>
                 </div>
 
+                <div id="retireBox" style="display: none;">
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 8px;">Retiring the old selector</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+                        After the switch, an empty <code>p=</code> revokes the old key (as in DKIM, RFC 6376 §3.6.1).
+                        Verifiers then report every file signed with it, including archived copies, as INVALID (<code>key_revoked</code>).
+                    </p>
+                    <div class="dns-record">
+                        <div><span class="dns-label">Name:</span> <span id="retireName" class="dns-value"></span></div>
+                        <div><span class="dns-label">Type:</span> <span>TXT</span></div>
+                        <div><span class="dns-label">Value:</span> <span class="dns-value">v=ARP1; k=ed25519; p=</span></div>
+                    </div>
+                </div>
+
                 <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 8px;">B. Deploy &amp; Backup</h4>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+                    <code>/.well-known/reasoning.json</code> and <code>/.well-known/reasoning.md</code>, served as published here
+                    (the Markdown byte for byte, its SHA-256 is signed).
+                </p>
 
                 <div class="download-grid">
                     <button id="btnDownloadJson" class="btn-download btn-download-json">
                         ↓ reasoning.json
+                    </button>
+                    <button id="btnDownloadMd" class="btn-download btn-download-md">
+                        ↓ reasoning.md
                     </button>
                     <button id="btnDownloadKey" class="btn-download btn-download-key">
                         ↓ private_key.pem
                     </button>
                 </div>
 
+                <div id="selfCheck" class="selfcheck"></div>
+
+                <details>
+                    <summary>C. Making both files findable (ARP-D)</summary>
+                    <div id="snippets" class="snippets"></div>
+                </details>
+
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 16px;">
+                    After deployment: <a id="validateLink" href="/validator">check the live file in the Validator</a>.
+                </p>
+
                 <div class="warning-box">
                     <strong>⚠ Keep your Private Key secret!</strong>
-                    You will need it to update your file in the future without changing your DNS settings. We do not store it.
+                    You need it to re-sign under the same selector. It is not stored or transmitted by this page.
                 </div>
             </div>
         </div>
@@ -424,31 +536,42 @@
         <div class="timeline">
             <div class="timeline-item current">
                 <span class="timeline-year">Step 1</span>
-                <span class="timeline-label">Generate Ed25519 Keypair</span>
-                <span class="timeline-desc">A new keypair is generated entirely in your browser via <code>@noble/ed25519</code>.</span>
+                <span class="timeline-label">Check the file</span>
+                <span class="timeline-desc">Version 1.3 (v1.2 files with <code>provenance</code> are upgraded), <code>domain</code> matches, <code>provenance</code> present, wording rules ARP-W pass (same rules as the Validator and <code>arp_cli lint</code>).</span>
             </div>
             <div class="timeline-item">
                 <span class="timeline-year">Step 2</span>
-                <span class="timeline-label">JCS Canonicalization (RFC 8785)</span>
-                <span class="timeline-desc">Your JSON is deterministically serialized to produce identical byte output regardless of whitespace or key ordering.</span>
+                <span class="timeline-label">Signature metadata</span>
+                <span class="timeline-desc"><code>_arp_signature</code> gets algorithm, selector, timestamps, the fixed <code>statement</code> and the <code>verify</code> pointers (DNS name, DNS-over-HTTPS URL, spec).</span>
             </div>
             <div class="timeline-item">
                 <span class="timeline-year">Step 3</span>
-                <span class="timeline-label">Ed25519 Signature</span>
-                <span class="timeline-desc">The canonical bytes are signed with your private key. The signature is appended as <code>_arp_signature</code>.</span>
+                <span class="timeline-label">reasoning.md and its hash</span>
+                <span class="timeline-desc">The readable Markdown is rendered from the manifest (ARP-R); its SHA-256 goes into <code>representations</code>.</span>
             </div>
             <div class="timeline-item">
                 <span class="timeline-year">Step 4</span>
-                <span class="timeline-label">DNS TXT Binding</span>
-                <span class="timeline-desc">Publish your public key as a DNS TXT record at <code>&lt;selector&gt;._arp.&lt;domain&gt;</code>. AI agents resolve this to verify authorship.</span>
+                <span class="timeline-label">JCS canonicalization and Ed25519 signature</span>
+                <span class="timeline-desc">The whole object, with <code>signature</code> set to <code>""</code>, is serialized per RFC 8785 and signed. The keypair is generated in the browser via <code>@noble/ed25519</code>, or an existing PEM key is used.</span>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">Step 5</span>
+                <span class="timeline-label">DNS TXT binding</span>
+                <span class="timeline-desc">The public key is published at <code>&lt;selector&gt;._arp.&lt;domain&gt;</code>. Verifiers build this name from the retrieval domain and <code>dns_selector</code>.</span>
             </div>
         </div>
 
         <div class="note">
-            <div class="note-label">Security Model</div>
-            This is the same trust model as DKIM and HTTPS: it proves <strong>domain ownership</strong>, not content accuracy.
-            For AI safety architectures, a cryptographically verified <code>reasoning.json</code> should be treated as 
-            first-party brand attestation — the domain owner has the legal right (and liability) to define their own identity.
+            <div class="note-label">What the signature shows</div>
+            The trust model is that of DKIM and HTTPS: a valid signature shows that the operator of the domain published exactly this file
+            and that it has not been altered since. It does not show that the statements are true. A signed <code>reasoning.json</code>
+            remains the entity's self-description; its statements are self-attested.
+        </div>
+
+        <div class="note">
+            <div class="note-label">Command line</div>
+            The same steps run with <code>arp_cli</code> v1.4.0: <code>sign</code>, <code>render-md</code>, <code>verify</code> and <code>lint</code>
+            (<a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">arp_cli.py on GitHub</a>).
         </div>
     </section>
 </div>
@@ -458,14 +581,15 @@
     <div class="footer-inner">
         <div class="footer-col">
             <span class="footer-col-title">Specification</span>
-            <a href="/SPEC.md">Specification v1.2</a>
-            <a href="/ETHICS.md">Ethics Policy v1.2</a>
+            <a href="/SPEC.md">Specification (SPEC.md)</a>
+            <a href="/ETHICS.md">Ethics Policy</a>
+            <a href="/schema/v1.3.json">JSON Schema v1.3</a>
         </div>
         <div class="footer-col">
             <span class="footer-col-title">Tools</span>
-            <a href="/sign/">🔐 Zero-Knowledge Signer</a>
-            <a href="/validator.html">Validator</a>
-            <a href="/generator.html">Generator</a>
+            <a href="/sign/">Signer</a>
+            <a href="/validator">Validator</a>
+            <a href="/generator">Generator</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">CLI Tool</a>
         </div>
         <div class="footer-col">
@@ -475,48 +599,69 @@
         </div>
     </div>
     <div class="footer-bottom">
-        MIT License · Created by Sascha Deforth · Düsseldorf, Germany · 2026
+        MIT License · Created by Sascha Deforth · Grevenbroich near Düsseldorf, Germany · 2026
+        <div class="self-description">Self-description (ARP): <a href="https://arp-protocol.org/.well-known/reasoning.json">https://arp-protocol.org/.well-known/reasoning.json</a></div>
     </div>
 </footer>
 
+<script src="/script.js"></script>
 <script type="module">
-    import * as ed25519 from 'https://esm.sh/@noble/ed25519@2.0.0';
-    import { sha512 } from 'https://esm.sh/@noble/hashes@1.3.3/sha512';
-    import canonicalize from 'https://esm.sh/canonicalize@2.0.0';
+    // Canonicalization (JCS), wording rules (ARP-W), reasoning.md rendering (ARP-R)
+    // and verification come from /script.js — the same code the Validator uses.
+    const T = window.ARPTools;
 
-    // CRITICAL: @noble/ed25519 v2 requires external SHA-512
-    ed25519.etc.sha512Sync = (...m) => sha512(ed25519.etc.concatBytes(...m));
+    // @noble/ed25519 (with SHA-512 from @noble/hashes) is loaded from esm.sh on the first
+    // signing run, so the page still works and reports the problem if esm.sh is unreachable.
+    async function loadSigner() {
+        try {
+            return await T.loadNoble();
+        } catch (e) {
+            throw new Error('The signing library (@noble/ed25519 from esm.sh) could not be loaded. Check the network connection or use arp_cli sign.');
+        }
+    }
 
-    const toBase64 = (bytes) => btoa(String.fromCharCode(...bytes));
-    const toBase64Url = (bytes) => toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const PKCS8_ED25519_PREFIX = [0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+        0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20];
 
     function formatPEM(privKeyBytes) {
-        const header = new Uint8Array([
-            0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
-            0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20
-        ]);
-        const pkcs8 = new Uint8Array(header.length + privKeyBytes.length);
-        pkcs8.set(header);
-        pkcs8.set(privKeyBytes, header.length);
-        const b64 = toBase64(pkcs8);
-        const lines = b64.match(/.{1,64}/g).join('\n');
-        return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----`;
+        const pkcs8 = new Uint8Array(PKCS8_ED25519_PREFIX.length + privKeyBytes.length);
+        pkcs8.set(PKCS8_ED25519_PREFIX);
+        pkcs8.set(privKeyBytes, PKCS8_ED25519_PREFIX.length);
+        const lines = T.bytesToBase64(pkcs8).match(/.{1,64}/g).join('\n');
+        return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----\n`;
+    }
+
+    function esc(value) {
+        return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
     let signedJsonBlob = null;
+    let markdownBlob = null;
     let privateKeyBlob = null;
     let currentDomain = "";
     let currentSelector = "";
     let importedPrivKey = null;
 
+    const selectorInput = document.getElementById('selector');
+    selectorInput.value = T.defaultSelector();
+    document.getElementById('selectorExample').textContent = T.defaultSelector();
+
     // Auto-populate from Generator handoff via sessionStorage
-    const pendingPayload = sessionStorage.getItem('unsigned_arp_payload');
+    const jsonInput = document.getElementById('jsonInput');
+    let pendingPayload = null;
+    try {
+        pendingPayload = sessionStorage.getItem('unsigned_arp_payload');
+        if (pendingPayload) sessionStorage.removeItem('unsigned_arp_payload');
+    } catch (e) { /* storage blocked: the page opens empty */ }
     if (pendingPayload) {
-        document.getElementById('jsonInput').value = pendingPayload;
-        sessionStorage.removeItem('unsigned_arp_payload');
+        jsonInput.value = pendingPayload;
+        try {
+            const d = JSON.parse(pendingPayload);
+            if (d.domain && !document.getElementById('domain').value) document.getElementById('domain').value = d.domain;
+        } catch (e) { /* the sign step reports invalid JSON */ }
     }
 
-    // PEM Key Import
+    // PEM Key Import (PKCS#8, unencrypted Ed25519 key as written by arp_cli keys and this page)
     document.getElementById('keyInput')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         const keyStatus = document.getElementById('keyStatus');
@@ -530,15 +675,15 @@
         reader.onload = (ev) => {
             try {
                 const b64 = ev.target.result.replace(/(-----(BEGIN|END) PRIVATE KEY-----|\s+)/g, '');
-                const binary = atob(b64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                importedPrivKey = bytes.slice(-32); // Raw Ed25519 seed is last 32 bytes of PKCS#8
-                keyStatus.textContent = '✓ Key loaded — will re-sign with existing keypair.';
+                const bytes = T.base64ToBytes(b64);
+                const prefixOk = bytes.length === 48 && PKCS8_ED25519_PREFIX.every((b, i) => bytes[i] === b);
+                if (!prefixOk) throw new Error('not an unencrypted PKCS#8 Ed25519 key');
+                importedPrivKey = bytes.slice(16);
+                keyStatus.textContent = '✓ Key loaded — the DNS record under the chosen selector must hold its public key (shown after signing).';
                 keyStatus.style.color = '#1a7f37';
             } catch (err) {
                 importedPrivKey = null;
-                keyStatus.textContent = '✗ Invalid PEM file. Generating new key instead.';
+                keyStatus.textContent = '✗ Unsupported PEM file (' + err.message + '). A new keypair will be generated instead.';
                 keyStatus.style.color = '#cf222e';
             }
         };
@@ -546,7 +691,6 @@
     });
 
     // Drag & Drop (with file type validation)
-    const jsonInput = document.getElementById('jsonInput');
     jsonInput.addEventListener('dragover', (e) => { e.preventDefault(); jsonInput.classList.add('drag-over'); });
     jsonInput.addEventListener('dragleave', () => { jsonInput.classList.remove('drag-over'); });
     jsonInput.addEventListener('drop', (e) => {
@@ -558,87 +702,217 @@
             reader.onload = (ev) => { jsonInput.value = ev.target.result; };
             reader.readAsText(file);
         } else if (file) {
-            const errorMsg = document.getElementById('errorMsg');
-            errorMsg.textContent = 'Please drop a valid .json file.';
-            errorMsg.style.display = 'block';
+            showError('Please drop a valid .json file.');
         }
     });
 
+    function showError(message, items) {
+        const errorMsg = document.getElementById('errorMsg');
+        errorMsg.innerHTML = esc(message) + (items && items.length ? '<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>' : '');
+        errorMsg.style.display = 'block';
+    }
+
+    function showNotices(items) {
+        const box = document.getElementById('noticeMsg');
+        if (!items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.innerHTML = 'Changes before signing:<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
+        box.style.display = 'block';
+    }
+
+    // Rebuilds the object so that domain follows version (key order only; JCS ignores it)
+    function withDomain(payload, domain) {
+        const out = {};
+        let placed = false;
+        for (const [k, v] of Object.entries(payload)) {
+            if (k === 'domain') continue;
+            out[k] = v;
+            if (k === 'version') { out.domain = domain; placed = true; }
+        }
+        if (!placed) return Object.assign({ domain: domain }, out);
+        return out;
+    }
+
+    // Checks and normalizes the input. Returns { payload, notices } or { errors }.
+    function prepare(input, domain) {
+        const notices = [];
+        const errors = [];
+        let payload = input;
+
+        if (payload.domain === undefined) {
+            payload = withDomain(payload, domain);
+            notices.push(`<code>domain</code> set to <code>${esc(domain)}</code>`);
+        } else if (T.normalizeDomain(payload.domain) !== domain) {
+            errors.push(`The <code>domain</code> field (<code>${esc(payload.domain)}</code>) differs from the signing domain (<code>${esc(domain)}</code>).`);
+        }
+
+        const version = T.KNOWN_SCHEMAS[payload.$schema] || (typeof payload.version === 'string' ? payload.version.slice(0, 3) : '');
+        if (version === '1.2') {
+            payload.$schema = T.SCHEMA_URL;
+            payload.version = T.SPEC_VERSION;
+            notices.push('<code>$schema</code> and <code>version</code> upgraded from 1.2 to 1.3');
+        } else if (payload.$schema !== T.SCHEMA_URL || !/^1\.3(\.\d+)?$/.test(String(payload.version))) {
+            errors.push('Only v1.3 files (or v1.2 files with provenance) can be signed here. The <a href="/validator">Validator</a> lists the migration steps.');
+        }
+        if (payload.protocol !== T.PROTOCOL) errors.push(`<code>protocol</code> must be <code>${esc(T.PROTOCOL)}</code>.`);
+        if (typeof payload.entity !== 'string' || !payload.entity) errors.push('<code>entity</code> is missing.');
+
+        const prov = payload.provenance;
+        if (!prov || typeof prov !== 'object') {
+            errors.push('<code>provenance</code> is required in v1.3 (statement, publisher, publisher_url, published). The <a href="/generator">Generator</a> creates it.');
+        } else {
+            if (!prov.publisher) errors.push('<code>provenance.publisher</code> is missing.');
+            if (!/^https:\/\/\S+$/.test(prov.publisher_url || '')) errors.push('<code>provenance.publisher_url</code> must be an https URL of the legal notice.');
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(prov.published || '')) errors.push('<code>provenance.published</code> must be a date (YYYY-MM-DD).');
+            if (prov.publisher && typeof payload.entity === 'string') {
+                const expected = T.provenanceStatement(payload.entity, prov.publisher, domain);
+                if (prov.statement !== expected) {
+                    prov.statement = expected;
+                    notices.push('<code>provenance.statement</code> set to the fixed wording');
+                }
+            }
+        }
+
+        const allowed = ['$schema', 'protocol', 'version', 'domain', 'entity', 'provenance', 'representations', 'verification',
+            'identity', 'organization', 'corrections', 'entity_claims', 'diagnostics', 'authority', 'content_policy', '_arp_signature'];
+        const unknown = Object.keys(payload).filter(k => !allowed.includes(k));
+        if (unknown.length) errors.push('Fields not defined in schema v1.3: ' + unknown.map(k => `<code>${esc(k)}</code>`).join(', '));
+        if (!payload.entity_claims || typeof payload.entity_claims.framing_context !== 'string') {
+            errors.push('<code>entity_claims.framing_context</code> is required.');
+        }
+
+        // Same rules as arp_cli sign, which lints before signing; the old signature block is not linted
+        const unsigned = Object.assign({}, payload);
+        delete unsigned._arp_signature;
+        const findings = T.lint(unsigned).filter(f => f.severity === 'error' && !f.rule.startsWith('ARP-P/'));
+        for (const f of findings) {
+            errors.push(`${esc(f.rule)} in <code>${esc(f.path)}</code>: ${esc(f.message)}${f.excerpt ? ' » ' + esc(f.excerpt) : ''}`);
+        }
+
+        return errors.length ? { errors } : { payload, notices };
+    }
+
     document.getElementById('btnSign').addEventListener('click', async () => {
-        const domain = document.getElementById('domain').value.trim();
-        const selector = document.getElementById('selector').value.trim() || 'arp';
+        const domain = T.normalizeDomain(document.getElementById('domain').value);
+        const selector = selectorInput.value.trim() || T.defaultSelector();
+        const ttlDays = Math.min(365, Math.max(1, parseInt(document.getElementById('ttl').value, 10) || 90));
         const jsonText = jsonInput.value;
         const errorMsg = document.getElementById('errorMsg');
         const resultsPanel = document.getElementById('resultsPanel');
 
         errorMsg.style.display = 'none';
+        showNotices([]);
         resultsPanel.classList.remove('visible');
 
-        if (!domain || !jsonText) {
-            errorMsg.textContent = "Error: Domain and JSON payload are required.";
-            errorMsg.style.display = 'block';
+        if (!domain || !T.isValidDomain(domain) || !jsonText.trim()) {
+            showError('Error: a valid domain and the JSON file are required.');
+            return;
+        }
+        if (!T.isValidSelector(selector)) {
+            showError('Error: the selector must consist of DNS labels separated by dots (letters, digits, "-" and "_"; each label begins and ends with a letter or digit; at most 50 characters).');
             return;
         }
 
-        let payload;
+        let input;
         try {
-            payload = JSON.parse(jsonText);
+            input = JSON.parse(jsonText);
+            if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('not an object');
         } catch (e) {
-            errorMsg.textContent = "Error: Invalid JSON syntax. Please check your payload.";
-            errorMsg.style.display = 'block';
+            showError('Error: Invalid JSON syntax. Please check your payload.');
             return;
         }
 
-        try {
-            // 1. Remove any existing signature to prevent nested signing
-            delete payload._arp_signature;
+        const previousSelector = input._arp_signature && typeof input._arp_signature.dns_selector === 'string'
+            ? input._arp_signature.dns_selector : null;
 
-            // 2. Use imported key or generate new keypair
+        // The signature is recomputed; the reasoning.md entry in representations is replaced
+        delete input._arp_signature;
+
+        const prepared = prepare(input, domain);
+        if (prepared.errors) {
+            showError('Signing stopped — fix these points first:', prepared.errors);
+            return;
+        }
+        let payload = prepared.payload;
+        showNotices(prepared.notices);
+
+        try {
+            const ed25519 = await loadSigner();
+
+            // 1. Use imported key or generate new keypair
             const privKey = importedPrivKey || ed25519.utils.randomPrivateKey();
             const pubKey = await ed25519.getPublicKey(privKey);
-            const pubKeyB64 = toBase64(pubKey);
-            const privKeyPem = formatPEM(privKey);
+            const pubKeyB64 = T.bytesToBase64(pubKey);
 
             const now = new Date();
-            const expires = new Date();
-            expires.setDate(now.getDate() + 90);
+            const expires = new Date(now.getTime() + ttlDays * 86400000);
 
-            // 3. Attach metadata FIRST with empty signature (enveloped signature pattern)
-            payload._arp_signature = {
+            // 2. Signature metadata with empty signature (Enveloped Pattern, SPEC §13.4)
+            const sigBlock = {
                 algorithm: "Ed25519",
                 dns_selector: selector,
-                dns_record: `${selector}._arp.${domain}`,
+                dns_record: T.dnsName(selector, domain),
                 canonicalization: "jcs-rfc8785",
-                signed_at: now.toISOString().split('.')[0] + "Z",
-                expires_at: expires.toISOString().split('.')[0] + "Z",
-                signature: "" // Empty during canonicalization — metadata is signed!
+                signed_at: T.isoSeconds(now),
+                expires_at: T.isoSeconds(expires),
+                statement: T.signatureStatement(selector, domain),
+                verify: T.verifyBlock(selector, domain),
+                signature: ""
             };
+            payload._arp_signature = sigBlock;
 
-            // 4. Canonicalize payload + metadata, then sign
-            const canonicalString = canonicalize(payload);
-            const canonicalBytes = new TextEncoder().encode(canonicalString);
+            // 3. Render reasoning.md (ARP-R) and record its SHA-256 before the signature block
+            const markdown = T.renderMarkdown(payload, domain);
+            const mdHash = await T.sha256Hex(markdown);
+            delete payload._arp_signature;
+            T.setMarkdownRepresentation(payload, domain, mdHash);
+            payload._arp_signature = sigBlock;
+
+            // 4. Canonicalize the whole object (signature = "") and sign
+            const canonicalBytes = T.utf8(T.canonicalize(payload));
             const signatureBytes = await ed25519.sign(canonicalBytes, privKey);
 
-            // 5. Inject the final Base64URL signature
-            payload._arp_signature.signature = toBase64Url(signatureBytes);
+            // 5. Inject the final unpadded base64url signature (86 characters)
+            payload._arp_signature.signature = T.bytesToBase64Url(signatureBytes);
 
-            document.getElementById('dnsName').textContent = `${selector}._arp.${domain}`;
+            // 6. Self-check with an independent implementation (WebCrypto via script.js)
+            const check = await T.verifyManifest(payload, { domain: domain, publicKey: pubKeyB64 });
+            const mdCheck = (await T.sha256Hex(T.renderMarkdown(payload, domain))) === mdHash;
+            const selfCheck = document.getElementById('selfCheck');
+            const ok = check.level === 'CRYPTOGRAPHIC' && mdCheck;
+            selfCheck.className = 'selfcheck ' + (ok ? 'ok' : 'bad');
+            selfCheck.textContent = ok
+                ? '✓ Self-check: signature verifies against the new public key; reasoning.md matches its SHA-256.'
+                : `✗ Self-check failed (${check.level}${check.reason ? ', ' + check.reason : ''}${mdCheck ? '' : ', reasoning.md hash'}). Do not deploy this file.`;
+
+            document.getElementById('dnsName').textContent = T.dnsName(selector, domain);
             document.getElementById('dnsValue').textContent = `v=ARP1; k=ed25519; p=${pubKeyB64}`;
 
-            signedJsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const retireBox = document.getElementById('retireBox');
+            if (previousSelector && previousSelector !== selector) {
+                document.getElementById('retireName').textContent = T.dnsName(previousSelector, domain);
+                retireBox.style.display = 'block';
+            } else {
+                retireBox.style.display = 'none';
+            }
+
+            signedJsonBlob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: "application/json" });
+            markdownBlob = new Blob([markdown], { type: "text/markdown" });
             // Only offer key download for newly generated keys
-            privateKeyBlob = importedPrivKey ? null : new Blob([privKeyPem], { type: "application/x-pem-file" });
+            privateKeyBlob = importedPrivKey ? null : new Blob([formatPEM(privKey)], { type: "application/x-pem-file" });
             document.getElementById('btnDownloadKey').style.display = importedPrivKey ? 'none' : 'flex';
             currentDomain = domain;
             currentSelector = selector;
+
+            document.getElementById('snippets').textContent =
+                T.discoverySnippets(domain, payload.entity, sigBlock.signed_at.slice(0, 10));
+            document.getElementById('validateLink').href = '/validator?url=' + encodeURIComponent(domain);
 
             resultsPanel.classList.add('visible');
             resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (err) {
             console.error(err);
-            errorMsg.textContent = "Cryptographic Error: " + err.message;
-            errorMsg.style.display = 'block';
+            showError("Cryptographic Error: " + err.message);
         }
     });
 
@@ -652,6 +926,10 @@
 
     document.getElementById('btnDownloadJson').addEventListener('click', () => {
         triggerDownload(signedJsonBlob, 'reasoning.json');
+    });
+
+    document.getElementById('btnDownloadMd').addEventListener('click', () => {
+        triggerDownload(markdownBlob, 'reasoning.md');
     });
 
     document.getElementById('btnDownloadKey').addEventListener('click', () => {

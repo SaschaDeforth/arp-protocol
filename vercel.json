@@ -6,9 +6,38 @@
   "cleanUrls": true,
   "headers": [
     {
+      "source": "/((?!\\.well-known/)(?!LICENSE$)(?!.*\\.[A-Za-z0-9]+$).*)",
+      "headers": [
+        { "key": "Link", "value": "</.well-known/reasoning.json>; rel=\"describedby\"; type=\"application/json\", </.well-known/reasoning.md>; rel=\"describedby\"; type=\"text/markdown\"" }
+      ]
+    },
+    {
+      "source": "/docs/bre/(.*)",
+      "headers": [
+        { "key": "Link", "value": "</.well-known/reasoning.json>; rel=\"describedby\"; type=\"application/json\", </.well-known/reasoning.md>; rel=\"describedby\"; type=\"text/markdown\"" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
       "source": "/.well-known/reasoning.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/reasoning.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/.well-known/reasoning.md",
+      "headers": [
+        { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
@@ -22,14 +51,37 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/.well-known/layer0(/.*)?",
+      "destination": "/layer0/",
+      "permanent": true
+    },
+    {
+      "source": "/.well-known/reasoning.corrected.json",
+      "destination": "/.well-known/reasoning.json",
+      "permanent": true
+    },
+    {
+      "source": "/tests/:path*",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/drafts/working/:path*",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/drafts/ietf/SUBMISSION-NOTES.md",
+      "destination": "/404",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/reasoning.json",
       "destination": "/.well-known/reasoning.json"
-    },
-    {
-      "source": "/.well-known/layer0",
-      "destination": "/layer0/index.html"
     },
     {
       "source": "/schema/v1\\.2/reasoning\\.schema\\.json",

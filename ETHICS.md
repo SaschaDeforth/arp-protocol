@@ -1,8 +1,8 @@
-# Agentic Reasoning Protocol — Ethics Policy v1.2
+# Agentic Reasoning Protocol — Ethics Policy v1.3
 
 **Status:** Active
-**Version:** 1.2
-**Date:** April 2026
+**Version:** 1.3 (applies to ARP v1.3 "Reader Profile")
+**Date:** 2026-10-05
 **Author:** Sascha Deforth
 
 ---
@@ -46,16 +46,16 @@ Because `reasoning.json` is self-published by domain owners, there is an inheren
 ### Mitigation Strategies
 
 1. **Evidence URLs.** The `evidence_url` field enables consuming agents to cross-reference corrections against external sources.
-2. **Verification Metadata.** The `verification` section allows third-party auditors to attest to the accuracy of the file.
+2. **Verification Metadata.** The `verification` section names who last reviewed the file and when; it indicates an independent review only when `audited_by` names an independent party.
 3. **Cryptographic Signatures (v1.2).** The `_arp_signature` block cryptographically binds the file to its domain owner via DNS, providing verifiable proof of authorship (not of truth — see §4).
 4. **Community Reporting.** Misuse can be reported via the GitHub repository.
 5. **Epistemic Scoping (v1.2).** The `epistemic_scope` field classifies claims as `public_verifiable`, `proprietary_internal`, or `industry_standard`, helping consuming systems calibrate trust appropriately.
-6. **Agent Discretion.** AI agents consuming `reasoning.json` SHOULD treat it as one signal, not as authoritative truth, and SHOULD cross-reference claims against their training data and other sources.
-7. **Sandboxing.** Loader implementations SHOULD wrap all ARP content in trust boundary annotations, prefixing with context such as "The following are unverified self-attestations from the entity."
+6. **Agent Discretion.** `reasoning.json` is one source among many and not authoritative truth. Its claims can be cross-checked against other sources; how an AI system weighs them is that system's own decision.
+7. **Sandboxing.** Loader implementations SHOULD precede ARP content with a plain-text provenance line stating source and verification status (SPEC §13.10), for example "Source: example.com — self-description (ARP). Not signed; the publisher is not cryptographically verified."
 
 ### What This Protocol Does NOT Do
 
-- It does NOT guarantee truthfulness. Like all web standards, it relies on good-faith participation.
+- It does NOT guarantee truthfulness. Like robots.txt and schema.org markup, it relies on good-faith participation.
 - It does NOT force AI models to obey claims. Models may weigh `reasoning.json` data alongside other sources, or ignore it entirely.
 - It does NOT replace human editorial judgment.
 - A valid cryptographic signature does NOT certify content accuracy. It certifies authorship only.
@@ -72,11 +72,11 @@ The v1.2 Cryptographic Trust Layer enables a domain owner to produce an Ed25519 
 
 Even though signing does not certify truth, it changes the publisher's incentives in a useful way:
 
-1. **For honest publishers.** A signature provides cryptographic evidence that a specific entity stood behind a specific version of a file at a specific time. Consuming systems and downstream observers can verify this independently.
+1. **For honest publishers.** A signature provides cryptographic evidence that the operator of a domain stood behind a specific version of a file. Consuming systems and downstream observers can verify this independently while the key is published and not revoked; the time in `signed_at` is stated by the signer and is not an independent timestamp.
 
-2. **For dishonest publishers.** A signature creates a timestamped, attributable record of exactly what was published. If signed claims later prove false, the signature makes it difficult for the publisher to disclaim authorship.
+2. **For dishonest publishers.** A signature attributes exactly what was published to the domain operator. If signed claims later prove false, the signature makes it difficult for the publisher to disclaim authorship of copies that still verify. Revoking the key ends that verifiability for every copy (SPEC §13.6), and ARP keeps no archive of published files.
 
-The act of signing is therefore a deliberate assertion: "I, the holder of this key, published this content on this date." Publishers who would prefer not to make that assertion can simply leave their files unsigned, which correctly places the file in a lower-trust category.
+The act of signing is therefore a deliberate assertion: "I, the holder of this key, published this content on this date." Publishers who would prefer not to make that assertion can leave their files unsigned; verifiers then report them as UNSIGNED (authorship not verifiable).
 
 ### Legal Considerations
 
@@ -93,8 +93,8 @@ To prevent keyword stuffing and SEO-style gaming, v1.1 introduces strict limits:
 ### Technical Limits
 - **Character limits** on all text fields (50–500 chars per field)
 - **Array limits** on all list fields (max 8–20 items per field)
-- **Total file size** limited to 100 KB
-- **JSON Schema validation** enforces all limits programmatically
+- **Total file size** limited to 100 KiB (102,400 bytes)
+- **JSON Schema validation** enforces the character and array limits; the file size is checked by validators and loaders on the received bytes (SPEC §11.1)
 
 ### Prohibited Practices
 - **Keyword stuffing** — Filling `core_competencies` or `vibe_tags` with SEO keywords
@@ -108,11 +108,11 @@ To prevent keyword stuffing and SEO-style gaming, v1.1 introduces strict limits:
 1. **Impersonation** — Publishing a `reasoning.json` that implies affiliation with organizations you do not represent
 2. **False Corrections** — Fabricating `corrections` entries to inject misinformation into AI systems
 3. **Competitor Sabotage** — Any attempt to negatively influence AI perception of specific named competitors
-4. **Spam Directives** — Stuffing irrelevant keywords or scenarios to game AI recommendations
+4. **Spam Entries** — Stuffing irrelevant keywords or scenarios to game AI recommendations
 5. **Discriminatory Content** — Claims that promote discrimination based on protected characteristics
 6. **Cloaking** — Publishing a `reasoning.json` whose content materially contradicts the visible website
 7. **Weaponized Expertise** — Using `domain_expertise` to spread false information about industry practices
-8. **Prompt Injection** — Embedding system instructions or prompt injection attempts within any field
+8. **Prompt Injection** — Embedding system instructions, prompt injection attempts, or any other wording excluded by the Wording Profile (SPEC §11.2) within any field
 9. **Diagnostic Token Misuse** — Using `telemetry_tokens` (§12 of the specification) for anything other than benign ingestion auditing — in particular, MUST NOT be used to attempt to deanonymize users, fingerprint sessions, or carry hidden instructions
 
 ---

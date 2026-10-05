@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LangChain Integration — Agentic Reasoning Protocol</title>
-    <meta name="description" content="LangChain Document Loader for reasoning.json — fetch, parse, and inject brand reasoning directives into your RAG pipeline.">
+    <meta name="description" content="LangChain document loader for reasoning.json (ARP v1.3): turns an entity's self-description into Documents, each with a plain provenance line and the result of the Ed25519 signature check.">
     <link rel="canonical" href="https://arp-protocol.org/integrations/langchain/">
     <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
-    <link rel="stylesheet" href="../../style.css">
+    <link rel="describedby" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
@@ -17,7 +18,7 @@
         <a href="/" class="nav-logo">reasoning.json</a>
         <div class="nav-links">
             <a href="/#specification" class="nav-link">Specification</a>
-            <a href="/validator.html" class="nav-link">Validator</a>
+            <a href="/validator" class="nav-link">Validator</a>
             <a href="/#integration" class="nav-link">Integration</a>
             <a href="/#ethics" class="nav-link">Ethics</a>
             <a href="/SPEC.md" class="nav-link">Full Spec</a>
@@ -31,8 +32,9 @@
     <div class="container">
         <h1>LangChain Integration</h1>
         <p class="header-desc">
-            A LangChain-compatible Document Loader for <code>reasoning.json</code> files.
-            Fetch, parse, and inject brand reasoning directives into your RAG pipeline.
+            A LangChain-compatible document loader for <code>reasoning.json</code> files (ARP v1.3).
+            A <code>reasoning.json</code> file is an entity's self-description. The loader turns it into Documents
+            and states in every Document where the content comes from and what was checked.
         </p>
         <div class="header-meta">
             <span>Language: <strong>Python</strong></span>
@@ -52,8 +54,14 @@
                 <span>Terminal</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
-<pre><code>pip install requests langchain</code></pre>
+<pre><code>pip install requests langchain-core
+<span class="py-comment"># for the signature check (reference verifier arp_cli.py, v1.4 or later):</span>
+pip install cryptography rfc8785 dnspython</code></pre>
         </div>
+        <p>
+            The signature check uses <code>arp_cli.py</code>. The loader imports it when it is on the Python path or,
+            inside the repository, from <code>../../arp_cli.py</code>. Without it, a signed file is marked <code>NOT_CHECKED</code>.
+        </p>
     </section>
 
     <!-- Quick Start -->
@@ -66,57 +74,129 @@
             </div>
 <pre><code><span class="py-kw">from</span> arp_loader <span class="py-kw">import</span> AgenticReasoningLoader
 
-<span class="py-comment"># Load from any website</span>
 loader = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>)
 docs = loader.load()
 
-<span class="py-comment"># Each section becomes a separate Document</span>
+<span class="py-comment"># One Document per section, each with the result of the signature check</span>
 <span class="py-kw">for</span> doc <span class="py-kw">in</span> docs:
-    print(f<span class="py-str">"[{doc.metadata['section']}] {doc.page_content[:100]}..."</span>)</code></pre>
+    print(doc.metadata[<span class="py-str">"section"</span>], doc.metadata[<span class="py-str">"authorship_status"</span>])</code></pre>
         </div>
     </section>
 
-    <!-- How It Works -->
+    <!-- Provenance line -->
     <section class="section">
-        <h2>How It Works</h2>
+        <h2>Provenance line</h2>
         <p>
-            The loader fetches <code>/.well-known/reasoning.json</code> from any domain
-            and splits it into prioritized Documents optimized for RAG retrieval:
+            Every Document starts with one plain-text line, followed by an empty line and the content (SPEC v1.3 §13.10):
+        </p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Text</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>Source: example.com — self-description (ARP). Authorship verified via Ed25519/DNS on 2026-10-05; this verifies the publisher, not the truth of the content.</code></pre>
+        </div>
+        <p>Other results use the same form:</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Text</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>Source: example.com — self-description (ARP). Not signed; the publisher is not cryptographically verified.
+Source: example.com — self-description (ARP). Signature check failed (key_revoked); the publisher is not verified.
+Source: example.com — self-description (ARP). Signature expired on 2026-12-23; the publisher is not currently verified.
+Source: example.com — self-description (ARP). Signature present, not checked by this loader; the publisher is not verified.</code></pre>
+        </div>
+        <p>
+            The line describes origin and check result. It contains no instruction to the model and no tags that imitate
+            system markup. How a model weighs the content remains the decision of the application.
+        </p>
+    </section>
+
+    <!-- Documents -->
+    <section class="section">
+        <h2>Documents</h2>
+        <p>
+            The loader fetches <code>/.well-known/reasoning.json</code> and yields one Document per section:
         </p>
         <ol>
-            <li><strong>Corrections</strong> (highest priority) — prevents hallucinations during RAG</li>
-            <li><strong>Identity</strong> — brand facts and system instructions</li>
-            <li><strong>Recommendations</strong> — when to recommend / when not to</li>
-            <li><strong>Counterfactuals</strong> — pre-programmed reasoning logic</li>
-            <li><strong>Dichotomies</strong> — competitive positioning pivots</li>
+            <li><strong>Corrections</strong> — topic-anchored statements the entity publishes about itself, with evidence links</li>
+            <li><strong>Identity</strong> — self-description, provenance statement and positioning (<code>framing_context</code>)</li>
+            <li><strong>Organization</strong> — legal facts from the v1.3 <code>organization</code> object</li>
+            <li><strong>Fit</strong> — situations the entity describes as a typical fit or not a fit (<code>recommendation_context</code>)</li>
+            <li><strong>Domain expertise</strong> — the entity's perspective on scenarios in its field</li>
+            <li><strong>Market positioning</strong> — the entity's view of its market category</li>
         </ol>
         <p>
-            Each Document includes rich metadata (<code>entity</code>, <code>section</code>,
-            <code>protocol</code>, <code>version</code>) for targeted retrieval.
+            The <code>diagnostics</code> object is never passed on (SPEC §12). Members named like instructions
+            (<code>system_instruction</code>, <code>ai_directive</code>, <code>agent_directive</code>) are not passed on either.
         </p>
+    </section>
+
+    <!-- Metadata -->
+    <section class="section">
+        <h2>Metadata</h2>
+        <p>All metadata values are flat strings, numbers or booleans, so vector stores can index them.</p>
+        <div class="table-wrap">
+        <table style="overflow-wrap: anywhere;">
+            <thead>
+                <tr><th>Key</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>authorship_status</code></td><td><code>CRYPTOGRAPHIC</code>, <code>UNSIGNED</code>, <code>INVALID</code>, <code>ERROR</code> (DNS lookup failed) or <code>NOT_CHECKED</code></td></tr>
+                <tr><td><code>authorship_reason</code></td><td>e.g. <code>valid</code>, <code>unsigned</code>, <code>expired</code>, <code>key_revoked</code>, <code>legacy_payload_only</code>, <code>domain_mismatch</code></td></tr>
+                <tr><td><code>authorship_checked_on</code></td><td>Date of the check (UTC)</td></tr>
+                <tr><td><code>source_line</code></td><td>The provenance line at the top of each Document</td></tr>
+                <tr><td><code>is_signed</code></td><td>A signature block is present (says nothing about validity)</td></tr>
+                <tr><td><code>signature_dns</code>, <code>signature_doh_url</code>, <code>signature_statement</code></td><td>From <code>_arp_signature</code> (<code>verify.dns_name</code>, <code>verify.doh_url</code>, <code>statement</code>)</td></tr>
+                <tr><td><code>signed_at</code>, <code>expires_at</code></td><td>Signature period</td></tr>
+                <tr><td><code>provenance_statement</code>, <code>publisher</code>, <code>publisher_url</code>, <code>published</code></td><td>From the v1.3 <code>provenance</code> object</td></tr>
+                <tr><td><code>representation_url</code>, <code>representation_sha256</code></td><td>The <code>reasoning.md</code> entry of <code>representations</code></td></tr>
+                <tr><td><code>representation_status</code></td><td>Only with <code>check_representation=True</code>: <code>REPRESENTATION_MATCH</code>, <code>REPRESENTATION_MISMATCH</code> or <code>REPRESENTATION_UNCHECKED</code></td></tr>
+            </tbody>
+        </table>
+        </div>
+        <div class="note">
+            <div class="note-label">What the status means</div>
+            <code>CRYPTOGRAPHIC</code> means that the operator of the domain published exactly this file.
+            It does not mean that the statements are true. The same check runs in the browser in the <a href="/validator">Validator</a>.
+        </div>
+    </section>
+
+    <!-- Options -->
+    <section class="section">
+        <h2>Options</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Python</span>
+                <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+<pre><code>AgenticReasoningLoader(
+    <span class="py-str">"https://example.com"</span>,
+    path=<span class="py-str">"/.well-known/reasoning.json"</span>,
+    timeout=10,
+    verify_signature=<span class="py-kw">True</span>,        <span class="py-comment"># check via arp_cli; False → NOT_CHECKED</span>
+    check_representation=<span class="py-kw">False</span>,   <span class="py-comment"># fetch reasoning.md and compare its sha256</span>
+)</code></pre>
+        </div>
     </section>
 
     <!-- RAG Pipeline -->
     <section class="section">
-        <h2>Use in a RAG Pipeline</h2>
+        <h2>The Loader in a RAG Pipeline</h2>
         <div class="code-block">
             <div class="code-header">
                 <span>Python — Vector Store Integration</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
-<pre><code><span class="py-kw">from</span> langchain.vectorstores <span class="py-kw">import</span> Chroma
-<span class="py-kw">from</span> langchain.embeddings <span class="py-kw">import</span> OpenAIEmbeddings
+<pre><code><span class="py-kw">from</span> langchain_community.vectorstores <span class="py-kw">import</span> Chroma
+<span class="py-kw">from</span> langchain_openai <span class="py-kw">import</span> OpenAIEmbeddings
 
-<span class="py-comment"># Load reasoning documents</span>
-loader = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>)
-docs = loader.load()
-
-<span class="py-comment"># Add to vector store</span>
+docs = AgenticReasoningLoader(<span class="py-str">"https://example.com"</span>).load()
 vectorstore = Chroma.from_documents(docs, OpenAIEmbeddings())
-
-<span class="py-comment"># Now your AI agent knows how to reason about this brand</span>
 retriever = vectorstore.as_retriever()</code></pre>
         </div>
+        <p>The provenance line travels with each chunk, so the retrieved text keeps its source and check result.</p>
     </section>
 
     <!-- Standalone Usage -->
@@ -151,8 +231,8 @@ docs = load_reasoning(<span class="py-str">"https://example.com"</span>)
     <section class="section">
         <h2>Source Code</h2>
         <ul>
-            <li><a href="arp_loader.py">arp_loader.py</a> — Full source code (Python)</li>
-            <li><a href="README.md">README.md</a> — Documentation</li>
+            <li><a href="/integrations/langchain/arp_loader.py">arp_loader.py</a> — Full source code (Python)</li>
+            <li><a href="/integrations/langchain/README.md">README.md</a> — Documentation</li>
             <li><a href="https://github.com/SaschaDeforth/arp-protocol/tree/main/integrations/langchain" target="_blank" rel="noopener">View on GitHub</a></li>
         </ul>
     </section>
@@ -166,7 +246,7 @@ docs = load_reasoning(<span class="py-str">"https://example.com"</span>)
             <div class="footer-col-title">Protocol</div>
             <a href="/SPEC.md">Specification</a>
             <a href="/ETHICS.md">Ethics Policy</a>
-            <a href="/schema/v1.json">JSON Schema</a>
+            <a href="/schema/v1.3.json">JSON Schema v1.3</a>
         </div>
         <div class="footer-col">
             <div class="footer-col-title">Resources</div>
@@ -182,7 +262,8 @@ docs = load_reasoning(<span class="py-str">"https://example.com"</span>)
         </div>
     </div>
     <div class="footer-bottom">
-        © 2026 Sascha Deforth. Built in Düsseldorf.
+        © 2026 Sascha Deforth. Built in Grevenbroich near Düsseldorf.
+        <div style="margin-top: 8px; font-size: 13px; overflow-wrap: anywhere;">Self-description (ARP): <a href="https://arp-protocol.org/.well-known/reasoning.json">https://arp-protocol.org/.well-known/reasoning.json</a></div>
     </div>
 </footer>
 

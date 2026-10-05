@@ -4,24 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Agenda — Agentic Reasoning Protocol</title>
-    <meta name="description" content="Open research agenda for the Agentic Reasoning Protocol (ARP). Derived from independent analysis by Google Gemini, OpenAI ChatGPT, and Anthropic Claude.">
+    <meta name="description" content="Open research agenda for the Agentic Reasoning Protocol (ARP). The questions were collected with AI-assisted deep-research tools (Google Gemini, OpenAI ChatGPT, Anthropic Claude); these outputs are not peer review.">
     <meta name="author" content="Sascha Deforth">
-    <link rel="canonical" href="https://arp-protocol.org/research.html">
+    <link rel="canonical" href="https://arp-protocol.org/research">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="describedby" type="application/json" href="/.well-known/reasoning.json">
     <meta property="og:title" content="Research Agenda — Agentic Reasoning Protocol">
-    <meta property="og:description" content="Open research agenda for ARP. Formal research questions derived from independent triple AI platform validation.">
-    <meta property="og:url" content="https://arp-protocol.org/research.html">
+    <meta property="og:description" content="Open research agenda for ARP: research questions collected with AI-assisted deep-research tools, open for independent evaluation.">
+    <meta property="og:url" content="https://arp-protocol.org/research">
     <meta property="og:type" content="article">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "ScholarlyArticle",
         "name": "Research Agenda — Agentic Reasoning Protocol",
-        "description": "Open research questions and standardization roadmap for ARP, derived from independent analysis by Google Gemini Deep Research, OpenAI ChatGPT Deep Research, and Anthropic Claude Opus 4.6.",
-        "url": "https://arp-protocol.org/research.html",
+        "description": "Open research questions for ARP, collected with AI-assisted deep-research tools (Google Gemini Deep Research, OpenAI ChatGPT Deep Research, Anthropic Claude Opus 4.6). These outputs are not peer review.",
+        "url": "https://arp-protocol.org/research",
         "datePublished": "2026-04-11",
         "author": {
             "@type": "Person",
@@ -41,7 +42,7 @@
             <a href="/" class="nav-link">Home</a>
             <a href="/#specification" class="nav-link">Specification</a>
             <a href="/#analysis" class="nav-link" style="color: #8b5cf6;">Research</a>
-            <a href="SPEC.md" class="nav-link">Full Spec</a>
+            <a href="/SPEC.md" class="nav-link">Full Spec</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
         </div>
     </div>
@@ -52,9 +53,9 @@
     <div class="container">
         <h1>Research Agenda</h1>
         <p class="header-desc">
-            Open research questions for the Agentic Reasoning Protocol, derived from
-            independent analysis by Google Gemini Deep Research, OpenAI ChatGPT Deep Research,
-            and Anthropic Claude Opus 4.6.
+            Open research questions for the Agentic Reasoning Protocol, collected with
+            AI-assisted deep-research tools (Google Gemini Deep Research, OpenAI ChatGPT Deep Research,
+            and Anthropic Claude Opus 4.6). These outputs are not peer review.
         </p>
         <div class="header-meta">
             <span>Published: <strong>April 11, 2026</strong></span>
@@ -69,15 +70,14 @@
     <section class="section" id="context">
         <h2>Context</h2>
         <p>
-            In April 2026, all three major AI research platforms — Google (Gemini Deep Research),
-            OpenAI (ChatGPT Deep Research), and Anthropic (Claude Opus 4.6 Thinking) —
-            independently produced comprehensive analyses of the Agentic Reasoning Protocol.
+            In April 2026, the protocol author used the deep-research features of Google
+            (Gemini Deep Research), OpenAI (ChatGPT Deep Research), and Anthropic (Claude Opus 4.6 Thinking)
+            to generate analyses of the Agentic Reasoning Protocol. The outputs were produced on the
+            author's request; they are not independent reviews and not peer review.
         </p>
         <p>
-            These analyses converged on ARP's core thesis: the epistemological gap between
-            descriptive web standards and prescriptive AI cognition is real, and <code>reasoning.json</code>
-            addresses it. However, they also identified specific open research questions that
-            require community investigation.
+            The outputs named open research questions that need independent investigation.
+            AI-generated agreement with the protocol is not used here as evidence for it.
         </p>
         <p>
             This page consolidates those questions into a formal, open research agenda.
@@ -98,9 +98,9 @@
         <ul>
             <li>Select N domains across verticals (SaaS, consulting, e-commerce, healthcare)</li>
             <li>Generate baseline AI responses about each entity <em>without</em> ARP</li>
-            <li>Deploy <code>reasoning.json</code> with verified corrections and context</li>
+            <li>Deploy <code>reasoning.json</code> with sourced corrections and context</li>
             <li>Re-query after indexing and measure: hallucination rate, factual accuracy, entity attribution correctness</li>
-            <li>Use automated fact-checking against <code>evidence_url</code> references</li>
+            <li>Automated fact-checking against <code>evidence_url</code> references</li>
         </ul>
         <h3>Open Sub-Questions</h3>
         <ul>
@@ -119,12 +119,13 @@
             results be independently replicated by third parties?
         </p>
         <h3>Experiments to Replicate</h3>
+        <p>The findings below are reported by the protocol author. The raw data are not published in the ARP repository, and the findings have not been independently replicated.</p>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
                         <th>Experiment</th>
-                        <th>Original Finding</th>
+                        <th>Finding reported by the author</th>
                         <th>Replication Needs</th>
                     </tr>
                 </thead>
@@ -152,6 +153,12 @@
                 </tbody>
             </table>
         </div>
+        <p>
+            Counter-observation, also reported by the author: on 2026-05-13 the Vercel edge logs of
+            arp-protocol.org showed no bot requests for <code>/.well-known/reasoning.json</code>; the file
+            was added to the sitemap afterwards
+            (<a href="https://github.com/SaschaDeforth/arp-protocol/commit/826b94d" target="_blank" rel="noopener">commit 826b94d</a>).
+        </p>
     </section>
 
     <!-- Research Question 3 -->
@@ -159,17 +166,17 @@
         <h2>RQ3: IETF Standardization Pathway</h2>
         <p><strong>Source:</strong> ChatGPT Deep Research, Gemini Deep Research</p>
         <p>
-            What is the optimal standardization pathway for a <code>.well-known</code> URI
-            serving cognitive reasoning directives?
+            Which standardization pathway, if any, fits a <code>.well-known</code> URI
+            that serves an entity's self-description?
         </p>
         <h3>Current Status</h3>
         <ul>
-            <li>IETF Internet-Draft prepared: <code>draft-deforth-arp-01</code> (submitted to IETF Datatracker)</li>
+            <li>Individual Internet-Drafts on the IETF Datatracker, with no IETF stream or working group assigned: <code>draft-deforth-arp-00</code> (DNS-bound signatures for v1.x; posted 2026-04-18, expires 2026-10-20) and <code>draft-deforth-arp-reasoning-protocol-00</code> (ARP v2.0; posted 2026-04-28, expires 2026-10-30); submission does not imply IETF endorsement or working-group adoption</li>
             <li>W3C AIVS Community Group introduction in progress</li>
         </ul>
         <h3>Open Questions</h3>
         <ul>
-            <li>Should ARP pursue IETF RFC status, W3C Community Group Report, or both?</li>
+            <li>Is an IETF RFC, a W3C Community Group Report, or both the better path for ARP?</li>
             <li>How should the protocol handle versioning across RFC iterations?</li>
             <li>What is the relationship between ARP and the emerging AI Verifiable Standards (AIVS)?</li>
         </ul>
@@ -180,14 +187,14 @@
         <h2>RQ4: Multimodal Extension</h2>
         <p><strong>Source:</strong> ChatGPT Deep Research</p>
         <p>
-            Can the ARP schema be extended to govern reasoning about non-text entities —
+            Can the ARP schema be extended to describe non-text entities —
             images, video, IoT devices, autonomous vehicles?
         </p>
         <h3>Considerations</h3>
         <ul>
-            <li>Image agents: Can <code>reasoning.json</code> provide correction directives for visual AI (e.g., product image misidentification)?</li>
-            <li>IoT agents: Can sensor-equipped autonomous systems use domain-hosted reasoning directives for decision boundaries?</li>
-            <li>Video: Can reasoning directives be temporally scoped (valid for specific content windows)?</li>
+            <li>Image agents: Can <code>reasoning.json</code> carry sourced corrections relevant to visual AI (e.g., product image misidentification)?</li>
+            <li>IoT agents: Can sensor-equipped autonomous systems read domain-hosted self-descriptions, for example device specifications?</li>
+            <li>Video: Can self-description statements be temporally scoped (valid for specific content windows)?</li>
         </ul>
     </section>
 
@@ -196,8 +203,8 @@
         <h2>RQ5: Trust Model Adversarial Analysis</h2>
         <p><strong>Source:</strong> ChatGPT Deep Research, Gemini Deep Research</p>
         <p>
-            What are the attack surfaces of a self-attested reasoning file, and how
-            effectively does v1.2 cryptographic signing mitigate them?
+            What are the attack surfaces of a self-attested reasoning file, and which of them
+            does cryptographic signing (since v1.2) address?
         </p>
         <h3>Threat Vectors</h3>
         <div class="table-wrap">
@@ -206,14 +213,14 @@
                     <tr>
                         <th>Threat</th>
                         <th>ARP v1.1 Mitigation</th>
-                        <th>ARP v1.2 Mitigation</th>
+                        <th>ARP v1.2/v1.3 Mitigation</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>False self-attestation</td>
                         <td>Good faith (same as schema.org)</td>
-                        <td>Ed25519 signature = non-repudiation</td>
+                        <td>Ed25519 signature attributes the file to the domain operator; it does not show that the statements are true</td>
                     </tr>
                     <tr>
                         <td>Man-in-the-middle</td>
@@ -229,6 +236,16 @@
                         <td>Competitor sabotage</td>
                         <td>Ethics policy</td>
                         <td>Signature attribution + community reporting</td>
+                    </tr>
+                    <tr>
+                        <td>Altered copies (e.g., extended expiry date)</td>
+                        <td>—</td>
+                        <td>Signature covers the metadata (enveloped pattern); payload-only legacy signatures are rejected (v1.3)</td>
+                    </tr>
+                    <tr>
+                        <td>Compromised or retired key</td>
+                        <td>—</td>
+                        <td>New selector per key; old selector revoked with an empty <code>p=</code> (v1.3)</td>
                     </tr>
                 </tbody>
             </table>
@@ -246,7 +263,7 @@
         <h3>Measurement Dimensions</h3>
         <ul>
             <li>Citation persistence: Do AI platforms continue citing reasoning.json after model updates?</li>
-            <li>Training integration: Do ARP directives eventually enter model training data?</li>
+            <li>Training integration: Do ARP self-descriptions eventually enter model training data?</li>
             <li>Competitive dynamics: When multiple entities in a vertical deploy ARP, how do AI systems resolve conflicting claims?</li>
         </ul>
     </section>
@@ -255,8 +272,8 @@
     <section class="section" id="contribute">
         <h2>How to Contribute</h2>
         <p>
-            This research agenda is open. We invite AI researchers, RAG engineers, and
-            domain owners to contribute:
+            This research agenda is open. AI researchers, RAG engineers, and
+            domain owners are invited to contribute:
         </p>
         <ul>
             <li><strong>Replicate experiments</strong> — Run the Ghost Site or Canary Token experiments independently and share results</li>
@@ -273,8 +290,9 @@
     <div class="footer-inner">
         <div class="footer-col">
             <div class="footer-col-title">Protocol</div>
-            <a href="SPEC.md">Specification v1.2</a>
-            <a href="ETHICS.md">Ethics Policy v1.2</a>
+            <a href="/SPEC.md">Specification v1.3</a>
+            <a href="/ETHICS.md">Ethics Policy</a>
+            <a href="/layer0/">About this site's self-description</a>
             <a href="/">Home</a>
         </div>
         <div class="footer-col">
@@ -285,13 +303,14 @@
         </div>
         <div class="footer-col">
             <div class="footer-col-title">Legal</div>
-            <a href="https://truesource.studio/impressum.html">Impressum</a>
+            <a href="https://truesource.studio/impressum">Impressum</a>
             <a href="https://truesource.studio/datenschutz.html">Datenschutz</a>
-            <a href="LICENSE">MIT License</a>
+            <a href="/LICENSE">MIT License</a>
         </div>
     </div>
     <div class="footer-bottom">
-        © 2026 Sascha Deforth. Built in Düsseldorf.
+        <p style="margin: 0 0 8px; overflow-wrap: anywhere;">Self-description (ARP): <a href="https://arp-protocol.org/.well-known/reasoning.json">https://arp-protocol.org/.well-known/reasoning.json</a></p>
+        © 2026 Sascha Deforth. Built in Grevenbroich near Düsseldorf.
     </div>
 </footer>
 

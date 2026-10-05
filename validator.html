@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validator — reasoning.json v1.2</title>
-    <meta name="description" content="Validate your reasoning.json file against the ARP v1.2 schema. Check compliance, cryptographic signatures, anti-spam limits, and migration tips.">
+    <title>Validator — reasoning.json v1.3</title>
+    <meta name="description" content="Check a reasoning.json file against ARP v1.3: required fields, provenance, wording profile, Ed25519 signature via DNS and the reasoning.md hash. Runs in the browser.">
     <meta name="robots" content="index, follow">
+    <link rel="reasoning" type="application/json" href="/.well-known/reasoning.json">
+    <link rel="describedby" type="application/json" href="/.well-known/reasoning.json">
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <style>
         /* --- Validator-specific styles --- */
         .validator-box {
@@ -89,6 +91,43 @@
             border-color: var(--text-muted);
         }
 
+        /* --- Options --- */
+        .options {
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 10px 16px;
+            margin: 8px 0 16px;
+            font-size: 13px;
+        }
+
+        .options summary {
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .options label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .options .hint {
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
         /* --- Results --- */
         .results {
             display: none;
@@ -106,7 +145,7 @@
             padding: 24px;
             border: 1px solid var(--border);
             border-radius: 6px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             background: var(--code-bg);
         }
 
@@ -139,6 +178,67 @@
             font-size: 14px;
         }
 
+        .score-meta .score-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 6px;
+        }
+
+        /* --- Trust level --- */
+        .trust-box {
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--text-dim);
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .trust-box.level-cryptographic { border-left-color: #1a7f37; }
+        .trust-box.level-unsigned { border-left-color: #9a6700; }
+        .trust-box.level-invalid { border-left-color: #cf222e; }
+
+        .trust-head {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .trust-level {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .level-cryptographic .trust-level { color: #1a7f37; }
+        .level-unsigned .trust-level { color: #9a6700; }
+        .level-invalid .trust-level { color: #cf222e; }
+
+        .trust-reason {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .trust-box p {
+            margin: 0 0 8px;
+        }
+
+        .trust-box ul {
+            margin: 8px 0 0;
+            padding-left: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .trust-note {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
         .check-list {
             margin: 16px 0;
         }
@@ -166,9 +266,11 @@
         .check-pass { color: #1a7f37; }
         .check-fail { color: #cf222e; }
         .check-warn { color: #9a6700; }
+        .check-info { color: var(--text-dim); }
 
         .check-detail {
             flex: 1;
+            min-width: 0;
         }
 
         .check-detail strong {
@@ -179,31 +281,43 @@
         .check-detail span {
             color: var(--text-muted);
             font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .check-detail .excerpt {
+            display: block;
+            margin-top: 4px;
+            padding: 4px 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            background: var(--code-bg);
+            border-radius: 3px;
+            color: var(--code-text);
+        }
+
+        .check-detail mark {
+            background: #ffebe9;
+            color: #cf222e;
         }
 
         /* --- CTA --- */
         .cta-box {
-            border: 1px solid var(--accent);
+            border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 20px 24px;
+            padding: 16px 20px;
             margin: 24px 0;
-            background: rgba(9, 105, 218, 0.04);
+            background: var(--code-bg);
         }
 
         .cta-box h3 {
-            margin: 0 0 8px;
-            font-size: 16px;
-            color: var(--accent);
+            margin: 0 0 6px;
+            font-size: 15px;
         }
 
         .cta-box p {
             margin: 0;
             font-size: 14px;
             color: var(--text-muted);
-        }
-
-        .cta-box a {
-            font-weight: 600;
         }
 
         /* --- URL input --- */
@@ -215,6 +329,7 @@
 
         .url-input {
             flex: 1;
+            min-width: 0;
             font-family: var(--font-mono);
             font-size: 13px;
             padding: 8px 12px;
@@ -299,19 +414,30 @@
             font-size: 13px;
             color: var(--text-muted);
         }
+
+        .self-description {
+            margin-top: 8px;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 640px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .score-display { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
 
 <nav class="nav">
     <div class="nav-inner">
-        <a href="index.html" class="nav-logo">reasoning.json</a>
+        <a href="/" class="nav-logo">reasoning.json</a>
         <div class="nav-links">
-            <a href="index.html#specification" class="nav-link">Specification</a>
-            <a href="validator.html" class="nav-link" style="color: var(--text); font-weight: 600;">Validator</a>
-            <a href="generator.html" class="nav-link">Generator</a>
-            <a href="sign/" class="nav-link" style="color: #10b981;">🔐 Sign</a>
-            <a href="index.html#ethics" class="nav-link">Ethics</a>
+            <a href="/#specification" class="nav-link">Specification</a>
+            <a href="/validator" class="nav-link" style="color: var(--text); font-weight: 600;">Validator</a>
+            <a href="/generator" class="nav-link">Generator</a>
+            <a href="/sign/" class="nav-link">Sign</a>
+            <a href="/#ethics" class="nav-link">Ethics</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link">GitHub</a>
         </div>
     </div>
@@ -322,12 +448,15 @@
     <header class="header">
         <h1>Validate your <code>reasoning.json</code></h1>
         <p class="header-desc">
-            Check your file against the ARP v1.2 schema. Get a compliance score, cryptographic trust checks, anti-spam limits, and migration tips.
+            Checks a file against ARP v1.3 (“Reader Profile”): required fields, provenance, the wording profile
+            (third-person statements, no instructions to AI systems), the Ed25519 signature and the
+            <code>reasoning.md</code> hash. A valid signature shows who published the file and that it is unchanged.
+            It shows the origin, not the accuracy of the statements.
         </p>
         <div class="header-meta">
-            <span>Schema: v1.2</span>
-            <span>Checks: 28</span>
-            <span>Client-side only — your data never leaves your browser</span>
+            <span>Spec: ARP v1.3</span>
+            <span>Schema: v1.3 (v1.2 files are read as v1.2)</span>
+            <span>The file stays in your browser; for the signature check the page asks dns.google for the public key (only the DNS name is sent)</span>
         </div>
     </header>
 
@@ -335,22 +464,24 @@
 
         <!-- Tabs -->
         <div class="tab-bar">
-            <button class="tab active" onclick="switchTab('paste')">Paste JSON</button>
-            <button class="tab" onclick="switchTab('url')">Fetch from URL</button>
+            <button class="tab active" id="tab-btn-paste" onclick="switchTab('paste')">Paste JSON</button>
+            <button class="tab" id="tab-btn-url" onclick="switchTab('url')">Fetch from URL</button>
         </div>
 
         <!-- Paste Tab -->
         <div id="tab-paste" class="tab-panel active">
             <div class="validator-box">
                 <div class="validator-header">
-                    <span>reasoning.json</span>
+                    <span id="source-label">reasoning.json</span>
                     <span id="char-count">0 characters</span>
                 </div>
-                <textarea id="json-input" class="validator-input" placeholder='{
-  "$schema": "https://arp-protocol.org/schema/v1.1.json",
+                <textarea id="json-input" class="validator-input" spellcheck="false" placeholder='{
+  "$schema": "https://arp-protocol.org/schema/v1.3.json",
   "protocol": "Agentic Reasoning Protocol (ARP)",
-  "version": "1.1",
+  "version": "1.3",
+  "domain": "example.com",
   "entity": "Your Brand",
+  "provenance": { ... },
   "identity": { ... },
   "corrections": { ... },
   "entity_claims": { ... }
@@ -362,96 +493,127 @@
         <div id="tab-url" class="tab-panel">
             <p>Enter a domain to fetch its <code>/.well-known/reasoning.json</code>:</p>
             <div class="url-input-row">
-                <input type="text" id="url-input" class="url-input" placeholder="https://example.com">
-                <button class="btn btn-secondary" onclick="fetchFromUrl()">Fetch</button>
+                <input type="text" id="url-input" class="url-input" placeholder="https://example.com" onkeydown="if (event.key === 'Enter') fetchFromUrl()">
+                <button class="btn btn-secondary" onclick="fetchFromUrl()">Fetch &amp; validate</button>
             </div>
             <p style="font-size: 13px; color: var(--text-dim); margin-top: 8px;">
-                Note: The target server must allow CORS requests. If fetching fails, paste the JSON manually.
+                The target server must allow CORS requests (<code>Access-Control-Allow-Origin: *</code>, SPEC §2.3).
+                For fetched files the signature is checked against the domain of the URL.
             </p>
         </div>
+
+        <details class="options">
+            <summary>Signature check options</summary>
+            <div class="options-grid">
+                <div>
+                    <label for="opt-domain">Domain for pasted files</label>
+                    <input type="text" id="opt-domain" class="url-input" placeholder="taken from the domain field" style="width: 100%;">
+                    <div class="hint">Used for the DNS lookup of pasted files. Must match the <code>domain</code> field.</div>
+                </div>
+                <div>
+                    <label for="opt-pubkey">Public key for an offline check</label>
+                    <input type="text" id="opt-pubkey" class="url-input" placeholder="base64, 32-byte Ed25519 key" style="width: 100%;">
+                    <div class="hint">With a key here, no DNS request is made (like <code>arp_cli verify --pubkey</code>).</div>
+                </div>
+                <div>
+                    <label for="opt-md">Local reasoning.md for pasted files</label>
+                    <input type="file" id="opt-md" accept=".md,text/markdown" style="width: 100%; font-size: 12px;">
+                    <div class="hint">Compared with the SHA-256 in <code>representations</code> before deployment.</div>
+                </div>
+            </div>
+        </details>
 
         <!-- Actions -->
         <div class="validator-actions">
             <button class="btn btn-primary" onclick="validate()">✓ Validate</button>
-            <button class="btn btn-secondary" onclick="loadExample()">Load v1.2 Example</button>
+            <button class="btn btn-secondary" onclick="loadExample()">Load v1.3 example</button>
             <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
         </div>
 
     </div>
 
     <!-- Results -->
-    <div id="results" class="results">
+    <div id="results" class="results" aria-live="polite">
 
         <div id="score-display" class="score-display">
             <div id="score-circle" class="score-circle grade-b">--</div>
             <div class="score-meta">
-                <h3 id="score-grade">Validating...</h3>
+                <h3 id="score-grade">Validating…</h3>
                 <p id="score-summary"></p>
+                <div class="score-label">Circle: completeness of recommended fields (not a quality or truth rating)</div>
             </div>
         </div>
 
+        <!-- Trust level -->
+        <div id="trust-box" class="trust-box"></div>
+
         <!-- Migration Banner -->
         <div id="migration-banner" class="migration-banner">
-            <h4>⚠ v1.0 → v1.1 Migration Needed</h4>
+            <h4 id="migration-title">Upgrade to v1.3</h4>
             <ul id="migration-items"></ul>
         </div>
 
-        <!-- Schema Compliance -->
         <div class="section-group">
-            <div class="section-group-title">Schema Compliance</div>
+            <div class="section-group-title">Schema &amp; Version</div>
             <div id="checks-schema" class="check-list"></div>
         </div>
 
-        <!-- Identity Layer -->
         <div class="section-group">
-            <div class="section-group-title">Identity Layer</div>
+            <div class="section-group-title">Provenance (who published the file)</div>
+            <div id="checks-provenance" class="check-list"></div>
+        </div>
+
+        <div class="section-group">
+            <div class="section-group-title">Wording profile (ARP-W)</div>
+            <div id="checks-wording" class="check-list"></div>
+        </div>
+
+        <div class="section-group">
+            <div class="section-group-title">Identity</div>
             <div id="checks-identity" class="check-list"></div>
         </div>
 
-        <!-- Anti-Hallucination Layer -->
         <div class="section-group">
-            <div class="section-group-title">Anti-Hallucination Layer (Corrections)</div>
+            <div class="section-group-title">Corrections</div>
             <div id="checks-corrections" class="check-list"></div>
         </div>
 
-        <!-- Entity Claims Layer -->
         <div class="section-group">
-            <div class="section-group-title">Entity Claims (Self-Attested Context)</div>
+            <div class="section-group-title">Entity claims (self-attested context)</div>
             <div id="checks-claims" class="check-list"></div>
         </div>
 
-        <!-- Anti-Spam -->
         <div class="section-group">
-            <div class="section-group-title">Anti-Spam Limits</div>
+            <div class="section-group-title">Length limits</div>
             <div id="checks-limits" class="check-list"></div>
         </div>
 
-        <!-- Cryptographic Trust -->
         <div class="section-group">
-            <div class="section-group-title">🔐 Cryptographic Trust Layer (v1.2)</div>
+            <div class="section-group-title">Signature block (_arp_signature)</div>
             <div id="checks-crypto" class="check-list"></div>
         </div>
 
-        <!-- Diagnostics -->
         <div class="section-group">
-            <div class="section-group-title">Diagnostics & Telemetry (v1.2)</div>
+            <div class="section-group-title">Readable representation (reasoning.md)</div>
+            <div id="checks-representation" class="check-list"></div>
+        </div>
+
+        <div class="section-group">
+            <div class="section-group-title">Diagnostics</div>
             <div id="checks-diagnostics" class="check-list"></div>
         </div>
 
-        <!-- Authority & Trust -->
         <div class="section-group">
-            <div class="section-group-title">Authority & Trust</div>
+            <div class="section-group-title">Sources &amp; audit metadata</div>
             <div id="checks-authority" class="check-list"></div>
         </div>
 
         <!-- CTA -->
         <div id="cta-box" class="cta-box" style="display: none;">
-            <h3>Need a higher score?</h3>
+            <h3>Help with a self-description</h3>
             <p>
-                Writing effective reasoning files requires understanding what AI systems actually hallucinate about your brand.
-                A Brand Reasoning Engineer audits AI outputs, crafts verified corrections, and builds domain expertise scenarios.
-                <br><br>
-                → <a href="https://truesource.studio" target="_blank" rel="noopener">Contact TrueSource for professional Brand Reasoning Engineering</a>
+                TrueSource, the consultancy of ARP author Sascha Deforth, reviews and drafts <code>reasoning.json</code> files:
+                <a href="https://truesource.studio" target="_blank" rel="noopener">truesource.studio</a>
             </p>
         </div>
 
@@ -463,14 +625,16 @@
     <div class="footer-inner">
         <div class="footer-col">
             <div class="footer-col-title">Protocol</div>
-            <a href="index.html">Specification</a>
-            <a href="index.html#ethics">Ethics Policy</a>
-            <a href="validator.html">Validator</a>
-            <a href="generator.html">Generator</a>
+            <a href="/">Specification</a>
+            <a href="/#ethics">Ethics Policy</a>
+            <a href="/validator">Validator</a>
+            <a href="/generator">Generator</a>
+            <a href="/sign/">Signer</a>
         </div>
         <div class="footer-col">
             <div class="footer-col-title">Resources</div>
             <a href="https://github.com/SaschaDeforth/arp-protocol">GitHub</a>
+            <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/arp_cli.py">CLI (arp_cli)</a>
             <a href="https://linkedin.com/in/deforth">LinkedIn</a>
         </div>
         <div class="footer-col">
@@ -481,115 +645,639 @@
         </div>
     </div>
     <div class="footer-bottom">
-        © 2026 Sascha Deforth. Built in Düsseldorf.
+        © 2026 Sascha Deforth. Built in Grevenbroich near Düsseldorf.
+        <div class="self-description">Self-description (ARP): <a href="https://arp-protocol.org/.well-known/reasoning.json">https://arp-protocol.org/.well-known/reasoning.json</a></div>
     </div>
 </footer>
 
+<script src="/script.js"></script>
 <script>
 // ========================================================
-// reasoning.json Validator — v1.2 Scoring Engine
+// reasoning.json Validator — ARP v1.3 ("Reader Profile")
+// Rules: SPEC v1.3, schema/v1.3.json, wording profile ARP-W (shared with
+// Generator and Signer via script.js), Enveloped signature check (SPEC §13.4).
 // ========================================================
+
+const T = window.ARPTools;
+const textarea = document.getElementById('json-input');
+const charCount = document.getElementById('char-count');
+const sourceLabel = document.getElementById('source-label');
+
+// Set when the JSON was fetched from a URL; cleared on manual edits.
+let retrieval = null;
+
+const TOP_LEVEL_KEYS = {
+    '1.3': ['$schema', 'protocol', 'version', 'domain', 'entity', 'provenance', 'representations', 'verification',
+        'identity', 'organization', 'corrections', 'entity_claims', 'diagnostics', 'authority', 'content_policy', '_arp_signature'],
+    '1.2': ['$schema', 'protocol', 'version', 'domain', 'entity', 'verification', 'identity', 'corrections',
+        'entity_claims', 'diagnostics', 'authority', 'content_policy', '_arp_signature']
+};
+
+const PROVENANCE_PATTERN = /^This file is .+'s own description of itself, published by .+ at [a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\. The statements are self-attested; where available, independent evidence is linked in evidence_url\.$/;
+
+function esc(value) {
+    return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function code(value) {
+    return '<code>' + esc(value) + '</code>';
+}
 
 function switchTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelector(`#tab-${tab}`).classList.add('active');
-    event.target.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('tab-btn-' + tab).classList.add('active');
 }
 
-const textarea = document.getElementById('json-input');
-const charCount = document.getElementById('char-count');
+function setInput(text) {
+    textarea.value = text;
+    charCount.textContent = text.length + ' characters';
+}
 
 textarea.addEventListener('input', () => {
     charCount.textContent = textarea.value.length + ' characters';
+    if (retrieval) {
+        retrieval = null;
+        sourceLabel.textContent = 'reasoning.json (edited)';
+    }
 });
 
+function manifestUrlFromInput(raw) {
+    let url = raw.trim();
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const parsed = new URL(url);
+    if (!/reasoning\.json$/.test(parsed.pathname)) return parsed.origin + '/.well-known/reasoning.json';
+    return parsed.href;
+}
+
 async function fetchFromUrl() {
-    const urlInput = document.getElementById('url-input');
-    let url = urlInput.value.trim();
-    if (!url) return;
-
-    if (!url.startsWith('http')) url = 'https://' + url;
-
+    const raw = document.getElementById('url-input').value;
+    if (!raw.trim()) return;
+    let url;
     try {
-        const parsedUrl = new URL(url);
-        if (!parsedUrl.pathname.includes('reasoning.json')) {
-            url = parsedUrl.origin + '/.well-known/reasoning.json';
-        }
+        url = manifestUrlFromInput(raw);
     } catch (e) {
         alert('Invalid URL. Please enter a valid domain.');
         return;
     }
-
     try {
-        const resp = await fetch(url);
+        const resp = await fetch(url, { cache: 'no-store' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const text = await resp.text();
-        textarea.value = text;
-        charCount.textContent = text.length + ' characters';
+        setInput(text);
+        retrieval = { url: url, domain: new URL(url).hostname };
+        sourceLabel.textContent = url;
         switchTab('paste');
-        document.querySelectorAll('.tab')[0].classList.add('active');
-        document.querySelectorAll('.tab')[1].classList.remove('active');
     } catch (e) {
-        alert(`Could not fetch reasoning.json from ${url}.\n\nError: ${e.message}\n\nThe server may not allow CORS requests. Try pasting the JSON manually.`);
+        retrieval = null;
+        alert(`Could not fetch reasoning.json from ${url}.\n\nError: ${e.message}\n\nThe server may not allow CORS requests. Paste the JSON instead.`);
+        return;
     }
+    await validate();
 }
 
 function loadExample() {
-    textarea.value = JSON.stringify({
-        "$schema": "https://arp-protocol.org/schema/v1.2.json",
-        "protocol": "Agentic Reasoning Protocol (ARP)",
-        "version": "1.2",
+    const example = {
+        "$schema": T.SCHEMA_URL,
+        "protocol": T.PROTOCOL,
+        "version": "1.3",
+        "domain": "example.com",
         "entity": "Example Corp",
+        "provenance": {
+            "statement": T.provenanceStatement('Example Corp', 'Example Corp GmbH', 'example.com'),
+            "publisher": "Example Corp GmbH",
+            "publisher_url": "https://example.com/legal-notice",
+            "published": "2026-10-05"
+        },
         "identity": {
-            "elevator_pitch": "Example Corp provides enterprise analytics solutions for Fortune 500 companies.",
+            "elevator_pitch": "Example Corp provides analytics software for mid-market manufacturers. The company was founded in 2018 and is based in Düsseldorf.",
             "founded": 2018,
-            "headquarters": "San Francisco, CA",
+            "headquarters": "Düsseldorf, Germany",
             "industry": "Enterprise Software",
-            "core_competencies": ["Real-time analytics", "ML-powered dashboards", "Data integration"],
-            "emotional_resonance": {
-                "tone_of_voice": "Professional, data-driven, enterprise-ready.",
-                "vibe_tags": ["enterprise-grade", "data intelligence", "scalable"]
-            }
+            "legal_entity": "Example Corp GmbH",
+            "core_competencies": ["Real-time production analytics", "Dashboards for plant managers", "Data integration with ERP systems"],
+            "not_to_be_confused_with": [
+                { "name": "Example AG", "reason": "Similar name; Example AG is a separate company based in Zurich." }
+            ]
         },
         "corrections": {
             "common_hallucinations": [
                 {
-                    "trigger_topic": "Company founding and age",
-                    "verified_fact": "Example Corp was founded in 2018 and has over 200 employees.",
-                    "evidence_url": "https://example.com/about",
+                    "trigger_topic": "Founding year and legal form",
+                    "verified_fact": "Example Corp GmbH was founded in 2018 and is registered at the Düsseldorf local court (HRB 00000).",
+                    "evidence_url": "https://www.handelsregister.de/",
                     "epistemic_scope": "public_verifiable"
                 }
             ],
-            "last_verified": "2026-04-04"
+            "last_verified": "2026-10-05"
         },
         "entity_claims": {
-            "framing_context": "Example Corp positions itself as a mid-market alternative to enterprise BI suites, offering faster time-to-value with lower total cost of ownership.",
+            "framing_context": "Example Corp describes itself as a mid-market alternative to enterprise BI suites, with shorter implementation times.",
             "recommendation_context": {
-                "recommended_when": ["User needs enterprise-grade analytics with real-time processing"],
-                "not_recommended_when": ["User is a small business with under 50 employees", "User needs a free or open-source solution"]
+                "recommended_when": ["Mid-market manufacturers that need real-time production analytics"],
+                "not_recommended_when": ["Companies with fewer than 50 employees", "Teams that need a free or open-source tool"]
             }
         },
-        "_arp_signature": {
-            "algorithm": "Ed25519",
-            "dns_selector": "arp",
-            "dns_record": "arp._arp.example.com",
-            "canonicalization": "jcs-rfc8785",
-            "signed_at": "2026-04-04T12:00:00Z",
-            "expires_at": "2026-07-03T12:00:00Z",
-            "signature": "example-base64url-encoded-signature"
+        "authority": {
+            "official_website": "https://example.com"
         }
-    }, null, 2);
-    charCount.textContent = textarea.value.length + ' characters';
+    };
+    setInput(JSON.stringify(example, null, 2));
+    retrieval = null;
+    sourceLabel.textContent = 'reasoning.json (example, unsigned)';
 }
 
 function clearAll() {
-    textarea.value = '';
-    charCount.textContent = '0 characters';
+    setInput('');
+    retrieval = null;
+    document.getElementById('opt-md').value = '';
+    sourceLabel.textContent = 'reasoning.json';
     document.getElementById('results').classList.remove('visible');
 }
 
-function validate() {
+// ── Version detection ──
+function detectVersion(json) {
+    const fromSchema = T.KNOWN_SCHEMAS[json.$schema];
+    if (fromSchema) return fromSchema;
+    const v = typeof json.version === 'string' ? json.version : '';
+    if (/^1\.3/.test(v)) return '1.3';
+    if (/^1\.2/.test(v)) return '1.2';
+    if (/^1\.1/.test(v)) return '1.1';
+    if (json.reasoning_directives || /^1(\.0)?$/.test(v)) return '1.0';
+    return null;
+}
+
+function isObject(v) {
+    return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function hostOf(url) {
+    try { return new URL(url).hostname.toLowerCase(); } catch (e) { return null; }
+}
+
+function sameSite(host, domain) {
+    if (!host || !domain) return false;
+    return host === domain || host.endsWith('.' + domain) || domain.endsWith('.' + host);
+}
+
+function validDate(s) {
+    return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s + 'T00:00:00Z'));
+}
+
+function validDateTime(s) {
+    return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.test(s) && !isNaN(Date.parse(s));
+}
+
+// ── Static checks (no network) ──
+function runChecks(json, rawText) {
+    const checks = [];
+    const add = (group, name, status, detail, weight, must) =>
+        checks.push({ group, name, status, detail: detail || '', weight: weight || 0, must: !!must });
+
+    const version = detectVersion(json);
+    const v13 = version === '1.3';
+    const domain = typeof json.domain === 'string' ? T.normalizeDomain(json.domain) : '';
+    const entity = typeof json.entity === 'string' ? json.entity : '';
+
+    // ── Schema & version ──
+    if (json.$schema === T.SCHEMA_URL) {
+        add('schema', '$schema', 'pass', code(json.$schema), 3, true);
+    } else if (T.KNOWN_SCHEMAS[json.$schema]) {
+        add('schema', '$schema', 'warn', `${code(json.$schema)} — read as ARP v${esc(T.KNOWN_SCHEMAS[json.$schema])}; v1.3 uses ${code(T.SCHEMA_URL)}`, 3, false);
+    } else {
+        add('schema', '$schema', 'fail', json.$schema ? `Unknown schema ${code(json.$schema)}` : 'Missing — must reference the ARP schema URI', 3, true);
+    }
+
+    add('schema', 'protocol', json.protocol === T.PROTOCOL ? 'pass' : 'fail',
+        `Must be ${code(T.PROTOCOL)}`, 3, true);
+
+    const declared = typeof json.version === 'string' ? json.version : null;
+    if (v13 && declared && /^1\.3(\.\d+)?$/.test(declared)) {
+        add('schema', 'version', 'pass', code(declared), 3, true);
+    } else if (v13) {
+        add('schema', 'version', 'fail', `The v1.3 schema requires version ${code('1.3')}${declared ? ' (found ' + code(declared) + ')' : ''}`, 3, true);
+    } else if (declared && /^\d+\.\d+(\.\d+)?$/.test(declared)) {
+        add('schema', 'version', 'warn', `${code(declared)} — current version is 1.3`, 3, false);
+    } else {
+        add('schema', 'version', 'fail', 'Missing or not a version string', 3, true);
+    }
+
+    if (!domain) {
+        add('schema', 'domain', 'fail', 'Missing — the domain that serves this file (required since schema v1.2)', 3, true);
+    } else if (!T.isValidDomain(domain)) {
+        add('schema', 'domain', 'fail', `${code(json.domain)} is not a valid domain name`, 3, true);
+    } else if (retrieval && retrieval.domain.toLowerCase() !== domain) {
+        add('schema', 'domain', 'fail', `${code(domain)} does not match the retrieval domain ${code(retrieval.domain)} (SPEC §4)`, 3, true);
+    } else {
+        add('schema', 'domain', 'pass', retrieval ? `${code(domain)} — matches the retrieval domain` : code(domain), 3, true);
+    }
+
+    add('schema', 'entity', entity.length > 0 && entity.length <= 200 ? 'pass' : 'fail',
+        'Canonical name of the entity (max 200 characters)', 5, true);
+
+    const claimsObj = isObject(json.entity_claims) ? json.entity_claims : null;
+    const hasFraming = claimsObj && typeof claimsObj.framing_context === 'string';
+    add('schema', 'entity_claims', hasFraming ? 'pass' : 'fail',
+        hasFraming ? 'Object with framing_context'
+            : claimsObj ? 'framing_context is missing (required)'
+            : (json.reasoning_directives ? 'Missing — the file uses the v1.0 key reasoning_directives' : 'Missing (required)'), 3, true);
+
+    const allowed = TOP_LEVEL_KEYS[v13 ? '1.3' : '1.2'];
+    if (version === '1.3' || version === '1.2') {
+        const unknown = Object.keys(json).filter(k => !allowed.includes(k));
+        add('schema', 'top-level fields', unknown.length ? 'fail' : 'pass',
+            unknown.length ? `Not defined in schema v${esc(version)}: ${unknown.map(code).join(', ')}` : `All fields defined in schema v${esc(version)}`,
+            0, unknown.length > 0);
+    }
+
+    // ── Provenance (K2) ──
+    const prov = json.provenance;
+    if (!isObject(prov)) {
+        add('provenance', 'provenance', v13 ? 'fail' : 'warn',
+            v13 ? 'Missing — required in v1.3 (who published the file, with legal notice URL and date)' : 'Required from v1.3 on (who published the file, with legal notice URL and date)',
+            5, v13);
+    } else {
+        const publisher = typeof prov.publisher === 'string' ? prov.publisher.trim() : '';
+        add('provenance', 'publisher', publisher && publisher.length <= 200 ? 'pass' : 'fail',
+            publisher ? esc(publisher) : 'Missing — name of the publisher as stated in its legal notice', 2, true);
+        const pubUrlOk = typeof prov.publisher_url === 'string' && /^https:\/\/\S+$/.test(prov.publisher_url) && !!hostOf(prov.publisher_url);
+        add('provenance', 'publisher_url', pubUrlOk ? 'pass' : 'fail',
+            pubUrlOk ? esc(prov.publisher_url) : 'Missing or not an https URL — URL of the legal notice (imprint)', 2, true);
+        add('provenance', 'published', validDate(prov.published) ? 'pass' : 'fail',
+            validDate(prov.published) ? esc(prov.published) : 'Missing or not a date (YYYY-MM-DD)', 1, true);
+
+        const statement = typeof prov.statement === 'string' ? prov.statement : '';
+        const expected = T.provenanceStatement(entity, publisher, domain);
+        if (statement === expected) {
+            add('provenance', 'statement', 'pass', 'Matches the fixed template (entity, publisher and domain from this file)', 3, true);
+        } else if (statement && PROVENANCE_PATTERN.test(statement)) {
+            add('provenance', 'statement', 'warn', `Template wording, but entity, publisher or domain differ from the file. Expected: <span class="excerpt">${esc(expected)}</span>`, 3, false);
+        } else {
+            add('provenance', 'statement', 'fail', `${statement ? 'Does not follow' : 'Missing —'} the fixed template: <span class="excerpt">${esc(expected)}</span>`, 3, true);
+        }
+        if (/\bsign(ed|ature|ing)?\b|ed25519|cryptograph/i.test(statement)) {
+            add('provenance', 'statement without signature claim', 'fail', 'The provenance statement is identical in signed and unsigned files and does not mention a signature', 0, true);
+        }
+        const extra = Object.keys(prov).filter(k => !['statement', 'publisher', 'publisher_url', 'published'].includes(k));
+        if (extra.length) add('provenance', 'provenance fields', 'fail', `Not defined: ${extra.map(code).join(', ')}`, 0, true);
+    }
+
+    // ── Wording profile (ARP-W, K1) — same rules as arp_cli lint ──
+    const allFindings = T.lint(json);
+    const findings = allFindings.filter(f => f.rule.startsWith('ARP-W/'));
+    const errors = findings.filter(f => f.severity === 'error');
+    if (!errors.length) {
+        add('wording', 'No instruction language (ARP-W)',
+            'pass', 'Texts read as third-person statements about the entity; no instruction field names, pseudo-system markers, assurances or unattributed authority words found', 6, true);
+    } else {
+        add('wording', `${errors.length} wording error${errors.length > 1 ? 's' : ''} (ARP-W)`,
+            v13 ? 'fail' : 'warn',
+            v13 ? 'ARP v1.3 requires third-person statements without instructions to AI systems'
+                : 'Allowed in v1.2 files, not in v1.3: rewrite as third-person statements before upgrading',
+            6, v13);
+    }
+    for (const f of findings) {
+        const status = f.severity === 'error' ? (v13 ? 'fail' : 'warn') : 'warn';
+        const ex = esc(f.excerpt);
+        const excerpt = f.match ? ex.replace(esc(f.match), () => '<mark>' + esc(f.match) + '</mark>') : ex;
+        add('wording', f.rule, status,
+            `${code(f.path)} <span class="excerpt">${excerpt}</span>${esc(f.message)}`, 0, false);
+    }
+    const lintErrors = allFindings.filter(f => f.severity === 'error').length;
+    add('wording', 'arp_cli lint equivalent', 'info',
+        `${lintErrors} error(s), ${allFindings.length - lintErrors} warning(s) over ARP-W, ARP-P, ARP-S and ARP-R — the result of ${code('arp_cli lint')} v${esc(T.CLI_VERSION)} for this file`, 0);
+
+    // ── Identity ──
+    const identity = isObject(json.identity) ? json.identity : {};
+    const org = isObject(json.organization) ? json.organization : {};
+    const pitch = typeof identity.elevator_pitch === 'string' ? identity.elevator_pitch : '';
+    add('identity', 'elevator_pitch', pitch.length > 20 && pitch.length <= 500 ? 'pass' : (pitch.length > 20 ? 'warn' : 'fail'),
+        'One-paragraph third-person description (max 500 characters)', 8);
+    const comps = Array.isArray(identity.core_competencies) ? identity.core_competencies : [];
+    add('identity', 'core_competencies', comps.length >= 2 && comps.length <= 10 ? 'pass' : (comps.length ? 'warn' : 'fail'),
+        'Primary capabilities (2–10 items, 80 characters each)', 5);
+    add('identity', 'basic facts', identity.headquarters && identity.founded ? 'pass' : (identity.headquarters || identity.founded ? 'warn' : 'fail'),
+        'Headquarters and founding year', 4);
+    add('identity', 'legal entity', identity.legal_entity || org.legalName ? 'pass' : 'warn',
+        'identity.legal_entity or organization.legalName', 3);
+    add('identity', 'not_to_be_confused_with', Array.isArray(identity.not_to_be_confused_with) && identity.not_to_be_confused_with.length ? 'pass' : 'warn',
+        'Entities with similar names, each with the reason for the confusion', 3);
+    if (identity.emotional_resonance) {
+        add('identity', 'emotional_resonance', 'info', 'Tone as described by the entity itself (optional)', 0);
+    }
+
+    // ── Corrections ──
+    const corrections = isObject(json.corrections) ? json.corrections : {};
+    const entries = Array.isArray(corrections.common_hallucinations) ? corrections.common_hallucinations : [];
+    add('corrections', 'corrections', entries.length ? 'pass' : 'fail',
+        entries.length ? `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} (max 20)` : 'No trigger_topic / verified_fact entries', 10);
+    if (entries.length) {
+        const topicPattern = entries.every(h => isObject(h) && h.trigger_topic && h.verified_fact);
+        const oldFormat = entries.some(h => isObject(h) && (h.false_claim || h.correction_fact));
+        add('corrections', 'topic-anchored format', topicPattern ? 'pass' : 'warn',
+            oldFormat ? 'Uses the v1.0 false_claim format — migrate to trigger_topic / verified_fact (the false claim is not repeated)'
+                : 'trigger_topic names the topic; verified_fact states the fact without repeating the error', 8);
+        const withEvidence = entries.filter(h => isObject(h) && typeof h.evidence_url === 'string' && h.evidence_url);
+        add('corrections', 'evidence_url', withEvidence.length === entries.length ? 'pass' : (withEvidence.length ? 'warn' : 'fail'),
+            `${withEvidence.length} of ${entries.length} entries link a source`, 6);
+        if (withEvidence.length && domain) {
+            const external = withEvidence.filter(h => !sameSite(hostOf(h.evidence_url), domain)).length;
+            add('corrections', 'sources outside the own domain', external * 2 >= withEvidence.length ? 'pass' : 'warn',
+                `${external} of ${withEvidence.length} source links point to other domains (independent sources carry more weight than the own site)`, 4);
+        }
+        const scoped = entries.filter(h => isObject(h) && h.epistemic_scope).length;
+        add('corrections', 'epistemic_scope', scoped === entries.length ? 'pass' : (scoped ? 'warn' : 'fail'),
+            `${scoped} of ${entries.length} entries classified (public_verifiable, proprietary_internal, industry_standard; SPEC §8.2)`, 3);
+    }
+
+    // ── Entity claims ──
+    const claims = claimsObj || (isObject(json.reasoning_directives) ? json.reasoning_directives : {});
+    const framing = typeof claims.framing_context === 'string' ? claims.framing_context
+        : (typeof claims.system_instruction === 'string' ? claims.system_instruction : '');
+    add('claims', 'framing_context', framing.length > 10 && framing.length <= 500 ? 'pass' : (framing.length > 10 ? 'warn' : 'fail'),
+        claims.framing_context !== undefined ? 'Third-person positioning statement (max 500 characters)' : 'Uses the v1.0 key system_instruction — migrate to framing_context', 8);
+    const rec = isObject(claims.recommendation_context) ? claims.recommendation_context : {};
+    const fit = rec.recommended_when || rec.recommend_when || [];
+    const noFit = rec.not_recommended_when || rec.do_not_recommend_when || [];
+    add('claims', 'recommendation_context', fit.length && noFit.length ? 'pass' : (fit.length || noFit.length ? 'warn' : 'fail'),
+        'Typical fit (recommended_when) and not a fit (not_recommended_when), as descriptions', 6);
+    const expertise = claims.domain_expertise || claims.counterfactual_simulations || [];
+    add('claims', 'domain_expertise', Array.isArray(expertise) && expertise.length && expertise.length <= 10 ? 'pass' : 'warn',
+        claims.counterfactual_simulations ? 'Uses the v1.0 key counterfactual_simulations — migrate to domain_expertise' : 'Scenarios with the entity\'s perspective (optional, max 10)', 3);
+    const positioning = claims.market_positioning || claims.strategic_dichotomies;
+    if (isObject(positioning) && Object.keys(positioning).length) {
+        add('claims', 'market_positioning', 'info', 'Keys name market categories, never individual companies (SPEC §8.4)', 0);
+    }
+
+    // ── Length limits ──
+    const tagline = typeof identity.tagline === 'string' ? identity.tagline : '';
+    add('limits', 'elevator_pitch length', pitch.length <= 500 ? 'pass' : 'fail', `${pitch.length}/500 characters`, 2);
+    add('limits', 'tagline length', tagline.length <= 120 ? 'pass' : 'fail', tagline ? `${tagline.length}/120 characters` : 'Not set', 1);
+    add('limits', 'framing_context length', framing.length <= 500 ? 'pass' : 'fail', `${framing.length}/500 characters`, 2);
+    add('limits', 'corrections count', entries.length <= 20 ? 'pass' : 'fail', `${entries.length}/20 entries`, 1);
+    const sizeKB = new Blob([rawText]).size / 1024;
+    add('limits', 'total file size', sizeKB <= 100 ? 'pass' : 'fail', `${sizeKB.toFixed(1)} KB / 100 KB`, 1, true);
+
+    // ── Signature block (K3) ──
+    const sig = json._arp_signature;
+    if (!isObject(sig)) {
+        add('crypto', 'unsigned', 'info', 'No _arp_signature block. Signing is optional; the trust level is UNSIGNED.', 0);
+    } else {
+        const selector = typeof sig.dns_selector === 'string' ? sig.dns_selector : '';
+        add('crypto', 'algorithm', sig.algorithm === 'Ed25519' ? 'pass' : 'fail', `Must be ${code('Ed25519')}`, 2, true);
+        add('crypto', 'canonicalization', sig.canonicalization === 'jcs-rfc8785' ? 'pass' : 'fail', `Must be ${code('jcs-rfc8785')} (RFC 8785)`, 2, true);
+        add('crypto', 'dns_selector', selector && T.isValidSelector(selector) ? 'pass' : 'fail',
+            selector ? `${code(selector)}${/^arp\d{4}$/.test(selector) ? '' : ' — rotation pattern for new keys: arpYYMM, e.g. ' + code(T.defaultSelector())}` : 'Missing', 2, true);
+        if (sig.dns_record !== undefined) {
+            const expectedRecord = selector && domain ? T.dnsName(selector, domain) : '';
+            add('crypto', 'dns_record', sig.dns_record === expectedRecord ? 'pass' : (v13 ? 'fail' : 'warn'),
+                sig.dns_record === expectedRecord ? code(sig.dns_record)
+                    : v13 ? `${code(sig.dns_record)} differs from ${code(expectedRecord || '?')} — in v1.3 files this is INVALID (domain_mismatch, SPEC §13.3); verifiers build the DNS name from the retrieval domain and dns_selector`
+                    : `${code(sig.dns_record)} differs from ${code(expectedRecord || '?')} — informational in v1.2 files; verifiers build the DNS name from the retrieval domain and dns_selector`, 0, v13);
+        }
+        add('crypto', 'signed_at', validDateTime(sig.signed_at) ? 'pass' : 'fail', validDateTime(sig.signed_at) ? esc(sig.signed_at) : 'Missing or not an ISO 8601 timestamp', 1, true);
+        if (validDateTime(sig.expires_at)) {
+            const expired = Date.parse(sig.expires_at) < Date.now();
+            add('crypto', 'expires_at', expired ? 'warn' : 'pass', expired ? `Expired on ${esc(sig.expires_at)} — counts as UNSIGNED (SPEC §13.7)` : `Valid until ${esc(sig.expires_at)}`, 2);
+        } else {
+            add('crypto', 'expires_at', 'fail', 'Missing or not an ISO 8601 timestamp', 2, true);
+        }
+
+        const expectedStatement = selector && domain ? T.signatureStatement(selector, domain) : null;
+        if (sig.statement === undefined) {
+            add('crypto', 'statement', v13 ? 'fail' : 'warn', 'Missing — required in signed v1.3 files: what the signature shows and what it does not show', 3, v13);
+        } else if (sig.statement === expectedStatement) {
+            add('crypto', 'statement', 'pass', 'Matches the fixed template (origin, not accuracy)', 3, true);
+        } else {
+            add('crypto', 'statement', 'fail', `Does not follow the fixed template for this domain and selector: <span class="excerpt">${esc(expectedStatement || '?')}</span>`, 3, true);
+        }
+
+        if (sig.verify === undefined) {
+            add('crypto', 'verify', v13 ? 'fail' : 'warn', 'Missing — required in signed v1.3 files: dns_name, doh_url, spec', 2, v13);
+        } else if (!isObject(sig.verify)) {
+            add('crypto', 'verify', 'fail', 'Must be an object with dns_name, doh_url and spec', 2, true);
+        } else {
+            const ref = selector && domain ? T.verifyBlock(selector, domain) : {};
+            const vb = sig.verify;
+            add('crypto', 'verify.dns_name', vb.dns_name === ref.dns_name ? 'pass' : 'fail',
+                vb.dns_name === ref.dns_name ? code(vb.dns_name) : `${vb.dns_name ? code(vb.dns_name) : 'Missing'} — expected ${code(ref.dns_name || '?')}`, 1, true);
+            if (vb.doh_url === ref.doh_url) {
+                add('crypto', 'verify.doh_url', 'pass', esc(vb.doh_url), 1);
+            } else if (typeof vb.doh_url === 'string' && /^https:\/\//.test(vb.doh_url) && ref.dns_name && vb.doh_url.includes(ref.dns_name)) {
+                add('crypto', 'verify.doh_url', 'warn', `Other resolver than the reference value ${code(ref.doh_url)}`, 1);
+            } else {
+                add('crypto', 'verify.doh_url', 'fail', `Missing or does not query ${code(ref.dns_name || '?')}`, 1, true);
+            }
+            add('crypto', 'verify.spec', vb.spec === T.SPEC_SIGNATURE_URL ? 'pass' : (vb.spec ? 'warn' : 'fail'),
+                vb.spec === T.SPEC_SIGNATURE_URL ? esc(vb.spec) : `Reference value: ${code(T.SPEC_SIGNATURE_URL)}`, 1, !vb.spec);
+        }
+
+        const s = typeof sig.signature === 'string' ? sig.signature : '';
+        if (/^[A-Za-z0-9_-]{86}$/.test(s)) {
+            add('crypto', 'signature encoding', 'pass', 'Unpadded base64url, 86 characters', 1);
+        } else if (/^[A-Za-z0-9_-]{86}==$/.test(s)) {
+            add('crypto', 'signature encoding', 'warn', 'Padded base64url (accepted on read; emission format is unpadded)', 1);
+        } else {
+            add('crypto', 'signature encoding', 'fail', 'Not a base64url Ed25519 signature', 1, true);
+        }
+    }
+
+    // ── Representation (K4) ──
+    const reps = json.representations;
+    if (reps === undefined) {
+        add('representation', 'representations', v13 ? 'warn' : 'info',
+            `Recommended from v1.3: ${code(domain ? T.markdownUrl(domain) : 'https://{domain}/.well-known/reasoning.md')} with its SHA-256 (the Signer and arp_cli render-md create it)`, v13 ? 3 : 0);
+    } else if (!Array.isArray(reps) || !reps.length) {
+        add('representation', 'representations', 'fail', 'Must be a non-empty array of { href, media_type, sha256 }', 3, true);
+    } else {
+        reps.forEach((r, i) => {
+            const ok = isObject(r) && typeof r.href === 'string' && /^https:\/\//.test(r.href) &&
+                typeof r.media_type === 'string' && /^[a-z]+\/[a-z0-9.+-]+$/.test(r.media_type) &&
+                typeof r.sha256 === 'string' && /^[0-9a-f]{64}$/.test(r.sha256);
+            const isReference = ok && domain && r.href === T.markdownUrl(domain) && r.media_type === 'text/markdown';
+            add('representation', `representations[${i}]`, ok ? (isReference ? 'pass' : 'warn') : 'fail',
+                ok ? `${esc(r.href)} · ${esc(r.media_type)}${isReference ? '' : ' — the reference representation is ' + code(domain ? T.markdownUrl(domain) : 'reasoning.md') + ' (text/markdown)'}`
+                    : 'Needs href (https), media_type (e.g. text/markdown) and sha256 (64 lowercase hex characters)', i === 0 ? 3 : 0, !ok);
+        });
+    }
+
+    // ── Diagnostics ──
+    const diag = isObject(json.diagnostics) ? json.diagnostics : null;
+    const tokens = diag && Array.isArray(diag.telemetry_tokens) ? diag.telemetry_tokens : [];
+    if (!diag) {
+        add('diagnostics', 'diagnostics', 'info', 'No diagnostics object (optional)', 0);
+    } else {
+        add('diagnostics', 'telemetry tokens', 'info', `${tokens.length} token(s). Diagnostics are infrastructure metadata, not part of reasoning.md; loaders strip them before content reaches a model (SPEC §12)`, 0);
+        if (tokens.length) {
+            add('diagnostics', 'transparency_statement', diag.transparency_statement ? 'pass' : 'warn', 'Plain explanation of why the tokens are present', 0);
+        }
+    }
+
+    // ── Sources & audit metadata ──
+    const authority = isObject(json.authority) ? json.authority : {};
+    add('authority', 'authority sources', authority.linkedin || authority.crunchbase || authority.wikipedia || authority.wikidata || authority.official_website ? 'pass' : 'warn',
+        'Official website, Wikidata, Wikipedia, LinkedIn or Crunchbase', 4);
+    const verification = isObject(json.verification) ? json.verification : {};
+    if (verification.audited_by || verification.last_verified) {
+        add('authority', 'audit metadata', 'info', `audited_by: ${esc(verification.audited_by || '—')} · last_verified: ${esc(verification.last_verified || '—')}`, 0);
+    }
+    if (verification.next_audit && validDate(verification.next_audit) && Date.parse(verification.next_audit) < Date.now()) {
+        add('authority', 'next_audit', 'warn', `Date ${esc(verification.next_audit)} has passed`, 0);
+    }
+
+    return { checks, version, findings: allFindings, domain };
+}
+
+// ── Network checks: signature (DNS) and reasoning.md hash ──
+async function runNetworkChecks(json, report) {
+    const add = (group, name, status, detail, weight, must) =>
+        report.checks.push({ group, name, status, detail: detail || '', weight: weight || 0, must: !!must });
+
+    const overrideDomain = T.normalizeDomain(document.getElementById('opt-domain').value);
+    const publicKey = document.getElementById('opt-pubkey').value.trim();
+    // Like arp_cli verify: URL host, else --domain, else the domain field of a local file
+    const bindDomain = retrieval ? retrieval.domain
+        : (overrideDomain || (typeof json.domain === 'string' ? T.normalizeDomain(json.domain) : ''));
+
+    const trust = await T.verifyManifest(json, {
+        domain: bindDomain || undefined,
+        publicKey: publicKey || undefined
+    });
+
+    if (isObject(json._arp_signature)) {
+        if (trust.level === 'CRYPTOGRAPHIC' || trust.reason === 'expired') {
+            add('crypto', 'signature covers content and metadata', 'pass', 'Enveloped pattern (SPEC §13.4): expires_at, dns_selector, statement and verify are signed too', 4, true);
+        } else if (trust.reason === 'legacy_payload_only') {
+            add('crypto', 'signature covers content and metadata', 'fail', 'Legacy payload-only pattern: the signature metadata is unprotected — rejected', 4, true);
+        } else if (trust.level === 'INVALID') {
+            add('crypto', 'signature check', 'fail', `INVALID (${esc(trust.reason)})`, 4, true);
+        } else {
+            add('crypto', 'signature check', 'info', 'Not checked — see the trust level above', 0);
+        }
+    }
+
+    // Representations (SPEC §13.12.3): compare the SHA-256 of each entry with the actual bytes.
+    // Like arp_cli verify: only https URLs on the retrieval domain are fetched; for pasted
+    // files a local reasoning.md can be selected instead.
+    const reps = Array.isArray(json.representations) ? json.representations : [];
+    const mdInput = document.getElementById('opt-md');
+    const localFile = mdInput && mdInput.files && mdInput.files[0] ? mdInput.files[0] : null;
+    const localBytes = localFile ? new Uint8Array(await localFile.arrayBuffer()) : null;
+    for (let i = 0; i < reps.length; i++) {
+        const r = reps[i];
+        const label = `representations[${i}]`;
+        if (!isObject(r) || typeof r.href !== 'string' || typeof r.sha256 !== 'string' || !/^[0-9a-fA-F]{64}$/.test(r.sha256)) {
+            add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(label)}: href or sha256 missing or malformed`, 0);
+            continue;
+        }
+        let parsed = null;
+        try { parsed = new URL(r.href); } catch (e) { parsed = null; }
+        let bytes = null;
+        let source = '';
+        const baseName = parsed ? parsed.pathname.split('/').pop() : '';
+        if (localBytes && (baseName === localFile.name || (r.media_type === 'text/markdown' && /\.md$/i.test(localFile.name)))) {
+            bytes = localBytes;
+            source = `the selected file ${localFile.name}`;
+        } else if (parsed && parsed.protocol === 'https:' && bindDomain && parsed.hostname.toLowerCase() === bindDomain) {
+            try {
+                const resp = await fetch(r.href, { cache: 'no-store' });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                bytes = new Uint8Array(await resp.arrayBuffer());
+                source = `the published ${r.href}`;
+            } catch (e) {
+                add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(r.href)}: ${esc(e.message)} (not deployed, or no CORS header)`, 0);
+                continue;
+            }
+        } else {
+            add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(r.href)}: not an https URL on the retrieval domain${bindDomain ? ' ' + code(bindDomain) : ''}; not fetched`, 0);
+            continue;
+        }
+        const hash = await T.sha256Hex(bytes);
+        if (hash === r.sha256.toLowerCase()) {
+            add('representation', 'REPRESENTATION_MATCH', 'pass', `${esc(source)} has exactly the declared SHA-256`, i === 0 ? 3 : 0);
+        } else {
+            add('representation', 'REPRESENTATION_MISMATCH', 'fail',
+                `${esc(source)} differs from the declared SHA-256 (${code(hash.slice(0, 16) + '…')} ≠ ${code(r.sha256.slice(0, 16) + '…')}). This does not invalidate the manifest signature, but the representation no longer matches the manifest`, i === 0 ? 3 : 0);
+        }
+    }
+
+    // Optional: render the manifest with the reference rules and compare (SPEC §13.12.3, MAY)
+    const md = reps.find(r => isObject(r) && typeof json.domain === 'string' && r.href === T.markdownUrl(T.normalizeDomain(json.domain)));
+    if (md && typeof json.entity === 'string' && typeof md.sha256 === 'string') {
+        let local = null;
+        try { local = await T.sha256Hex(T.renderMarkdown(json)); } catch (e) { local = null; }
+        add('representation', 'local rendering (ARP-R)', 'info',
+            local === md.sha256.toLowerCase() ? 'Rendering this manifest with the reference rules (arp_cli render-md) gives the declared SHA-256'
+                : 'Rendering this manifest with the reference rules gives a different SHA-256. Informational: the published file decides; key order or a different renderer can cause this', 0);
+    }
+
+    return trust;
+}
+
+function renderTrust(trust, json) {
+    const box = document.getElementById('trust-box');
+    const sig = isObject(json._arp_signature) ? json._arp_signature : {};
+    const levelClass = trust.level === 'CRYPTOGRAPHIC' ? 'level-cryptographic'
+        : trust.level === 'INVALID' ? 'level-invalid'
+        : trust.level === 'UNSIGNED' ? 'level-unsigned' : '';
+    const label = trust.level === 'ERROR' ? 'ERROR (not checked)' : trust.level;
+    const domain = retrieval ? retrieval.domain : (T.normalizeDomain(document.getElementById('opt-domain').value) || json.domain || '');
+    const explanation = T.explainResult(trust, {
+        domain: domain,
+        fileDomain: json.domain,
+        expiresAt: sig.expires_at
+    });
+    const items = [];
+    if (trust.dnsName) items.push(`DNS name: ${code(trust.dnsName)}`);
+    if (trust.method === 'local_public_key') items.push('Method: offline check with the entered public key (no DNS request)');
+    if (trust.method === 'dns' && trust.dnssec !== null) {
+        items.push(trust.dnssec ? 'DNSSEC: validated by the resolver (AD flag set)' : 'DNSSEC: not validated (AD flag not set)');
+    }
+    if (!retrieval && trust.method === 'dns') items.push('Pasted file: the DNS name is built from the ' + (document.getElementById('opt-domain').value.trim() ? 'entered domain' : 'domain field') + '; fetch the file from its URL to bind it to the retrieval domain');
+    trust.notes.forEach(n => items.push(esc(n)));
+
+    box.className = 'trust-box ' + levelClass;
+    box.innerHTML = `
+        <div class="trust-head">
+            <span class="trust-level">Trust level: ${esc(label)}</span>
+            ${trust.reason && trust.reason !== 'valid' ? `<span class="trust-reason">${esc(trust.reason)}</span>` : ''}
+        </div>
+        <p>${esc(explanation)}</p>
+        ${items.length ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}
+    `;
+}
+
+function migrationItems(json, report) {
+    const items = [];
+    const rd = isObject(json.reasoning_directives) ? json.reasoning_directives : null;
+    if (rd) items.push(`${code('reasoning_directives')} → ${code('entity_claims')}`);
+    if (rd && rd.system_instruction) items.push(`${code('system_instruction')} → ${code('framing_context')}, rewritten as a third-person statement`);
+    if (rd && rd.counterfactual_simulations) items.push(`${code('counterfactual_simulations')} → ${code('domain_expertise')}`);
+    if (rd && rd.strategic_dichotomies) items.push(`${code('strategic_dichotomies')} → ${code('market_positioning')}`);
+    if (rd && rd.causal_weights) items.push(`${code('causal_weights')} → ${code('decision_factors')}`);
+    const corr = isObject(json.corrections) && Array.isArray(json.corrections.common_hallucinations) ? json.corrections.common_hallucinations : [];
+    if (corr.some(c => isObject(c) && c.false_claim)) items.push(`${code('false_claim')} → ${code('trigger_topic')} (the false claim is not repeated)`);
+    if (corr.some(c => isObject(c) && c.correction_fact)) items.push(`${code('correction_fact')} → ${code('verified_fact')}`);
+
+    if (report.version !== '1.3') {
+        items.push(`${code('$schema')} → ${code(T.SCHEMA_URL)}, ${code('version')} → ${code('1.3')}`);
+        if (!isObject(json.provenance)) items.push(`Add ${code('provenance')} (statement, publisher, publisher_url, published) — the Generator creates it`);
+        const fields = [...new Set(report.findings.filter(f => f.rule === 'ARP-W/field-name').map(f => f.match))];
+        if (fields.length) items.push(`Remove instruction fields: ${fields.map(code).join(', ')}`);
+        const texts = report.findings.filter(f => f.rule.startsWith('ARP-W/') && f.rule !== 'ARP-W/field-name' && f.severity === 'error').length;
+        if (texts) items.push(`Rewrite ${texts} flagged text${texts > 1 ? 's' : ''} as third-person statements (see Wording profile)`);
+        if (isObject(json._arp_signature)) {
+            items.push(`Re-sign with arp_cli v${esc(T.CLI_VERSION)} or the <a href="/sign/">Signer</a>: adds ${code('statement')}, ${code('verify')} and the ${code('reasoning.md')} representation`);
+            items.push(`Re-signing after a change of the signing pattern uses a new selector (${code(T.defaultSelector())}); the old selector is retired with the TXT value ${code('v=ARP1; k=ed25519; p=')}`);
+        } else {
+            items.push(`Add the ${code('reasoning.md')} representation (Generator, Signer or ${code('arp_cli render-md')})`);
+        }
+    }
+    return items;
+}
+
+async function validate() {
     const input = textarea.value.trim();
     if (!input) {
         alert('Please paste a reasoning.json file or fetch one from a URL.');
@@ -603,17 +1291,33 @@ function validate() {
         showError('Invalid JSON', `Parse error: ${e.message}`);
         return;
     }
-
-    // Check file size
-    const sizeKB = new Blob([input]).size / 1024;
-    if (sizeKB > 100) {
-        showError('File Too Large', `reasoning.json exceeds 100KB limit (${sizeKB.toFixed(1)}KB). Remove excessive content.`);
+    if (!isObject(json)) {
+        showError('Invalid file', 'reasoning.json must be a JSON object.');
         return;
     }
 
-    const checks = runChecks(json);
-    const migrations = detectMigrations(json);
-    displayResults(checks, migrations);
+    const sizeKB = new Blob([input]).size / 1024;
+    if (sizeKB > 100) {
+        showError('File too large', `reasoning.json exceeds the 100 KB limit (${sizeKB.toFixed(1)} KB).`);
+        return;
+    }
+
+    const results = document.getElementById('results');
+    results.classList.add('visible');
+    document.getElementById('score-grade').textContent = 'Checking…';
+    document.getElementById('score-summary').textContent = 'Checking signature and reasoning.md …';
+    document.getElementById('trust-box').className = 'trust-box';
+    document.getElementById('trust-box').textContent = 'Checking signature …';
+
+    const report = runChecks(json, input);
+    let trust;
+    try {
+        trust = await runNetworkChecks(json, report);
+    } catch (e) {
+        trust = { level: 'ERROR', reason: 'error', dnsName: null, dnssec: null, method: null, notes: [e.message] };
+    }
+    renderTrust(trust, json);
+    displayResults(report, migrationItems(json, report));
 }
 
 function showError(title, message) {
@@ -624,8 +1328,10 @@ function showError(title, message) {
     document.getElementById('score-circle').className = 'score-circle grade-d';
     document.getElementById('score-grade').textContent = title;
     document.getElementById('score-summary').textContent = message;
+    document.getElementById('trust-box').className = 'trust-box';
+    document.getElementById('trust-box').textContent = '';
 
-    ['schema', 'identity', 'corrections', 'claims', 'limits', 'authority'].forEach(id => {
+    ['schema', 'provenance', 'wording', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'representation', 'diagnostics', 'authority'].forEach(id => {
         document.getElementById('checks-' + id).innerHTML = '';
     });
 
@@ -633,443 +1339,61 @@ function showError(title, message) {
     document.getElementById('migration-banner').style.display = 'none';
 }
 
-// ── Migration Detection (v1.0 → v1.1 → v1.2) ──
-function detectMigrations(json) {
-    const items = [];
+function displayResults(report, migrations) {
+    const checks = report.checks;
+    const scored = checks.filter(c => c.weight > 0);
+    const totalWeight = scored.reduce((sum, c) => sum + c.weight, 0);
+    let earned = 0;
+    scored.forEach(c => {
+        if (c.status === 'pass') earned += c.weight;
+        else if (c.status === 'warn') earned += c.weight * 0.5;
+    });
+    const score = totalWeight ? Math.round((earned / totalWeight) * 100) : 0;
+    const gradeClass = score >= 85 ? 'grade-a' : score >= 65 ? 'grade-b' : score >= 40 ? 'grade-c' : 'grade-d';
 
-    // v1.0 → v1.1 migrations
-    if (json.reasoning_directives) {
-        items.push('<code>reasoning_directives</code> → <code>entity_claims</code>');
-    }
-    const rd = json.reasoning_directives || {};
-    if (rd.system_instruction) {
-        items.push('<code>system_instruction</code> → <code>framing_context</code>');
-    }
-    if (rd.counterfactual_simulations) {
-        items.push('<code>counterfactual_simulations</code> → <code>domain_expertise</code>');
-    }
-    if (rd.strategic_dichotomies) {
-        items.push('<code>strategic_dichotomies</code> → <code>market_positioning</code>');
-    }
-    if (rd.causal_weights) {
-        items.push('<code>causal_weights</code> → <code>decision_factors</code>');
-    }
-    const corrections = (json.corrections || {}).common_hallucinations || [];
-    if (corrections.some(c => c.false_claim)) {
-        items.push('<code>false_claim</code> → <code>trigger_topic</code> (Pink Elephant fix)');
-    }
-    if (corrections.some(c => c.correction_fact)) {
-        items.push('<code>correction_fact</code> → <code>verified_fact</code>');
-    }
-    const rec = rd.recommendation_context || {};
-    if (rec.recommend_when) {
-        items.push('<code>recommend_when</code> → <code>recommended_when</code>');
-    }
-    if (rec.do_not_recommend_when) {
-        items.push('<code>do_not_recommend_when</code> → <code>not_recommended_when</code>');
+    const errors = checks.filter(c => c.must && c.status === 'fail').length;
+    const passCount = checks.filter(c => c.status === 'pass').length;
+    const warnCount = checks.filter(c => c.status === 'warn').length;
+    const failCount = checks.filter(c => c.status === 'fail').length;
+
+    let verdict;
+    if (report.version === '1.3') {
+        verdict = errors ? `ARP v1.3 — not conformant (${errors} error${errors > 1 ? 's' : ''})` : 'ARP v1.3 — conformant';
+    } else if (report.version === '1.2') {
+        verdict = `Read as ARP v1.2${errors ? ` — ${errors} error${errors > 1 ? 's' : ''}` : ''} · upgrade to v1.3 available`;
+    } else if (report.version) {
+        verdict = `ARP v${report.version} — migration to v1.3 needed`;
+    } else {
+        verdict = 'Not recognized as an ARP file';
     }
 
-    // v1.1 → v1.2 migrations
-    if (json.$schema === 'https://arp-protocol.org/schema/v1.json') {
-        items.push('<code>$schema</code> → update to <code>v1.2.json</code>');
-    }
-    if (json.$schema === 'https://arp-protocol.org/schema/v1.1.json') {
-        items.push('<code>$schema</code> → update to <code>v1.2.json</code> for cryptographic trust support');
-    }
-    if (json.version === '1.1') {
-        items.push('<code>version</code> → update to <code>1.2</code>');
-    }
-    if (json.verification && json.verification.trust_signature && !json._arp_signature) {
-        items.push('<code>trust_signature</code> (SHA-256) → <code>_arp_signature</code> (Ed25519 cryptographic binding)');
-    }
-    if (!json._arp_signature && json.version !== '1.0') {
-        items.push('Add <code>_arp_signature</code> for cryptographic domain verification (use the <a href="sign/">Signer tool</a>)');
-    }
-    if (!json.diagnostics && json.version !== '1.0') {
-        items.push('Consider adding <code>diagnostics</code> with telemetry tokens for RAG pipeline auditing');
-    }
-    return items;
-}
-
-// Helper: get with v1.0 fallback
-function compat(obj, v11, v10, def) {
-    return obj[v11] !== undefined ? obj[v11] : (obj[v10] !== undefined ? obj[v10] : def);
-}
-
-function runChecks(json) {
-    const checks = [];
-    const isV12 = json._arp_signature || json.diagnostics || json.version === '1.2';
-    const isV11 = !json.reasoning_directives && json.entity_claims;
-
-    // ── Schema Compliance ──
-    checks.push({
-        group: 'schema',
-        name: '$schema reference',
-        detail: 'Must reference ARP schema URI (v1.2 recommended)',
-        pass: json.$schema === 'https://arp-protocol.org/schema/v1.2.json',
-        warn: json.$schema === 'https://arp-protocol.org/schema/v1.1.json' || json.$schema === 'https://arp-protocol.org/schema/v1.json',
-        weight: 3
-    });
-
-    checks.push({
-        group: 'schema',
-        name: 'protocol field',
-        detail: 'Must be "Agentic Reasoning Protocol (ARP)"',
-        pass: json.protocol === 'Agentic Reasoning Protocol (ARP)',
-        weight: 3
-    });
-
-    checks.push({
-        group: 'schema',
-        name: 'version field',
-        detail: 'Semver-compatible version string (v1.2 recommended)',
-        pass: json.version === '1.2',
-        warn: typeof json.version === 'string' && /^\d+\.\d+(\.\d+)?$/.test(json.version),
-        weight: 3
-    });
-
-    checks.push({
-        group: 'schema',
-        name: 'entity name',
-        detail: 'Canonical name of the brand or organization (max 200 chars)',
-        pass: typeof json.entity === 'string' && json.entity.length > 0 && json.entity.length <= 200,
-        weight: 5
-    });
-
-    // ── Identity Layer ──
-    const identity = json.identity || {};
-
-    checks.push({
-        group: 'identity',
-        name: 'elevator_pitch',
-        detail: 'One-paragraph description (max 500 chars)',
-        pass: typeof identity.elevator_pitch === 'string' && identity.elevator_pitch.length > 20 && identity.elevator_pitch.length <= 500,
-        warn: typeof identity.elevator_pitch === 'string' && identity.elevator_pitch.length > 20,
-        weight: 8
-    });
-
-    checks.push({
-        group: 'identity',
-        name: 'core_competencies',
-        detail: 'Array of capabilities (max 10 items, 80 chars each)',
-        pass: Array.isArray(identity.core_competencies) && identity.core_competencies.length >= 2 && identity.core_competencies.length <= 10,
-        warn: Array.isArray(identity.core_competencies) && identity.core_competencies.length >= 1,
-        weight: 5
-    });
-
-    checks.push({
-        group: 'identity',
-        name: 'headquarters & founded',
-        detail: 'Basic factual data that AI frequently hallucinates',
-        pass: identity.headquarters && identity.founded,
-        warn: identity.headquarters || identity.founded,
-        weight: 4
-    });
-
-    checks.push({
-        group: 'identity',
-        name: 'emotional_resonance',
-        detail: 'Tone of voice, vibe tags, and personality traits',
-        pass: identity.emotional_resonance && (identity.emotional_resonance.tone_of_voice || identity.emotional_resonance.vibe_tags),
-        weight: 4
-    });
-
-    checks.push({
-        group: 'identity',
-        name: 'not_to_be_confused_with',
-        detail: 'Disambiguation entries to prevent AI mix-ups',
-        pass: Array.isArray(identity.not_to_be_confused_with) && identity.not_to_be_confused_with.length > 0,
-        weight: 3
-    });
-
-    // ── Anti-Hallucination (Corrections) ──
-    const corrections = json.corrections || {};
-    const hallucinations = corrections.common_hallucinations || [];
-
-    checks.push({
-        group: 'corrections',
-        name: 'corrections array',
-        detail: 'At least 1 trigger_topic / verified_fact pair',
-        pass: hallucinations.length >= 1,
-        weight: 10
-    });
-
-    const usesPinkElephantFix = hallucinations.length > 0 && hallucinations.every(h => h.trigger_topic && h.verified_fact);
-    const usesOldFormat = hallucinations.some(h => h.false_claim);
-    checks.push({
-        group: 'corrections',
-        name: 'Pink Elephant fix (v1.1)',
-        detail: usesOldFormat
-            ? '⚠ Uses old false_claim format — migrate to trigger_topic / verified_fact'
-            : 'Uses trigger_topic instead of false_claim (prevents reinforcing errors)',
-        pass: usesPinkElephantFix,
-        warn: hallucinations.length > 0 && !usesPinkElephantFix,
-        weight: 8
-    });
-
-    checks.push({
-        group: 'corrections',
-        name: 'evidence URLs',
-        detail: 'Each correction should include an evidence_url for verification',
-        pass: hallucinations.length > 0 && hallucinations.every(h => h.evidence_url),
-        warn: hallucinations.length > 0 && hallucinations.some(h => h.evidence_url),
-        weight: 6
-    });
-
-    checks.push({
-        group: 'corrections',
-        name: 'correction depth (3+)',
-        detail: 'AI audits typically reveal 3+ hallucinations per brand',
-        pass: hallucinations.length >= 3,
-        warn: hallucinations.length >= 1,
-        weight: 5
-    });
-
-    // ── Entity Claims (v1.1) / Reasoning Directives (v1.0) ──
-    const claims = json.entity_claims || json.reasoning_directives || {};
-
-    const framing = claims.framing_context || claims.system_instruction;
-    checks.push({
-        group: 'claims',
-        name: 'framing_context',
-        detail: isV11 ? 'Self-attested positioning statement (max 500 chars)' : 'Uses old key system_instruction — migrate to framing_context',
-        pass: typeof framing === 'string' && framing.length > 10 && framing.length <= 500,
-        warn: typeof framing === 'string' && framing.length > 10,
-        weight: 8
-    });
-
-    const expertise = claims.domain_expertise || claims.counterfactual_simulations || [];
-    checks.push({
-        group: 'claims',
-        name: 'domain_expertise',
-        detail: isV11 ? 'Structured domain knowledge scenarios (max 10)' : 'Uses old key counterfactual_simulations — migrate to domain_expertise',
-        pass: Array.isArray(expertise) && expertise.length > 0 && expertise.length <= 10,
-        warn: Array.isArray(expertise) && expertise.length > 0,
-        weight: 8
-    });
-
-    const rec = claims.recommendation_context || {};
-    const recWhen = rec.recommended_when || rec.recommend_when || [];
-    const notRecWhen = rec.not_recommended_when || rec.do_not_recommend_when || [];
-    checks.push({
-        group: 'claims',
-        name: 'recommendation_context',
-        detail: 'When to recommend and when NOT to recommend',
-        pass: recWhen.length > 0 && notRecWhen.length > 0,
-        warn: recWhen.length > 0 || notRecWhen.length > 0,
-        weight: 6
-    });
-
-    const positioning = claims.market_positioning || claims.strategic_dichotomies || {};
-    checks.push({
-        group: 'claims',
-        name: 'market_positioning',
-        detail: isV11 ? 'Category-level competitive positioning' : 'Uses old key strategic_dichotomies — migrate to market_positioning',
-        pass: typeof positioning === 'object' && Object.keys(positioning).length > 0,
-        weight: 4
-    });
-
-    // ── Anti-Spam Limits ──
-    const pitchLen = (identity.elevator_pitch || '').length;
-    checks.push({
-        group: 'limits',
-        name: 'elevator_pitch length',
-        detail: `${pitchLen}/500 characters`,
-        pass: pitchLen > 0 && pitchLen <= 500,
-        warn: pitchLen > 0 && pitchLen <= 600,
-        weight: 3
-    });
-
-    const taglineLen = (identity.tagline || '').length;
-    checks.push({
-        group: 'limits',
-        name: 'tagline length',
-        detail: taglineLen > 0 ? `${taglineLen}/120 characters` : 'Not set',
-        pass: taglineLen === 0 || taglineLen <= 120,
-        weight: 2
-    });
-
-    const framingLen = (framing || '').length;
-    checks.push({
-        group: 'limits',
-        name: 'framing_context length',
-        detail: `${framingLen}/500 characters`,
-        pass: framingLen > 0 && framingLen <= 500,
-        warn: framingLen > 0 && framingLen <= 600,
-        weight: 3
-    });
-
-    const fileSizeKB = new Blob([textarea.value]).size / 1024;
-    checks.push({
-        group: 'limits',
-        name: 'total file size',
-        detail: `${fileSizeKB.toFixed(1)}KB / 100KB limit`,
-        pass: fileSizeKB <= 100,
-        weight: 3
-    });
-
-    // ── Cryptographic Trust Layer (v1.2) ──
-    const sig = json._arp_signature || {};
-    const hasSig = !!json._arp_signature;
-
-    checks.push({
-        group: 'crypto',
-        name: '_arp_signature present',
-        detail: hasSig ? 'Ed25519 cryptographic signature block found' : 'No signature — file is UNSIGNED (add via CLI or Signer tool)',
-        pass: hasSig,
-        weight: 8
-    });
-
-    checks.push({
-        group: 'crypto',
-        name: 'algorithm',
-        detail: 'Must be Ed25519',
-        pass: sig.algorithm === 'Ed25519',
-        warn: hasSig && sig.algorithm,
-        weight: 3
-    });
-
-    checks.push({
-        group: 'crypto',
-        name: 'canonicalization',
-        detail: 'Must be jcs-rfc8785 (JSON Canonicalization Scheme)',
-        pass: sig.canonicalization === 'jcs-rfc8785',
-        warn: hasSig && sig.canonicalization,
-        weight: 3
-    });
-
-    checks.push({
-        group: 'crypto',
-        name: 'DNS record reference',
-        detail: hasSig ? `DNS: ${sig.dns_record || 'not set'}` : 'No DNS record configured',
-        pass: hasSig && sig.dns_record && sig.dns_selector,
-        weight: 3
-    });
-
-    checks.push({
-        group: 'crypto',
-        name: 'signature expiry',
-        detail: hasSig && sig.expires_at
-            ? (new Date(sig.expires_at) > new Date() ? `Valid until ${sig.expires_at}` : `⚠ EXPIRED on ${sig.expires_at}`)
-            : 'No expiry set',
-        pass: hasSig && sig.expires_at && new Date(sig.expires_at) > new Date(),
-        warn: hasSig && sig.expires_at,
-        weight: 4
-    });
-
-    // ── Epistemic Scope ──
-    const hasEpistemicScope = hallucinations.some(h => h.epistemic_scope);
-    checks.push({
-        group: 'crypto',
-        name: 'epistemic_scope on corrections',
-        detail: hasEpistemicScope ? 'Claims classified for AI verification behavior' : 'Add epistemic_scope (public_verifiable, proprietary_internal, industry_standard)',
-        pass: hasEpistemicScope && hallucinations.every(h => h.epistemic_scope),
-        warn: hasEpistemicScope,
-        weight: 3
-    });
-
-    // ── Diagnostics (v1.2) ──
-    const diag = json.diagnostics || {};
-    const tokens = diag.telemetry_tokens || [];
-
-    checks.push({
-        group: 'diagnostics',
-        name: 'diagnostics object',
-        detail: tokens.length > 0 ? `${tokens.length} telemetry token(s) deployed` : 'No diagnostics — consider adding for RAG pipeline auditing',
-        pass: tokens.length > 0,
-        weight: 3
-    });
-
-    checks.push({
-        group: 'diagnostics',
-        name: 'transparency statement',
-        detail: diag.transparency_statement ? 'Transparency statement present' : 'Add a transparency_statement explaining diagnostics purpose',
-        pass: !!diag.transparency_statement,
-        warn: tokens.length > 0,
-        weight: 2
-    });
-
-    // ── Authority & Trust ──
-    const authority = json.authority || {};
-    const verification = json.verification || {};
-
-    checks.push({
-        group: 'authority',
-        name: 'authority sources',
-        detail: 'LinkedIn, Crunchbase, Wikipedia, or official website links',
-        pass: authority.linkedin || authority.crunchbase || authority.wikipedia || authority.official_website,
-        weight: 4
-    });
-
-    checks.push({
-        group: 'authority',
-        name: 'verification metadata',
-        detail: 'audited_by, last_verified, next_audit dates',
-        pass: verification.audited_by && verification.last_verified,
-        warn: verification.audited_by || verification.last_verified,
-        weight: 4
-    });
-
-    return checks;
-}
-
-function displayResults(checks, migrations) {
-    const results = document.getElementById('results');
-    results.classList.add('visible');
-
-    // Calculate score
-    const totalWeight = checks.reduce((sum, c) => sum + c.weight, 0);
-    let earnedWeight = 0;
-    checks.forEach(c => {
-        if (c.pass) earnedWeight += c.weight;
-        else if (c.warn) earnedWeight += c.weight * 0.5;
-    });
-
-    const score = Math.round((earnedWeight / totalWeight) * 100);
-
-    // Grade
-    let grade, gradeLabel, gradeClass;
-    if (score >= 85) { grade = 'A'; gradeLabel = 'Excellent'; gradeClass = 'grade-a'; }
-    else if (score >= 65) { grade = 'B'; gradeLabel = 'Good'; gradeClass = 'grade-b'; }
-    else if (score >= 40) { grade = 'C'; gradeLabel = 'Needs Work'; gradeClass = 'grade-c'; }
-    else { grade = 'D'; gradeLabel = 'Incomplete'; gradeClass = 'grade-d'; }
-
-    document.getElementById('score-circle').textContent = score;
-    document.getElementById('score-circle').className = 'score-circle ' + gradeClass;
-    document.getElementById('score-grade').textContent = `Grade ${grade} — ${gradeLabel}`;
-
-    const passCount = checks.filter(c => c.pass).length;
-    const warnCount = checks.filter(c => !c.pass && c.warn).length;
-    const failCount = checks.filter(c => !c.pass && !c.warn).length;
+    const circle = document.getElementById('score-circle');
+    circle.textContent = score;
+    circle.className = 'score-circle ' + (errors ? 'grade-d' : gradeClass);
+    document.getElementById('score-grade').textContent = verdict;
     document.getElementById('score-summary').textContent =
-        `${passCount} passed · ${warnCount} partial · ${failCount} missing out of ${checks.length} checks`;
+        `${passCount} passed · ${warnCount} warnings · ${failCount} failed · completeness ${score}%`;
 
-    // Migration banner
     const banner = document.getElementById('migration-banner');
-    if (migrations.length > 0) {
+    if (migrations.length) {
         banner.style.display = 'block';
+        document.getElementById('migration-title').textContent =
+            report.version === '1.0' || report.version === '1.1' ? `Migration v${report.version} → v1.3` : 'Upgrade to v1.3';
         document.getElementById('migration-items').innerHTML = migrations.map(m => `<li>${m}</li>`).join('');
     } else {
         banner.style.display = 'none';
     }
 
-    // Render checks by group
-    const groups = ['schema', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'diagnostics', 'authority'];
-    groups.forEach(group => {
+    const icons = { pass: ['check-pass', '✓'], warn: ['check-warn', '⚠'], fail: ['check-fail', '✗'], info: ['check-info', 'ℹ'] };
+    ['schema', 'provenance', 'wording', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'representation', 'diagnostics', 'authority'].forEach(group => {
         const container = document.getElementById('checks-' + group);
-        const groupChecks = checks.filter(c => c.group === group);
-
-        container.innerHTML = groupChecks.map(c => {
-            let iconClass, icon;
-            if (c.pass) { iconClass = 'check-pass'; icon = '✓'; }
-            else if (c.warn) { iconClass = 'check-warn'; icon = '⚠'; }
-            else { iconClass = 'check-fail'; icon = '✗'; }
-
+        container.innerHTML = checks.filter(c => c.group === group).map(c => {
+            const [iconClass, icon] = icons[c.status];
             return `
                 <div class="check-item">
                     <div class="check-icon ${iconClass}">${icon}</div>
                     <div class="check-detail">
-                        <strong>${c.name}</strong>
+                        <strong>${esc(c.name)}</strong>
                         <span>${c.detail}</span>
                     </div>
                 </div>
@@ -1077,12 +1401,19 @@ function displayResults(checks, migrations) {
         }).join('');
     });
 
-    // Show CTA if score < 85
-    document.getElementById('cta-box').style.display = score < 85 ? 'block' : 'none';
-
-    // Scroll to results
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('cta-box').style.display = errors || score < 85 ? 'block' : 'none';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ?url=example.com prefills the URL tab and validates the fetched file
+(function initFromQuery() {
+    const param = new URLSearchParams(location.search).get('url');
+    if (param) {
+        document.getElementById('url-input').value = param;
+        switchTab('url');
+        fetchFromUrl();
+    }
+})();
 </script>
 
 <!-- Vercel Web Analytics (cookieless, GDPR-compliant) -->
