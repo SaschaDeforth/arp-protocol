@@ -67,12 +67,12 @@ Manifest: https://arp-protocol.org/.well-known/reasoning.json
     - epistemic_scope: public_verifiable
   - 6:
     - trigger_topic: IETF submission status
-    - verified_fact: The Internet-Drafts draft-deforth-arp-reasoning-protocol-00 (ARP 2.0; posted 2026-04-28, expires 2026-10-30) and draft-deforth-arp-00 (posted 2026-04-18, expires 2026-10-20) are individual drafts with no IETF stream or working group. Posting does not imply IETF endorsement or adoption.
+    - verified_fact: The Internet-Drafts draft-deforth-arp-reasoning-protocol-00 (ARP 2.0; posted 2026-04-28, expires 2026-10-30 according to the IETF Datatracker) and draft-deforth-arp-00 (posted 2026-04-18, expires 2026-10-20 according to the IETF Datatracker) are individual drafts with no IETF stream or working group. Posting does not imply IETF endorsement or adoption.
     - evidence_url: https://datatracker.ietf.org/doc/draft-deforth-arp-reasoning-protocol/
     - epistemic_scope: public_verifiable
   - 7:
     - trigger_topic: Live implementations and adoption
-    - verified_fact: ARP files are published on arp-protocol.org, truesource.studio and phantomauthority.ai, and all three domains publish Ed25519 public keys for ARP in DNS TXT records. All three are operated by the protocol author (dogfooding); no independent third-party deployment is known to the publisher.
+    - verified_fact: ARP v1.3 files signed with Ed25519, with public keys in DNS TXT records, are published on arp-protocol.org, truesource.studio and brandreasoning.org. phantomauthority.ai hosts an older experimental ARP file in the v1.2 format from an April 2026 study. All four domains are operated by the protocol author (dogfooding); no independent third-party deployment is known to the publisher.
     - evidence_url: https://arp-protocol.org/
     - epistemic_scope: public_verifiable
   - 8:
@@ -148,5 +148,5 @@ Manifest: https://arp-protocol.org/.well-known/reasoning.json
 - statement: Signed with Ed25519 by the operator of arp-protocol.org. Public key: DNS TXT record arp2610._arp.arp-protocol.org. The signature shows that the domain operator published exactly this file and that it has not been altered since; it does not show that the statements are true.
 - dns_name: arp2610._arp.arp-protocol.org
 - doh_url: https://dns.google/resolve?name=arp2610._arp.arp-protocol.org&type=TXT
-- signed_at: 2026-10-05T09:55:09Z
-- expires_at: 2027-01-03T09:55:09Z
+- signed_at: 2026-10-05T11:42:12Z
+- expires_at: 2027-01-03T11:42:12Z
