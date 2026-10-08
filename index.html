@@ -99,7 +99,7 @@
             <a href="/sign/" class="nav-link" style="color: #10b981;">🔐 Sign</a>
             <a href="#integration" class="nav-link">Integration</a>
             <a href="#ethics" class="nav-link">Ethics</a>
-            <a href="#roadmap-v2" class="nav-link" style="color: #a855f7;">v2.0</a>
+            <a href="#drafts" class="nav-link">Drafts</a>
             <a href="#analysis" class="nav-link" style="color: #8b5cf6;">Research</a>
             <a href="/SPEC.md" class="nav-link">Full Spec</a>
             <a href="https://github.com/SaschaDeforth/arp-protocol" class="nav-link" target="_blank" rel="noopener">GitHub</a>
@@ -118,7 +118,6 @@
         </p>
         <div class="header-meta">
             <span>Version: <strong>v1.3 “Reader Profile” (October 2026)</strong></span>
-            <span>v2.0: <strong>individual Internet-Draft</strong></span>
             <span>License: <strong>MIT</strong></span>
             <span>File: <strong><code>/.well-known/reasoning.json</code></strong></span>
         </div>
@@ -137,8 +136,8 @@
             data, corrections with evidence links, and self-described context.
         </p>
         <p>
-            ARP is an individual draft, not a standard. The v2.0 Internet-Draft is an individual
-            submission; submission does not imply IETF endorsement or working-group adoption.
+            ARP is an individual draft, not a standard. Its Internet-Drafts are individual
+            submissions; posting does not imply IETF endorsement or working-group adoption.
             ARP is not related to the Address Resolution Protocol (RFC 826), and it replaces neither
             schema.org nor llms.txt.
         </p>
@@ -764,138 +763,41 @@ python arp_cli.py verify https://yourdomain.com/.well-known/reasoning.json</code
         </ul>
     </section>
 
-    <!-- Roadmap: ARP v2.0 -->
-    <section id="roadmap-v2" class="section">
+    <!-- Internet-Drafts (the April 2026 v2.0 draft is an archived exploratory design) -->
+    <section id="drafts" class="section">
+        <span id="roadmap-v2"></span>
         <div class="container">
-            <h2>6. Roadmap: ARP v2.0 (individual Internet-Draft)</h2>
+            <h2>6. Internet-Drafts</h2>
 
             <div class="note">
                 <div class="note-label">Current Status</div>
                 <strong>v1.3 is the current specification</strong>; v1.2 files remain valid.
-                v2.0 is described in an <strong>individual Internet-Draft</strong>
-                (<code>draft-deforth-arp-reasoning-protocol-00</code>), an individual submission that
-                has not been adopted by an IETF working group. v2.0 is designed to be backward compatible.
+                ARP is an individual draft, not a standard.
             </div>
 
             <p>
-                ARP v2.0 was designed through <em>counterfactual inversion</em> — testing each v1.x
-                assumption by asking "what if this is wrong?" The result is a backward-compatible
-                design that extends ARP from a static file format to a live, bidirectional, multi-party
-                verifiable protocol.
+                Two individual Internet-Drafts were posted to the IETF Datatracker in April 2026.
+                Neither has an IETF stream or working group; posting implies no IETF endorsement.
             </p>
-
-            <h3>The Six Counterfactual Inversions</h3>
-
-            <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Aspect</th>
-                        <th>ARP v1.x</th>
-                        <th>ARP v2.0</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Distribution</strong></td>
-                        <td>Static file at <code>/.well-known/reasoning.json</code></td>
-                        <td>Live REST API at <code>/.well-known/arp/v2/</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Identity anchor</strong></td>
-                        <td>Domain ownership via DNS</td>
-                        <td>W3C Decentralized Identifier (DID)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Freshness signal</strong></td>
-                        <td>90-day re-signing TTL</td>
-                        <td>Server-Sent Events (SSE) push</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Trust source</strong></td>
-                        <td>Entity's own signature only</td>
-                        <td>Multi-party co-signing (institutional, government, sovereign)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Communication</strong></td>
-                        <td>One-way broadcast</td>
-                        <td>Bidirectional with anonymized agent feedback</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Internationalization</strong></td>
-                        <td>Implicit English</td>
-                        <td>First-class i18n with HTTP Accept-Language negotiation</td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
-
-            <h3>What's New in v2.0</h3>
-
             <ul>
-                <li><strong>POST /query</strong> — Semantic query endpoint. Agents describe their information need; entities respond with the most relevant subset of claims.</li>
-                <li><strong>GET /subscribe (SSE)</strong> — Real-time event stream for <code>claim:updated</code>, <code>attestation:added</code>, <code>trust:level:changed</code>.</li>
-                <li><strong>POST /feedback</strong> — Anonymized agent feedback. Entities learn which claims work and detect hallucination patterns.</li>
-                <li><strong>POST /a2a/handshake</strong> — Agent-to-Agent trust handshake for autonomous procurement and multi-agent commerce.</li>
-                <li><strong>Multi-party attestation</strong> — Four-tier hierarchy: SOVEREIGN (1.00), ATTESTED (0.90), CRYPTOGRAPHIC (0.70), UNSIGNED (0.30).</li>
-                <li><strong>W3C DID anchoring</strong> — Entity identity portable across domains, acquisitions, and rebrands.</li>
+                <li><code>draft-deforth-arp-00</code> describes the v1.2 signature layer
+                    (posted 2026-04-18, expires 2026-10-20). Its text predates v1.3.</li>
+                <li><code>draft-deforth-arp-reasoning-protocol-00</code> (&ldquo;ARP 2.0&rdquo;, posted 2026-04-28,
+                    expires 2026-10-30) was an exploratory design: a REST API, W3C DID anchoring,
+                    Server-Sent Events, agent feedback, multi-party attestation with numeric trust levels
+                    and an agent-to-agent handshake. <strong>It is not part of the current specification
+                    v1.3, has no implementation, and is not being developed further at this time.</strong>
+                    Its numeric trust levels are not used by v1.3 or by the reference tools.</li>
             </ul>
-
-            <h3>Migration Path</h3>
-
             <p>
-                Migration is voluntary and incremental. Stage 0 is "do nothing" — a v1.x file remains
-                readable. Each subsequent stage is opt-in:
+                In v1.3, a signature establishes origin, not accuracy: a verifier reports which domain
+                published a file, and the content remains the entity&rsquo;s self-description.
             </p>
-
-            <ol>
-                <li><strong>Stage 1</strong> — Add <code>entity_did</code> + <code>api_endpoint</code></li>
-                <li><strong>Stage 2</strong> — Add i18n + implement <code>POST /query</code></li>
-                <li><strong>Stage 3</strong> — First institutional attestation → Trust Level <strong>ATTESTED</strong> (0.90)</li>
-                <li><strong>Stage 4</strong> — Activate webhooks + bidirectional feedback</li>
-                <li><strong>Stage 5</strong> — Government or sovereign attestation → Trust Level <strong>SOVEREIGN</strong> (1.00)</li>
-            </ol>
-
-            <h3>Timeline (plan published in April 2026, status as of October 2026)</h3>
-
-            <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Period</th>
-                        <th>Plan (April 2026)</th>
-                        <th>Status (October 2026)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Q2 2026</strong></td>
-                        <td>v2.0 Internet-Draft published. Open community review begins.</td>
-                        <td>Draft posted to the IETF Datatracker on 2026-04-28; it expires on 2026-10-30.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Q3 2026</strong></td>
-                        <td>IETF Working Group outreach (HTTPAPI, DISPATCH). Pilot v2.0 API on arp-protocol.org.</td>
-                        <td>Not done: no IETF working group has adopted the draft, and no v2.0 API runs on arp-protocol.org.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Q4 2026</strong></td>
-                        <td>First v2.0 reference implementation. First institutional attester pilots.</td>
-                        <td>Open; the ARP repository contains no v2.0 implementation.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>2027</strong></td>
-                        <td>v2.0 promoted to production once a major AI platform implements native retrieval. v1.x remains a supported compatibility layer.</td>
-                        <td>Open.</td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
 
             <p style="margin-top: 1.5rem;">
-                <a href="/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt" style="color: #00ffcc;">Read the Internet-Draft</a>
-                &nbsp;·&nbsp;
-                <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/ROADMAP.md">View full ROADMAP.md</a>
+                <a href="/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt" style="color: #00ffcc;">Archived text of the exploratory ARP 2.0 draft</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://github.com/SaschaDeforth/arp-protocol/blob/main/ROADMAP.md">Version history (ROADMAP.md)</a>
             </p>
         </div>
     </section>
@@ -968,7 +870,7 @@ python arp_cli.py verify https://yourdomain.com/.well-known/reasoning.json</code
         <ul>
             <li>Standardized benchmarks comparing AI responses with and without ARP at controlled domains</li>
             <li>Independent replication of the experiments documented in the repository</li>
-            <li>Standardization pathway for v2.0 beyond the individual Internet-Draft</li>
+            <li>A standardization pathway beyond individual Internet-Drafts</li>
             <li>Multimodal extensions beyond text (image agents, IoT, structured data)</li>
             <li>Long-term effects on the stability and accuracy of generative search results</li>
         </ul>

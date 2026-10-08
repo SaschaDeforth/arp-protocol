@@ -1,6 +1,6 @@
 # ARP Roadmap
 
-This document describes the evolution path from ARP v1.x (current) to ARP v2.0 (a design published as an individual Internet-Draft). ARP is a single-author draft specification, not a standard; the Internet-Drafts have no IETF standing.
+This document records ARP's version history and, for the record, the exploratory v2.0 design from April 2026 (published as an individual Internet-Draft). The v2.0 design is not part of the current specification v1.3, has no implementation, and is not being developed further at this time. ARP is a single-author draft specification, not a standard; the Internet-Drafts have no IETF standing.
 
 ## Current Status (October 2026)
 
@@ -8,9 +8,7 @@ This document describes the evolution path from ARP v1.x (current) to ARP v2.0 (
 |---|---|---|
 | **v1.3** ("Reader Profile", 2026-10-05) | ✅ Current draft specification | Use this for any new deployment today |
 | **v1.2** | Previous version | Files remain valid and readable as v1.2; see the migration guide in SPEC.md §17.1 |
-| **v2.0** | 📐 Individual Internet-Draft (`draft-deforth-arp-reasoning-protocol-00`, expires 2026-10-30 per IETF Datatracker) | Read for direction; do not deploy in production yet |
-
-ARP v2.0 is designed to be backward compatible with v1.x files.
+| **v2.0** | 📐 Archived exploratory Internet-Draft (`draft-deforth-arp-reasoning-protocol-00`, expires 2026-10-30 per IETF Datatracker) | Not part of v1.3; no implementation; not being developed further at this time |
 
 The v1.2 signature layer is described in the individual Internet-Draft `draft-deforth-arp-00` (submitted 2026-04-18, expires 2026-10-20 per IETF Datatracker). A revision for v1.3 (`draft-deforth-arp-01`) is planned; it has not been submitted as of 2026-10-05.
 
@@ -20,7 +18,7 @@ v1.3 is designed to make ARP files readable and correctly attributable for bots,
 
 Open for a later version: v1.3 keeps the member names `verified_fact` and `last_verified` for compatibility, although item 5 of the Wording Profile (SPEC §11.2) otherwise excludes such terms unless the text names who checked what. Whether a later version renames them (for example to `stated_fact` and `last_reviewed`, with a transition period in which verifiers read both) is undecided.
 
-The following sections describe the v2.0 draft as designed in April 2026; they have not been revised for v1.3. Only the label of inversion 4 was reworded editorially on 2026-10-05 (SPEC.md, changelog "v1.3 editorial").
+The following sections describe the v2.0 draft as designed in April 2026. They have not been revised for v1.3 and are kept for the record only; the v2.0 design is not being developed further at this time. Only the label of inversion 4 was reworded editorially on 2026-10-05 (SPEC.md, changelog "v1.3 editorial").
 
 ## How v2.0 Was Designed
 

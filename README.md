@@ -1,7 +1,7 @@
 # 🧠 reasoning.json — The Agentic Reasoning Protocol
 
 **Status:** Draft Specification v1.3 "Reader Profile" (2026-10-05), single-author draft, not a standard
-**Internet-Drafts:** `draft-deforth-arp-00` (v1.2 signature layer) and `draft-deforth-arp-reasoning-protocol-00` (v2.0 design), individual submissions without IETF standing; a revision for v1.3 is planned
+**Internet-Drafts:** `draft-deforth-arp-00` (v1.2 signature layer) and `draft-deforth-arp-reasoning-protocol-00` (exploratory ARP 2.0 design, not part of v1.3), individual submissions without IETF standing; a revision for v1.3 is planned
 **License:** MIT | **Format:** JSON (+ Markdown representation) | **Trust:** Ed25519 + DNS
 **Author:** Sascha Deforth
 **Validator:** Online
@@ -12,7 +12,7 @@ A machine-readable file format in which a domain owner publishes a self-descript
 - 📄 Specification (current, v1.3): [SPEC.md](./SPEC.md)
 - 📐 JSON Schema (current): [`schema/v1.3.json`](./schema/v1.3.json)
 - 📐 Internet-Draft for the v1.2 signature layer: [draft-deforth-arp-00](https://datatracker.ietf.org/doc/draft-deforth-arp/) *(submitted 2026-04-18, expires 2026-10-20 per IETF Datatracker; a revision for v1.3, draft-deforth-arp-01, is planned)*
-- 📐 v2.0 Draft Text: [`drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt`](./drafts/ietf/) *(submitted 2026-04-28, expires 2026-10-30 per IETF Datatracker; not revised for v1.3)*
+- 📐 Archived exploratory ARP 2.0 draft: [`drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt`](./drafts/ietf/) *(posted 2026-04-28, expires 2026-10-30 per IETF Datatracker; not part of v1.3, not being developed further at this time)*
 - ✅ Validator: [arp-protocol.org/validator](https://arp-protocol.org/validator)
 - 🔐 Signing Tool: [arp-protocol.org/sign](https://arp-protocol.org/sign)
 - ⚖️ Ethics Policy: [ETHICS.md](./ETHICS.md)
@@ -302,7 +302,7 @@ arp-protocol/
 │   └── reasoning.md            # Markdown representation (rendered by arp_cli.py render-md)
 ├── drafts/
 │   └── ietf/
-│       └── draft-deforth-arp-reasoning-protocol-00.txt  # v2.0 draft text
+│       └── draft-deforth-arp-reasoning-protocol-00.txt  # archived exploratory ARP 2.0 draft
 ├── schema/
 │   ├── v1.json                 # v1.0 JSON Schema (legacy)
 │   ├── v1.1.json               # v1.1 JSON Schema
@@ -314,7 +314,7 @@ arp-protocol/
 ├── sign/                       # In-browser signing tool (keys stay local)
 ├── arp_cli.py                  # CLI v1.4.0: keys, lint, render-md, sign, verify
 ├── SPEC.md                     # Full v1.3 Specification
-├── ROADMAP.md                  # v1.2 → v2.0 evolution path
+├── ROADMAP.md                  # version history, archived v2.0 design notes
 ├── ETHICS.md                   # Ethics & Trust Policy
 ├── validator.html              # Online Validator UI
 ├── generator.html              # reasoning.json Generator
@@ -356,7 +356,7 @@ The following questions warrant formal independent investigation:
 - Standardized benchmarks comparing AI responses with and without ARP at controlled domains
 - Independent replication of the author's Ghost Site, Canary Token, and Citation Tracking experiments
 - Whether crawlers and agent fetchers retrieve `reasoning.json` and `reasoning.md` at all, and through which discovery pointer
-- Formal IETF standardization pathway for v2.0
+- A standardization pathway beyond individual Internet-Drafts
 - Multimodal extensions beyond text (image agents, IoT, structured data)
 - Long-term effects on the stability and accuracy of generative search results
 
@@ -364,49 +364,22 @@ Researchers and practitioners interested in conducting independent evaluations a
 
 ---
 
-## Roadmap: ARP v2.0 (Internet-Draft submitted)
+## Internet-Drafts
 
-ARP v1.3 is the current specification. A v2.0 design exists as an individual Internet-Draft (`draft-deforth-arp-reasoning-protocol-00`, expires 2026-10-30 according to the IETF Datatracker). It is designed to be backward compatible with v1.x files. Its text dates from April 2026 and has not been revised for the v1.3 Reader Profile.
+ARP v1.3 is the current specification. Two individual Internet-Drafts were posted to the IETF Datatracker in April 2026; neither has an IETF stream or working group, and posting implies no IETF endorsement.
 
-### What v2.0 Adds
-
-v2.0 was designed using counterfactual inversion — testing each v1.x assumption by asking "what if this assumption is wrong?" Six core inversions:
-
-| Aspect | v1.x | v2.0 |
-|--------|------|------|
-| Distribution | Static file at `/.well-known/reasoning.json` | Live REST API at `/.well-known/arp/v2/` |
-| Identity anchor | Domain ownership (DNS) | W3C Decentralized Identifier (DID) |
-| Freshness signal | 90-day re-signing TTL | Server-Sent Events (SSE) push |
-| Trust source | Entity's own signature only | Multi-party co-signing (institutional, government) |
-| Communication | One-way broadcast | Bidirectional with anonymized agent feedback |
-| Internationalization | Implicit English | First-class i18n with HTTP Accept-Language |
-
-Plus an Agent-to-Agent (A2A) extension for autonomous procurement scenarios.
-
-### What Stays the Same
-
-- Ed25519 + DNS cryptographic trust layer (extended, not replaced)
-- Topic-anchored correction pattern (`trigger_topic` + `verified_fact`)
-- Static `/.well-known/reasoning.json` (preserved as compatibility alias)
-- MIT license and open-protocol commitment
-
-### Migration Path
-
-The v2.0 specification defines a 6-stage incremental migration. Stage 0 is "do nothing" — v1.2 files remain valid. Each subsequent stage is opt-in.
-
-→ Full migration details: [ROADMAP.md](./ROADMAP.md)
+- `draft-deforth-arp-00` describes the v1.2 signature layer (posted 2026-04-18, expires 2026-10-20). Its text predates v1.3.
+- `draft-deforth-arp-reasoning-protocol-00` ("ARP 2.0", posted 2026-04-28, expires 2026-10-30) was an exploratory design: a REST API, W3C DID anchoring, Server-Sent Events, agent feedback, multi-party attestation with numeric trust levels, and an agent-to-agent handshake. **It is not part of the current specification v1.3, has no implementation, and is not being developed further at this time.** Its numeric trust levels are not used by v1.3 or by the reference tools. The archived text stays in [`drafts/ietf/`](./drafts/ietf/); [ROADMAP.md](./ROADMAP.md) records how it was designed.
 
 ### Timeline
 
 | Date | Milestone |
 |------|-----------|
-| 2026-04-18 | `draft-deforth-arp-00` (v1.2 signature layer) submitted to the IETF Datatracker as an individual submission (date per Datatracker) |
-| 2026-04-28 | v2.0 Internet-Draft submitted to the IETF Datatracker as an individual submission (date per Datatracker) |
+| 2026-04-18 | `draft-deforth-arp-00` (v1.2 signature layer) posted to the IETF Datatracker as an individual submission (date per Datatracker) |
+| 2026-04-28 | Exploratory ARP 2.0 draft posted to the IETF Datatracker as an individual submission (date per Datatracker) |
 | 2026-10-05 | v1.3 "Reader Profile" (this repository) |
 
-Plan as of April 2026 (not updated since): IETF working-group outreach (HTTPAPI, DISPATCH) and a pilot v2.0 API; a first v2.0 reference implementation and institutional attester pilots; v2.0 to be promoted to "production" only if at least one major AI platform implements native retrieval.
-
-v1.2 and v1.3 files remain readable; v1.x is intended to stay a supported compatibility layer.
+v1.2 and v1.3 files remain readable.
 
 ---
 
@@ -425,7 +398,7 @@ The protocol relies on the same good-faith trust model as `robots.txt` and `sche
 
 ### "ARP has no peer review."
 
-Correct. ARP is currently a single-author draft specification; its known deployments are operated by the author. It has not undergone academic peer review, IETF working group consensus, or independent implementation by third parties. The v2.0 Internet-Draft was submitted as a first step toward broader review. Critique, replication attempts, and implementation reports from the community are actively welcomed.
+Correct. ARP is currently a single-author draft specification; its known deployments are operated by the author. It has not undergone academic peer review, IETF working group consensus, or independent implementation by third parties. The individual Internet-Drafts from April 2026 were a first step toward broader review. Critique, replication attempts, and implementation reports from the community are actively welcomed.
 
 ### "Domain owners could publish false facts."
 
@@ -445,7 +418,7 @@ ARP content must be consistent with visible website content (see [ETHICS.md](./E
 
 ### "Why does ARP already have an Internet-Draft?"
 
-Submitting an Internet-Draft to the IETF is an open process — anyone can submit one, and submission does not imply endorsement, working group adoption, or progress toward RFC status. ARP is not an IETF standard. Two individual drafts were submitted in April 2026 as a starting point for community discussion: `draft-deforth-arp-00` (the v1.2 signature layer) and `draft-deforth-arp-reasoning-protocol-00` (the v2.0 design). v1.3 is the current specification; v2.0 is a longer-term proposal.
+Submitting an Internet-Draft to the IETF is an open process — anyone can submit one, and submission does not imply endorsement, working group adoption, or progress toward RFC status. ARP is not an IETF standard. Two individual drafts were submitted in April 2026 as a starting point for community discussion: `draft-deforth-arp-00` (the v1.2 signature layer) and `draft-deforth-arp-reasoning-protocol-00` (the exploratory ARP 2.0 design). v1.3 is the current specification; the ARP 2.0 design is not being developed further at this time.
 
 ---
 
@@ -459,7 +432,7 @@ ARP was developed in response to a recurring observation in GEO consulting work:
 
 - March 2026 — v1.0 / v1.1 specification drafted; first deployment on truesource.studio
 - March – April 2026 — v1.2 cryptographic trust layer added (Ed25519 + DNS TXT)
-- April 2026 — v2.0 draft prepared based on counterfactual gap analysis
+- April 2026 — exploratory v2.0 draft prepared (counterfactual gap analysis); not continued in v1.3
 - October 2026 — v1.3 "Reader Profile": Wording Profile, provenance, readable signature statement, `reasoning.md` representation, Discovery Profile, key revocation
 
 **Author:** Sascha Deforth — Founder, TrueSource (Düsseldorf, Germany)

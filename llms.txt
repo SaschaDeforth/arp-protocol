@@ -80,20 +80,11 @@
 - Gemini's output placed ARP alongside MCP (Anthropic) and A2A (Google) as complementary protocols; ChatGPT's output compared ARP to the BDI architecture and contained arXiv citations that do not exist
 - These outputs are not independent reviews and not peer review. No major AI platform has endorsed or adopted ARP.
 
-## ARP v2.0 (individual Internet-Draft)
+## Earlier exploratory draft: ARP 2.0
 
-ARP v2.0 is described in draft-deforth-arp-reasoning-protocol-00, posted to the IETF Datatracker on 2026-04-28 as an individual Internet-Draft with no IETF stream or working group assigned; it expires on 2026-10-30 (dates per Datatracker). Submission does not imply IETF endorsement or working-group adoption. The draft extends v1.x with:
+draft-deforth-arp-reasoning-protocol-00 ("ARP 2.0", posted 2026-04-28, expires 2026-10-30 per IETF Datatracker) was an exploratory design: REST API, W3C DID anchoring, multi-party attestation with numeric trust levels, agent feedback and an agent-to-agent handshake. It is not part of the current specification v1.3, has no implementation, and is not being developed further at this time. Its numeric trust levels are not used by v1.3 or by the reference tools. Posting implies no IETF endorsement or working-group adoption.
 
-- Live REST API (replacing static file)
-- W3C DID identity anchoring
-- Multi-party cryptographic attestation
-- Bidirectional agent feedback
-- First-class i18n
-- Agent-to-Agent (A2A) protocol extension
-
-v2.0 is designed to be backward compatible with v1.x.
-
-Draft text: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
+Archived draft text: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
 
 ## Research Agenda
 - Open research questions: https://arp-protocol.org/research
@@ -104,7 +95,7 @@ Draft text: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-pro
 - How this site publishes its self-description: https://arp-protocol.org/layer0/
 - GitHub: https://github.com/SaschaDeforth/arp-protocol
 - LangChain Loader: https://arp-protocol.org/integrations/langchain/ (source: https://github.com/SaschaDeforth/arp-protocol/tree/main/integrations/langchain)
-- IETF Draft: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
+- Archived exploratory ARP 2.0 draft (not part of v1.3): https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
 - Earlier individual Internet-Draft (v1.x signatures): https://datatracker.ietf.org/doc/draft-deforth-arp/ (draft-deforth-arp-00, expires 2026-10-20)
 - Roadmap: https://arp-protocol.org/ROADMAP.md
 - Research Agenda: https://arp-protocol.org/research
