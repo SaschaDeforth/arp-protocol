@@ -12,13 +12,6 @@
       ]
     },
     {
-      "source": "/docs/bre/(.*)",
-      "headers": [
-        { "key": "Link", "value": "</.well-known/reasoning.json>; rel=\"describedby\"; type=\"application/json\", </.well-known/reasoning.md>; rel=\"describedby\"; type=\"text/markdown\"" },
-        { "key": "X-Robots-Tag", "value": "noindex" }
-      ]
-    },
-    {
       "source": "/.well-known/reasoning.json",
       "headers": [
         { "key": "Content-Type", "value": "application/json; charset=utf-8" },

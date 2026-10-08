@@ -1,0 +1,29 @@
+# Paths that live in this repository but are never part of arp-protocol.org.
+# Redirects in vercel.json alone can be bypassed with percent-encoded paths
+# (e.g. /%74ests/), so these paths are not uploaded at all.
+
+# Repository-only files
+/tests
+/drafts/working
+/drafts/ietf/SUBMISSION-NOTES.md
+/docs
+/.vercelignore
+
+# Internal drafts (also in .gitignore; repeated here so that a CLI deploy
+# from a working tree never uploads them as untracked files)
+/paper
+/REVIEW_ANALYSIS.md
+/IETF_SUBMISSION_GUIDE.md
+/aivs-interop-github-issue.md
+/w3c-aivs-introduction-email.md
+/draft-deforth-arp-0*
+/drafts/ietf/draft-deforth-arp-01.*
+
+# Local tooling
+.env*
+.DS_Store
+.vercel
+node_modules
+__pycache__
+*.pyc
+.pytest_cache
