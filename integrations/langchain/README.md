@@ -12,9 +12,11 @@ pip install requests langchain-core
 pip install cryptography rfc8785 dnspython
 ```
 
-The signature check uses `arp_cli.py` (v1.4 or later). The loader imports it when it is on the Python path or, inside this repository, from `../../arp_cli.py`. Without it, a signed file is marked `NOT_CHECKED`.
+The signature check uses `arp_cli.py` (v1.4 or later). The loader imports it when it is on the Python path or, inside this repository, from `../../arp_cli.py`. Without it, a signed file is marked `NOT_CHECKED` (reason `arp_cli_unavailable`) and the loader logs a warning; an older `arp_cli` is not used.
 
 ## Usage
+
+`arp_loader.py` is a single file. In a clone of this repository it is imported from `integrations/langchain/` as the working directory or with that directory on the Python path (`PYTHONPATH=integrations/langchain`).
 
 ```python
 from arp_loader import AgenticReasoningLoader
@@ -71,11 +73,12 @@ All metadata values are flat strings, numbers or booleans, so vector stores can 
 | Key | Meaning |
 |-----|---------|
 | `authorship_status` | `CRYPTOGRAPHIC`, `UNSIGNED`, `INVALID`, `ERROR` (DNS lookup failed) or `NOT_CHECKED` |
-| `authorship_reason` | e.g. `valid`, `unsigned`, `expired`, `key_revoked`, `legacy_payload_only`, `domain_mismatch`, `domain_missing`, `malformed_signature` |
+| `authorship_reason` | e.g. `valid`, `unsigned`, `expired`, `key_revoked`, `legacy_payload_only`, `domain_mismatch`, `domain_missing`, `malformed_signature`; for `NOT_CHECKED`: `verification_disabled`, `arp_cli_unavailable` (arp_cli v1.4+ not importable) or `verifier_error` |
 | `authorship_checked_on` | Date of the check (UTC) |
 | `source_line` | The provenance line shown at the top of each Document |
 | `is_signed` | A signature block is present (says nothing about validity) |
-| `signature_dns`, `signature_doh_url` | From `_arp_signature` (`verify.dns_name`, `verify.doh_url`), only if `authorship_status` is `CRYPTOGRAPHIC`; otherwise `none` |
+| `signature_dns` | The key record that was queried, `{selector}._arp.{retrieval domain}` (in v1.3 files the same as `verify.dns_name`; `dns_record` in the file is informational only, SPEC §13.3), only if `authorship_status` is `CRYPTOGRAPHIC`; otherwise `none` |
+| `signature_doh_url` | `_arp_signature.verify.doh_url`, only if `authorship_status` is `CRYPTOGRAPHIC`; otherwise `none` |
 | `signature_statement` | `_arp_signature.statement`, only if `authorship_status` is `CRYPTOGRAPHIC` and the statement matches the fixed wording of SPEC §13.3 for the retrieval domain; otherwise `none`. A template that reads only metadata therefore never shows a signature statement for a file whose check failed |
 | `signed_at`, `expires_at` | Signature period |
 | `provenance_statement`, `publisher`, `publisher_url`, `published` | From the v1.3 `provenance` object |

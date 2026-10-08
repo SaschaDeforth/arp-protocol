@@ -103,7 +103,7 @@ Draft text: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-pro
 - Website: https://arp-protocol.org
 - How this site publishes its self-description: https://arp-protocol.org/layer0/
 - GitHub: https://github.com/SaschaDeforth/arp-protocol
-- LangChain Loader: https://github.com/SaschaDeforth/langchain-arp
+- LangChain Loader: https://arp-protocol.org/integrations/langchain/ (source: https://github.com/SaschaDeforth/arp-protocol/tree/main/integrations/langchain)
 - IETF Draft: https://arp-protocol.org/drafts/ietf/draft-deforth-arp-reasoning-protocol-00.txt
 - Earlier individual Internet-Draft (v1.x signatures): https://datatracker.ietf.org/doc/draft-deforth-arp/ (draft-deforth-arp-00, expires 2026-10-20)
 - Roadmap: https://arp-protocol.org/ROADMAP.md

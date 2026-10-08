@@ -456,34 +456,37 @@
 
         <h3>LangChain Document Loader</h3>
         <p>
-            The open-source <code>AgenticReasoningLoader</code> for LangChain fetches
-            a domain's <code>reasoning.json</code> and splits it into Documents for retrieval:
+            The open-source <code>AgenticReasoningLoader</code> in
+            <a href="/integrations/langchain/"><code>integrations/langchain/</code></a> of the ARP repository fetches
+            a domain's <code>reasoning.json</code>, checks its signature with <code>arp_cli.py</code> and splits it
+            into Documents for retrieval:
         </p>
         <div class="code-block">
             <div class="code-header">
                 <span>Python — LangChain Integration</span>
                 <button class="code-copy" onclick="copyCode(this)">Copy</button>
             </div>
-<pre><code><span class="py-kw">from</span> langchain_arp <span class="py-kw">import</span> AgenticReasoningLoader
+<pre><code><span class="py-comment"># pip install requests langchain-core cryptography rfc8785 dnspython</span>
+<span class="py-comment"># arp_loader.py from integrations/langchain/ of the ARP repository</span>
+<span class="py-kw">from</span> arp_loader <span class="py-kw">import</span> AgenticReasoningLoader
 
-<span class="py-comment"># 1. Fetch the entity's self-description from its domain</span>
 loader = AgenticReasoningLoader(<span class="py-str">"https://arp-protocol.org"</span>)
+docs = loader.<span class="py-fn">load</span>()
 
-<span class="py-comment"># 2. Split it into documents (corrections, identity, recommendations, ...)</span>
-arp_docs = loader.<span class="py-fn">load</span>()
-
-<span class="py-comment"># 3. Index the documents like any other source, with their provenance metadata</span>
-vectorstore.<span class="py-fn">add_documents</span>(arp_docs)</code></pre>
+<span class="py-comment"># One Document per section, each with the result of the signature check</span>
+<span class="py-kw">for</span> doc <span class="py-kw">in</span> docs:
+    print(doc.metadata[<span class="py-str">"section"</span>], doc.metadata[<span class="py-str">"authorship_status"</span>])</code></pre>
         </div>
         <p>
             The loader returns Documents in this order:
         </p>
         <ol>
-            <li><strong>Corrections</strong> — sourced statements on topics where errors recur</li>
-            <li><strong>Identity</strong> — core facts about the entity</li>
-            <li><strong>Recommendations</strong> — the entity's own fit and not-a-fit statements</li>
-            <li><strong>Counterfactuals</strong> — the entity's stated view on comparison questions</li>
-            <li><strong>Dichotomies</strong> — the entity's positioning statements</li>
+            <li><strong>Corrections</strong> — topic-anchored statements the entity publishes about itself, with evidence links</li>
+            <li><strong>Identity</strong> — self-description, provenance statement and positioning</li>
+            <li><strong>Organization</strong> — legal facts from the v1.3 <code>organization</code> object</li>
+            <li><strong>Fit</strong> — situations the entity describes as a typical fit or not a fit</li>
+            <li><strong>Domain expertise</strong> — the entity's perspective on scenarios in its field</li>
+            <li><strong>Market positioning</strong> — the entity's view of its market category</li>
         </ol>
         <p>
             <strong>Purpose for AI engineers:</strong> a structured, attributable first-party source

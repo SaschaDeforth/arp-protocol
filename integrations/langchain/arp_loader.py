@@ -43,6 +43,12 @@ v1.3 Changes (ARP v1.3 "Reader Profile"):
   only when authorship_status is CRYPTOGRAPHIC and the statement matches
   the fixed SPEC §13.3 template for the retrieval domain; otherwise "none".
 - Files nested deeper than 64 levels are rejected (ValueError).
+- The fallback import of ../../arp_cli.py registers the module in
+  sys.modules before running it; without that, the dataclasses in arp_cli
+  failed and every signed file was NOT_CHECKED. An arp_cli older than 1.4.0
+  is not used; a signed file that cannot be checked is logged as a warning.
+- signature_dns is the key record that was queried ({selector}._arp.{retrieval
+  domain}), not dns_record from the file (informational only, SPEC §13.3).
 
 v1.1 Changes:
 - Modern langchain_core imports (langchain.docstore.document is deprecated)
@@ -72,6 +78,7 @@ import json
 import logging
 import os
 import re
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -110,6 +117,13 @@ _SCRIPT_RE = re.compile(r"<script[^>]*>.*?</script>", re.DOTALL | re.IGNORECASE)
 # Authorship states (SPEC §13.7) plus the loader-only state NOT_CHECKED.
 NOT_CHECKED = "NOT_CHECKED"
 
+# Reference verifier: arp_cli v1.4.0 or later (Enveloped Pattern only,
+# domain binding, v1.3 fields). Inside the repository it sits two levels up.
+MIN_ARP_CLI_VERSION = (1, 4, 0)
+_MIN_ARP_CLI_TEXT = ".".join(map(str, MIN_ARP_CLI_VERSION))
+ARP_CLI_FALLBACK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "arp_cli.py")
+_ARP_CLI_LOCK = threading.Lock()
+
 # Fetch limits (same values as arp_cli v1.4).
 MAX_BYTES = 1024 * 1024
 TOTAL_TIMEOUT = 30.0
@@ -139,28 +153,57 @@ def _sanitize(text: Any) -> str:
     return text.strip()
 
 
+def _arp_cli_version_ok(module: Any) -> bool:
+    """True if module.__version__ is MIN_ARP_CLI_VERSION or later."""
+    try:
+        version = tuple(int(part) for part in str(module.__version__).split(".")[:3])
+    except (AttributeError, ValueError):
+        return False
+    return version + (0,) * (3 - len(version)) >= MIN_ARP_CLI_VERSION
+
+
 def _import_arp_cli():
-    """Return the arp_cli module (reference verifier) or None.
+    """Return the arp_cli module (reference verifier, v1.4.0 or later) or None.
 
     Tries a normal import first, then the repository layout
-    (integrations/langchain/ → ../../arp_cli.py).
+    (integrations/langchain/ → ../../arp_cli.py). The file from the
+    repository is registered in sys.modules before it runs, as a normal
+    import does: the dataclasses in arp_cli look up their module there while
+    the class is created. If running the file fails, the entry is removed
+    again. An older arp_cli is not used. Both cases are logged as warnings.
     """
-    try:
-        import arp_cli  # type: ignore
+    with _ARP_CLI_LOCK:  # no thread may see a module that is still running
+        try:
+            import arp_cli  # type: ignore
+        except Exception:
+            arp_cli = None
+        # A name already in sys.modules (e.g. set to None to block the
+        # import) is left alone.
+        if arp_cli is None and "arp_cli" not in sys.modules and os.path.isfile(ARP_CLI_FALLBACK_PATH):
+            spec = importlib.util.spec_from_file_location("arp_cli", ARP_CLI_FALLBACK_PATH)
+            if spec is None or spec.loader is None:
+                return None
+            module = importlib.util.module_from_spec(spec)
+            sys.modules["arp_cli"] = module
+            try:
+                spec.loader.exec_module(module)
+            except BaseException as e:
+                if sys.modules.get("arp_cli") is module:
+                    del sys.modules["arp_cli"]
+                if not isinstance(e, Exception):
+                    raise
+                logger.warning(f"arp_cli could not be loaded from {ARP_CLI_FALLBACK_PATH}: "
+                               f"{type(e).__name__}: {e}")
+                return None
+            arp_cli = module
+        if arp_cli is None:
+            return None
+        if not _arp_cli_version_ok(arp_cli):
+            logger.warning(f"arp_cli {getattr(arp_cli, '__version__', '(no version)')} from "
+                           f"{getattr(arp_cli, '__file__', '?')} is older than {_MIN_ARP_CLI_TEXT} "
+                           "and is not used.")
+            return None
         return arp_cli
-    except Exception:
-        pass
-    candidate = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "arp_cli.py")
-    if not os.path.isfile(candidate):
-        return None
-    try:
-        spec = importlib.util.spec_from_file_location("arp_cli", candidate)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)  # type: ignore[union-attr]
-        return module
-    except Exception as e:  # pragma: no cover - depends on the environment
-        logger.warning(f"arp_cli could not be loaded from {candidate}: {e}")
-        return None
 
 
 def _depth_exceeds(value: Any, limit: int) -> bool:
@@ -445,13 +488,19 @@ class AgenticReasoningLoader(BaseLoader):
             return {"status": NOT_CHECKED, "reason": "verification_disabled"}
         arp_cli = _import_arp_cli()
         if arp_cli is None:
+            logger.warning(f"Signature of {domain} not checked: arp_cli.py (v{_MIN_ARP_CLI_TEXT} or later) "
+                           "is not available; authorship_status is NOT_CHECKED.")
             return {"status": NOT_CHECKED, "reason": "arp_cli_unavailable"}
         try:
             result = arp_cli.verify_manifest(data, domain=domain, resolver=self.resolver, now=self._now())
         except Exception as e:  # missing optional dependency, unexpected input
             logger.warning(f"Signature check not possible: {e}")
             return {"status": NOT_CHECKED, "reason": "verifier_error"}
-        return {"status": result["status"], "reason": result["reason"] or ""}
+        # dns_name: the key record that was queried, built from the retrieval
+        # domain and dns_selector; dns_record in the file is informational
+        # only (SPEC §13.3).
+        return {"status": result["status"], "reason": result["reason"] or "",
+                "dns_name": result.get("dns_name") or ""}
 
     def _check_representation(self, data: Dict[str, Any], domain: str) -> str:
         arp_cli = _import_arp_cli()
@@ -496,7 +545,7 @@ class AgenticReasoningLoader(BaseLoader):
             "authorship_checked_on": checked_on,
             "source_line": self._source_line,
             "signature_algorithm": sig.get("algorithm", "none"),
-            "signature_dns": verify.get("dns_name", sig.get("dns_record", "none")) if cryptographic else "none",
+            "signature_dns": (check.get("dns_name") or "none") if cryptographic else "none",
             "signature_doh_url": verify.get("doh_url", "none") if cryptographic else "none",
             "signature_statement": statement,
             "signed_at": sig.get("signed_at", "none"),

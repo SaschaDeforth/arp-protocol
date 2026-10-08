@@ -229,7 +229,7 @@ The current signature status of each file can be checked with `python arp_cli.py
 
 ## For AI Developers: LangChain Integration
 
-A community LangChain document loader reads `reasoning.json` into documents. The version in this repository ([`integrations/langchain/`](./integrations/langchain/), loader version 1.3) checks the signature with `arp_cli.py` v1.4.0 when `arp_cli` is importable (otherwise the status is `NOT_CHECKED`) and starts every document with the provenance line of SPEC §13.10. The package `langchain-arp` 0.1.0 on PyPI (released 2026-03-17) does not verify signatures; its package description mentions no signature check.
+A community LangChain document loader in this repository ([`integrations/langchain/`](./integrations/langchain/), loader version 1.3) reads `reasoning.json` into documents. It checks the signature with `arp_cli.py` v1.4.0, which it imports from the Python path or, inside this repository, from `../../arp_cli.py` (otherwise the status is `NOT_CHECKED` and the loader logs a warning), and starts every document with the provenance line of SPEC §13.10. Usage and options: [`integrations/langchain/README.md`](./integrations/langchain/README.md). The separate package `langchain-arp` (PyPI 0.1.0, repository `SaschaDeforth/langchain-arp`) is outdated and not maintained with this repository: the PyPI release does not check signatures, and the `verify.py` added later in its repository queries the DNS name written in the file (`dns_record`) instead of the name built from the retrieval domain (SPEC §13.3).
 
 ```python
 from arp_loader import AgenticReasoningLoader
@@ -437,7 +437,7 @@ Valid concern. The author's Ghost Site, Canary Token, and Citation Tracking expe
 
 ### "LangChain integration is not officially adopted."
 
-Correct. The `langchain-arp` library (version 0.1.0, which does not verify signatures) is available via pip as a community package, not as part of the official LangChain distribution; the loader in `integrations/langchain/` is the current version. A community integration discussion has been opened upstream. The protocol is designed to work with any RAG framework.
+Correct. The loader in [`integrations/langchain/`](./integrations/langchain/) is a community integration, not part of the official LangChain distribution. A community integration discussion has been opened upstream. The protocol is designed to work with any RAG framework.
 
 ### "Could ARP be used for cloaking?"
 

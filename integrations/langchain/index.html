@@ -60,7 +60,14 @@ pip install cryptography rfc8785 dnspython</code></pre>
         </div>
         <p>
             The signature check uses <code>arp_cli.py</code>. The loader imports it when it is on the Python path or,
-            inside the repository, from <code>../../arp_cli.py</code>. Without it, a signed file is marked <code>NOT_CHECKED</code>.
+            inside the repository, from <code>../../arp_cli.py</code>. Without it, a signed file is marked <code>NOT_CHECKED</code>
+            (reason <code>arp_cli_unavailable</code>) and the loader logs a warning; an older <code>arp_cli</code> is not used.
+        </p>
+        <p>
+            <code>arp_loader.py</code> is a single file. In a clone of the
+            <a href="https://github.com/SaschaDeforth/arp-protocol" target="_blank" rel="noopener">repository</a> it is imported
+            from <code>integrations/langchain/</code> as the working directory or with that directory on the Python path
+            (<code>PYTHONPATH=integrations/langchain</code>).
         </p>
     </section>
 
@@ -144,11 +151,12 @@ Source: example.com — self-description (ARP). Signature present, not checked b
             </thead>
             <tbody>
                 <tr><td><code>authorship_status</code></td><td><code>CRYPTOGRAPHIC</code>, <code>UNSIGNED</code>, <code>INVALID</code>, <code>ERROR</code> (DNS lookup failed) or <code>NOT_CHECKED</code></td></tr>
-                <tr><td><code>authorship_reason</code></td><td>e.g. <code>valid</code>, <code>unsigned</code>, <code>expired</code>, <code>key_revoked</code>, <code>legacy_payload_only</code>, <code>domain_mismatch</code></td></tr>
+                <tr><td><code>authorship_reason</code></td><td>e.g. <code>valid</code>, <code>unsigned</code>, <code>expired</code>, <code>key_revoked</code>, <code>legacy_payload_only</code>, <code>domain_mismatch</code>; for <code>NOT_CHECKED</code>: <code>verification_disabled</code>, <code>arp_cli_unavailable</code> (arp_cli v1.4+ not importable) or <code>verifier_error</code></td></tr>
                 <tr><td><code>authorship_checked_on</code></td><td>Date of the check (UTC)</td></tr>
                 <tr><td><code>source_line</code></td><td>The provenance line at the top of each Document</td></tr>
                 <tr><td><code>is_signed</code></td><td>A signature block is present (says nothing about validity)</td></tr>
-                <tr><td><code>signature_dns</code>, <code>signature_doh_url</code>, <code>signature_statement</code></td><td>From <code>_arp_signature</code> (<code>verify.dns_name</code>, <code>verify.doh_url</code>, <code>statement</code>)</td></tr>
+                <tr><td><code>signature_dns</code></td><td>The key record that was queried, <code>{selector}._arp.{retrieval domain}</code> (in v1.3 files the same as <code>verify.dns_name</code>; <code>dns_record</code> in the file is informational only, SPEC §13.3); <code>none</code> unless <code>CRYPTOGRAPHIC</code></td></tr>
+                <tr><td><code>signature_doh_url</code>, <code>signature_statement</code></td><td>From <code>_arp_signature</code> (<code>verify.doh_url</code>, <code>statement</code>; the statement only in the fixed wording of SPEC §13.3); <code>none</code> unless <code>CRYPTOGRAPHIC</code></td></tr>
                 <tr><td><code>signed_at</code>, <code>expires_at</code></td><td>Signature period</td></tr>
                 <tr><td><code>provenance_statement</code>, <code>publisher</code>, <code>publisher_url</code>, <code>published</code></td><td>From the v1.3 <code>provenance</code> object</td></tr>
                 <tr><td><code>representation_url</code>, <code>representation_sha256</code></td><td>The <code>reasoning.md</code> entry of <code>representations</code></td></tr>

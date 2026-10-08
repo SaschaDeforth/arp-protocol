@@ -4,17 +4,24 @@ HTTP and DNS are replaced; LangChain itself is optional (the loader has a
 standalone fallback for Document/BaseLoader).
 """
 
+import hashlib
 import json
+import logging
 import os
+import subprocess
 import sys
+import textwrap
+import types
 from datetime import datetime, timezone
 
 import pytest
 
 import arp_cli
-from conftest import ROOT, load_fixture, txt_record
+from conftest import ROOT, fixture_path, load_fixture, txt_record
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-sys.path.insert(0, os.path.join(ROOT, "integrations", "langchain"))
+LOADER_DIR = os.path.join(ROOT, "integrations", "langchain")
+sys.path.insert(0, LOADER_DIR)
 import arp_loader  # noqa: E402
 
 NOW = datetime(2026, 10, 5, 12, 0, 0, tzinfo=timezone.utc)
@@ -249,3 +256,204 @@ def test_urls_with_userinfo_or_backslash_are_refused(serve, url):
     with pytest.raises(ValueError):
         FixedClockLoader(url).load()
     assert serve["__requested__"] == []
+
+
+# ─────────────────────────────────────────────
+# Review 08.10.2026: fallback import of ../../arp_cli.py, arp_cli version,
+# visibility of a skipped check, queried DNS name
+# ─────────────────────────────────────────────
+
+# Public test-vector key of vector_signed_v13.json (see test_arp_cli.py);
+# never published in DNS.
+VECTOR_KEY = Ed25519PrivateKey.from_private_bytes(
+    hashlib.sha256(b"ARP v1.3 test vector key - never publish in DNS").digest())
+# Key of arp._arp.arp-protocol.org on 05.10.2026; the Common Crawl copy
+# cc_legacy_expires_manipulated.json carries a genuine legacy signature by it.
+ARP_PROTOCOL_ORG_KEY_2026 = "v=ARP1; k=ed25519; p=YXIxAy0SA3VTybqIQ9nsuAKpctZ6I47YTJ1Qoq3kba8="
+
+# Runs in a fresh interpreter: PYTHONPATH is integrations/langchain only,
+# the working directory is a temporary directory. HTTP and DNS are replaced
+# as in the tests above (requests.get, injected resolver).
+DOCUMENTED_USE_SCRIPT = textwrap.dedent('''
+    import importlib.util, json, logging, os, sys
+    from datetime import datetime
+
+    with open(sys.argv[1], encoding="utf-8") as f:
+        config = json.load(f)
+
+    root = os.path.realpath(config["repo_root"])
+    assert not [p for p in sys.path if os.path.realpath(p or os.getcwd()) == root], sys.path
+    assert importlib.util.find_spec("arp_cli") is None, "arp_cli must not be importable via sys.path"
+
+    warnings = []
+
+    class Collect(logging.Handler):
+        def emit(self, record):
+            warnings.append(record.getMessage())
+
+    logging.getLogger("arp_loader").addHandler(Collect(logging.WARNING))
+
+    from arp_loader import AgenticReasoningLoader
+    import arp_loader
+
+    class Response:
+        def __init__(self, body):
+            self.content, self.status_code, self.headers = body, 200, {}
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, size):
+            yield self.content
+
+        def close(self):
+            pass
+
+    def get(url, **kwargs):
+        with open(config["pages"][url], "rb") as f:
+            return Response(f.read())
+
+    arp_loader.requests.get = get
+    queries = []
+
+    def resolver(name):
+        queries.append(name)
+        if name not in config["zone"]:
+            raise sys.modules["arp_cli"].DNSNoRecord(name)
+        return list(config["zone"][name])
+
+    class FixedClockLoader(AgenticReasoningLoader):
+        def _now(self):
+            return datetime.fromisoformat(config["now"])
+
+    results = []
+    for case in config["cases"]:
+        loader = FixedClockLoader(case["url"], resolver=resolver,
+                                  check_representation=case.get("check_representation", False))
+        meta = loader.load()[0].metadata
+        results.append({k: meta.get(k) for k in ("authorship_status", "authorship_reason", "source_line",
+                                                 "signature_dns", "representation_status")})
+
+    module = sys.modules.get("arp_cli")
+    print(json.dumps({"results": results, "queries": queries, "warnings": warnings,
+                      "arp_cli_file": os.path.realpath(module.__file__) if module else None,
+                      "arp_cli_version": getattr(module, "__version__", None)}))
+''')
+
+
+def test_documented_use_checks_signatures_without_arp_cli_on_the_path(tmp_path):
+    """The loader is used from integrations/langchain/ and arp_cli is not on
+    sys.path (the situation integrations/langchain/README.md describes): the
+    fallback import of ../../arp_cli.py must work, so that a signed fixture
+    is CRYPTOGRAPHIC. Before the fix exec_module failed inside dataclasses
+    and every signed file came out NOT_CHECKED."""
+    config = {
+        "repo_root": ROOT,
+        "now": NOW.isoformat(),
+        "pages": {
+            "https://example.com/.well-known/reasoning.json": fixture_path("vector_signed_v13.json"),
+            "https://example.com/.well-known/reasoning.md": fixture_path("vector_signed_v13.reasoning.md"),
+            "https://example.org/.well-known/reasoning.json": fixture_path("vector_signed_v13.json"),
+            "https://arp-protocol.org/.well-known/reasoning.json": fixture_path("cc_legacy_expires_manipulated.json"),
+        },
+        "zone": {
+            "arp2610._arp.example.com": [txt_record(VECTOR_KEY)],
+            "arp2610._arp.example.org": [txt_record(VECTOR_KEY)],
+            "arp._arp.arp-protocol.org": [ARP_PROTOCOL_ORG_KEY_2026],
+        },
+        "cases": [
+            {"url": "https://example.com", "check_representation": True},
+            {"url": "https://example.org"},       # file made for example.com
+            {"url": "https://arp-protocol.org"},  # legacy payload-only signature
+        ],
+    }
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    (tmp_path / "use_loader.py").write_text(DOCUMENTED_USE_SCRIPT, encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if not k.startswith("PYTHON")}
+    env["PYTHONPATH"] = LOADER_DIR
+
+    proc = subprocess.run([sys.executable, "-B", "use_loader.py", "config.json"], cwd=str(tmp_path),
+                          env=env, capture_output=True, text=True, timeout=120)
+
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    signed, other_domain, legacy = out["results"]
+    assert (signed["authorship_status"], signed["authorship_reason"]) == ("CRYPTOGRAPHIC", "valid")
+    assert signed["source_line"] == (
+        "Source: example.com — self-description (ARP). Authorship verified via Ed25519/DNS on "
+        "2026-10-05; this verifies the publisher, not the truth of the content.")
+    assert signed["signature_dns"] == "arp2610._arp.example.com"
+    assert signed["representation_status"] == "REPRESENTATION_MATCH"
+    # The verifier loaded by the fallback is arp_cli 1.4.0: domain binding
+    # (v1.3) and no payload-only fallback.
+    assert (other_domain["authorship_status"], other_domain["authorship_reason"]) == \
+        ("INVALID", "domain_mismatch")
+    assert (legacy["authorship_status"], legacy["authorship_reason"]) == ("INVALID", "legacy_payload_only")
+    assert out["queries"] == ["arp2610._arp.example.com", "arp._arp.arp-protocol.org"]
+    assert out["arp_cli_file"] == os.path.realpath(os.path.join(ROOT, "arp_cli.py"))
+    assert out["arp_cli_version"] == arp_cli.__version__
+    assert out["warnings"] == [] and "could not be loaded" not in proc.stderr
+
+
+def _without_arp_cli_on_the_path(monkeypatch):
+    """Make 'import arp_cli' fail as it does outside the repository root."""
+    root = os.path.realpath(ROOT)
+    monkeypatch.setattr(sys, "path", [p for p in sys.path if os.path.realpath(p or os.getcwd()) != root])
+    monkeypatch.delitem(sys.modules, "arp_cli")
+
+
+def test_fallback_import_registers_the_module(monkeypatch):
+    _without_arp_cli_on_the_path(monkeypatch)
+    module = arp_loader._import_arp_cli()
+    assert module is not None and sys.modules["arp_cli"] is module
+    assert os.path.realpath(module.__file__) == os.path.realpath(os.path.join(ROOT, "arp_cli.py"))
+    assert module.LintFinding("error", "ARP-W", "$", "m").as_dict()["severity"] == "error"
+    assert arp_loader._import_arp_cli() is module  # later calls import it normally
+
+
+def test_failed_fallback_import_is_removed_and_logged(tmp_path, monkeypatch, caplog):
+    broken = tmp_path / "arp_cli.py"
+    broken.write_text("__version__ = '1.4.0'\nraise RuntimeError('broken copy')\n", encoding="utf-8")
+    monkeypatch.setattr(arp_loader, "ARP_CLI_FALLBACK_PATH", str(broken))
+    _without_arp_cli_on_the_path(monkeypatch)
+    with caplog.at_level(logging.WARNING, logger="arp_loader"):
+        assert arp_loader._import_arp_cli() is None
+    assert "arp_cli" not in sys.modules
+    assert "RuntimeError: broken copy" in caplog.text
+
+
+def test_older_arp_cli_is_not_used_and_the_skipped_check_is_logged(throwaway_key, serve, monkeypatch, caplog):
+    signed, _ = signed_manifest(throwaway_key)
+    serve["https://example.com/.well-known/reasoning.json"] = signed
+    old = types.ModuleType("arp_cli")
+    old.__version__ = "1.3.1"
+    monkeypatch.setitem(sys.modules, "arp_cli", old)
+    with caplog.at_level(logging.WARNING, logger="arp_loader"):
+        docs = FixedClockLoader("https://example.com").load()
+    meta = docs[0].metadata
+    assert (meta["authorship_status"], meta["authorship_reason"]) == ("NOT_CHECKED", "arp_cli_unavailable")
+    assert "Signature present, not checked by this loader" in docs[0].page_content
+    assert "arp_cli 1.3.1" in caplog.text and "older than 1.4.0" in caplog.text
+    assert "Signature of example.com not checked" in caplog.text
+    assert sys.modules["arp_cli"] is old  # an existing entry is left alone
+
+
+def test_signature_dns_is_the_queried_key_record(throwaway_key, fake_dns, serve):
+    """v1.2 file: a dns_record that differs from {selector}._arp.{domain} is
+    only a warning (SPEC §13.3), so the file is CRYPTOGRAPHIC; the metadata
+    names the record that was queried, not the one written in the file."""
+    manifest = load_fixture("clean_v13.json")
+    manifest["version"] = "1.2"
+    manifest["_arp_signature"] = {
+        "algorithm": "Ed25519", "dns_selector": "arp", "dns_record": "arp._arp.elsewhere.example",
+        "canonicalization": "jcs-rfc8785", "signed_at": "2026-10-01T00:00:00Z",
+        "expires_at": "2026-12-30T00:00:00Z", "signature": "",
+    }
+    manifest["_arp_signature"]["signature"] = arp_cli.b64url_encode_unpadded(
+        throwaway_key.sign(arp_cli._canonical_bytes(manifest)))
+    serve["https://example.com/.well-known/reasoning.json"] = manifest
+    fake_dns["arp._arp.example.com"] = [txt_record(throwaway_key)]
+    meta = FixedClockLoader("https://example.com").load()[0].metadata
+    assert meta["authorship_status"] == "CRYPTOGRAPHIC"
+    assert meta["signature_dns"] == "arp._arp.example.com"
+    assert fake_dns["__queries__"] == ["arp._arp.example.com"]

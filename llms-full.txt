@@ -291,10 +291,9 @@ A v2.0 design was published as the individual Internet-Draft `draft-deforth-arp-
 
 ## 10. Developer Integration
 
-A community LangChain document loader reads `reasoning.json` into documents. It exists in two versions:
+A community LangChain document loader in the repository (`integrations/langchain/arp_loader.py`, loader version 1.3; documentation: https://arp-protocol.org/integrations/langchain/) reads `reasoning.json` into documents. It checks the signature with `arp_cli.py` (v1.4.0), which it imports from the Python path or, inside the repository, from `../../arp_cli.py`, and records the result as `authorship_status` (CRYPTOGRAPHIC, UNSIGNED, INVALID, or ERROR); without `arp_cli`, the status is NOT_CHECKED and the loader logs a warning. It starts every document with the provenance line of SPEC §13.10.
 
-- The loader in the repository (`integrations/langchain/arp_loader.py`, loader version 1.3) checks the signature with `arp_cli.py` (v1.4.0) when `arp_cli` is importable and records the result as `authorship_status` (CRYPTOGRAPHIC, UNSIGNED, INVALID, or ERROR); without `arp_cli`, the status is NOT_CHECKED. It starts every document with the provenance line of SPEC §13.10.
-- The package `langchain-arp` 0.1.0 on PyPI (released 2026-03-17) does not verify signatures; its package description mentions no signature check.
+The separate package `langchain-arp` (PyPI 0.1.0, repository SaschaDeforth/langchain-arp) is outdated and not maintained with the repository: the PyPI release does not check signatures, and the `verify.py` added later in its repository queries the DNS name written in the file (`dns_record`) instead of the name built from the retrieval domain (SPEC §13.3).
 
 ```python
 from arp_loader import AgenticReasoningLoader
