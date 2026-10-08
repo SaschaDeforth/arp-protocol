@@ -741,7 +741,7 @@
         if (payload.domain === undefined) {
             payload = withDomain(payload, domain);
             notices.push(`<code>domain</code> set to <code>${esc(domain)}</code>`);
-        } else if (T.normalizeDomain(payload.domain) !== domain) {
+        } else if (T.normalizeDomainSafe(payload.domain) !== domain) {
             errors.push(`The <code>domain</code> field (<code>${esc(payload.domain)}</code>) differs from the signing domain (<code>${esc(domain)}</code>).`);
         }
 
@@ -814,10 +814,14 @@
 
         let input;
         try {
-            input = JSON.parse(jsonText);
+            // Parsed like arp_cli sign: I-JSON (RFC 7493); duplicate member names, NaN/Infinity
+            // and integers beyond ±(2^53−1) are refused (SPEC §13.4).
+            input = T.parseManifestText(T.textAsFile(jsonText));
             if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('not an object');
         } catch (e) {
-            showError('Error: Invalid JSON syntax. Please check your payload.');
+            showError(e instanceof T.ManifestParseError && e.reason !== 'invalid_json'
+                ? `Error: ${e.message}. Such files are not signed (SPEC §13.4).`
+                : 'Error: Invalid JSON syntax. Please check your payload.');
             return;
         }
 

@@ -508,7 +508,7 @@
                 <div>
                     <label for="opt-domain">Domain for pasted files</label>
                     <input type="text" id="opt-domain" class="url-input" placeholder="taken from the domain field" style="width: 100%;">
-                    <div class="hint">Used for the DNS lookup of pasted files. Must match the <code>domain</code> field.</div>
+                    <div class="hint">Used for the DNS lookup of pasted files, like <code>arp_cli verify --domain</code>: a bare domain name (e.g. <code>example.com</code>) that matches the <code>domain</code> field.</div>
                 </div>
                 <div>
                     <label for="opt-pubkey">Public key for an offline check</label>
@@ -566,6 +566,11 @@
         <div class="section-group">
             <div class="section-group-title">Wording profile (ARP-W)</div>
             <div id="checks-wording" class="check-list"></div>
+        </div>
+
+        <div class="section-group">
+            <div class="section-group-title">arp_cli lint result (all rules)</div>
+            <div id="checks-cli" class="check-list"></div>
         </div>
 
         <div class="section-group">
@@ -656,6 +661,9 @@
 // reasoning.json Validator — ARP v1.3 ("Reader Profile")
 // Rules: SPEC v1.3, schema/v1.3.json, wording profile ARP-W (shared with
 // Generator and Signer via script.js), Enveloped signature check (SPEC §13.4).
+// Trust level and the "arp_cli lint result" group come from the ports of
+// arp_cli verify / lint in script.js (T.verifySource, T.lintSource): same
+// status, reason codes and rule IDs as arp_cli 1.4.0 (tests/test_web_parity.py).
 // ========================================================
 
 const T = window.ARPTools;
@@ -663,8 +671,13 @@ const textarea = document.getElementById('json-input');
 const charCount = document.getElementById('char-count');
 const sourceLabel = document.getElementById('source-label');
 
-// Set when the JSON was fetched from a URL; cleared on manual edits.
+// Set when the JSON was fetched from a URL ({ url, domain, bytes, contentType });
+// cleared on manual edits. Fetched files are checked as their URL (arp_cli verify
+// <URL>), pasted text as a local file (arp_cli verify FILE [--domain] [--pubkey]).
 let retrieval = null;
+
+const GROUPS = ['schema', 'provenance', 'wording', 'cli', 'identity', 'corrections', 'claims', 'limits', 'crypto',
+    'representation', 'diagnostics', 'authority'];
 
 const TOP_LEVEL_KEYS = {
     '1.3': ['$schema', 'protocol', 'version', 'domain', 'entity', 'provenance', 'representations', 'verification',
@@ -716,24 +729,30 @@ async function fetchFromUrl() {
     if (!raw.trim()) return;
     let url;
     try {
-        url = manifestUrlFromInput(raw);
+        url = new URL(manifestUrlFromInput(raw)).href;
     } catch (e) {
         alert('Invalid URL. Please enter a valid domain.');
         return;
     }
+    // As arp_cli verify <URL>: the URL host is the retrieval domain; redirects stay
+    // on that host and never go from https to http; at most 1 MiB.
+    let host, bytes, contentType;
     try {
-        const resp = await fetch(url, { cache: 'no-store' });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const text = await resp.text();
-        setInput(text);
-        retrieval = { url: url, domain: new URL(url).hostname };
-        sourceLabel.textContent = url;
-        switchTab('paste');
+        host = T.checkedUrl(url, true)[1];
+        [bytes, contentType] = await T.httpGetBytes(url);
     } catch (e) {
         retrieval = null;
+        if (e instanceof T.FetchError) {
+            showLoadFailure('Could not load the file', `${url}: ${e.kind}`, url);
+            return;
+        }
         alert(`Could not fetch reasoning.json from ${url}.\n\nError: ${e.message}\n\nThe server may not allow CORS requests. Paste the JSON instead.`);
         return;
     }
+    setInput(new TextDecoder('utf-8').decode(bytes));
+    retrieval = { url: url, domain: host, bytes: bytes, contentType: contentType };
+    sourceLabel.textContent = url;
+    switchTab('paste');
     await validate();
 }
 
@@ -829,15 +848,16 @@ function validDateTime(s) {
     return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.test(s) && !isNaN(Date.parse(s));
 }
 
-// ── Static checks (no network) ──
-function runChecks(json, rawText) {
+// ── Static checks (no network). lintOutcome: T.lintSource() for the same input ──
+function runChecks(json, rawText, lintOutcome) {
     const checks = [];
     const add = (group, name, status, detail, weight, must) =>
         checks.push({ group, name, status, detail: detail || '', weight: weight || 0, must: !!must });
 
     const version = detectVersion(json);
     const v13 = version === '1.3';
-    const domain = typeof json.domain === 'string' ? T.normalizeDomain(json.domain) : '';
+    // The domain as arp_cli reads it (normalize_domain: bare name, lowercase, no trailing dot)
+    const domain = T.normalizeDomainSafe(json.domain) || '';
     const entity = typeof json.entity === 'string' ? json.entity : '';
 
     // ── Schema & version ──
@@ -863,11 +883,13 @@ function runChecks(json, rawText) {
         add('schema', 'version', 'fail', 'Missing or not a version string', 3, true);
     }
 
-    if (!domain) {
+    if (typeof json.domain !== 'string' || !json.domain.trim()) {
         add('schema', 'domain', 'fail', 'Missing — the domain that serves this file (required since schema v1.2)', 3, true);
-    } else if (!T.isValidDomain(domain)) {
-        add('schema', 'domain', 'fail', `${code(json.domain)} is not a valid domain name`, 3, true);
-    } else if (retrieval && retrieval.domain.toLowerCase() !== domain) {
+    } else if (!domain) {
+        add('schema', 'domain', 'fail', `${code(json.domain)} is not a bare domain name (no scheme, path or port)`, 3, true);
+    } else if (domain !== json.domain) {
+        add('schema', 'domain', 'fail', `${code(json.domain)} — write it in lowercase without a trailing dot: ${code(domain)}`, 3, true);
+    } else if (retrieval && retrieval.domain !== domain) {
         add('schema', 'domain', 'fail', `${code(domain)} does not match the retrieval domain ${code(retrieval.domain)} (SPEC §4)`, 3, true);
     } else {
         add('schema', 'domain', 'pass', retrieval ? `${code(domain)} — matches the retrieval domain` : code(domain), 3, true);
@@ -924,7 +946,7 @@ function runChecks(json, rawText) {
     }
 
     // ── Wording profile (ARP-W, K1) — same rules as arp_cli lint ──
-    const allFindings = T.lint(json);
+    const allFindings = lintOutcome && lintOutcome.ok ? lintOutcome.findings : [];
     const findings = allFindings.filter(f => f.rule.startsWith('ARP-W/'));
     const errors = findings.filter(f => f.severity === 'error');
     if (!errors.length) {
@@ -944,9 +966,18 @@ function runChecks(json, rawText) {
         add('wording', f.rule, status,
             `${code(f.path)} <span class="excerpt">${excerpt}</span>${esc(f.message)}`, 0, false);
     }
-    const lintErrors = allFindings.filter(f => f.severity === 'error').length;
-    add('wording', 'arp_cli lint equivalent', 'info',
-        `${lintErrors} error(s), ${allFindings.length - lintErrors} warning(s) over ARP-W, ARP-P, ARP-S and ARP-R — the result of ${code('arp_cli lint')} v${esc(T.CLI_VERSION)} for this file`, 0);
+    // ── Complete arp_cli lint result (all rule families, same order as the CLI) ──
+    if (lintOutcome && lintOutcome.ok) {
+        add('cli', 'arp_cli lint equivalent', lintOutcome.errors ? 'fail' : (lintOutcome.warnings ? 'warn' : 'pass'),
+            `${lintOutcome.errors} error(s), ${lintOutcome.warnings} warning(s) over ARP-W, ARP-P, ARP-S, ARP-R and ARP — the result of ${code('arp_cli lint')} v${esc(T.CLI_VERSION)} for this file`, 0);
+        for (const f of allFindings) {
+            add('cli', `${f.severity === 'error' ? 'ERROR' : 'WARNING'} ${f.rule}`, f.severity === 'error' ? 'fail' : 'warn',
+                `${code(f.path)} ${esc(f.message)}${f.excerpt ? `<span class="excerpt">${esc(f.excerpt)}</span>` : ''}`, 0);
+        }
+    } else if (lintOutcome) {
+        add('cli', 'arp_cli lint equivalent', 'fail',
+            `${code('arp_cli lint')} v${esc(T.CLI_VERSION)} stops with an error for this file (exit code 2): ${esc(lintOutcome.error.message)}`, 0);
+    }
 
     // ── Identity ──
     const identity = isObject(json.identity) ? json.identity : {};
@@ -1031,17 +1062,20 @@ function runChecks(json, rawText) {
             selector ? `${code(selector)}${/^arp\d{4}$/.test(selector) ? '' : ' — rotation pattern for new keys: arpYYMM, e.g. ' + code(T.defaultSelector())}` : 'Missing', 2, true);
         if (sig.dns_record !== undefined) {
             const expectedRecord = selector && domain ? T.dnsName(selector, domain) : '';
-            add('crypto', 'dns_record', sig.dns_record === expectedRecord ? 'pass' : (v13 ? 'fail' : 'warn'),
-                sig.dns_record === expectedRecord ? code(sig.dns_record)
+            const recordOk = !!expectedRecord && T.sameDnsName(sig.dns_record, expectedRecord);
+            add('crypto', 'dns_record', recordOk ? 'pass' : (v13 ? 'fail' : 'warn'),
+                recordOk ? code(sig.dns_record)
                     : v13 ? `${code(sig.dns_record)} differs from ${code(expectedRecord || '?')} — in v1.3 files this is INVALID (domain_mismatch, SPEC §13.3); verifiers build the DNS name from the retrieval domain and dns_selector`
                     : `${code(sig.dns_record)} differs from ${code(expectedRecord || '?')} — informational in v1.2 files; verifiers build the DNS name from the retrieval domain and dns_selector`, 0, v13);
         }
         add('crypto', 'signed_at', validDateTime(sig.signed_at) ? 'pass' : 'fail', validDateTime(sig.signed_at) ? esc(sig.signed_at) : 'Missing or not an ISO 8601 timestamp', 1, true);
-        if (validDateTime(sig.expires_at)) {
-            const expired = Date.parse(sig.expires_at) < Date.now();
+        // Read like arp_cli verify (datetime.fromisoformat; naive times count as UTC)
+        const expiresAt = T.parseUtc(sig.expires_at);
+        if (expiresAt !== null) {
+            const expired = BigInt(Date.now()) * 1000n > expiresAt;
             add('crypto', 'expires_at', expired ? 'warn' : 'pass', expired ? `Expired on ${esc(sig.expires_at)} — counts as UNSIGNED (SPEC §13.7)` : `Valid until ${esc(sig.expires_at)}`, 2);
         } else {
-            add('crypto', 'expires_at', 'fail', 'Missing or not an ISO 8601 timestamp', 2, true);
+            add('crypto', 'expires_at', 'fail', 'Missing or not an ISO 8601 timestamp — verifiers report INVALID (malformed_metadata)', 2, true);
         }
 
         const expectedStatement = selector && domain ? T.signatureStatement(selector, domain) : null;
@@ -1060,8 +1094,9 @@ function runChecks(json, rawText) {
         } else {
             const ref = selector && domain ? T.verifyBlock(selector, domain) : {};
             const vb = sig.verify;
-            add('crypto', 'verify.dns_name', vb.dns_name === ref.dns_name ? 'pass' : 'fail',
-                vb.dns_name === ref.dns_name ? code(vb.dns_name) : `${vb.dns_name ? code(vb.dns_name) : 'Missing'} — expected ${code(ref.dns_name || '?')}`, 1, true);
+            const nameOk = !!ref.dns_name && T.sameDnsName(vb.dns_name, ref.dns_name);
+            add('crypto', 'verify.dns_name', nameOk ? 'pass' : 'fail',
+                nameOk ? code(vb.dns_name) : `${vb.dns_name ? code(vb.dns_name) : 'Missing'} — expected ${code(ref.dns_name || '?')}`, 1, true);
             if (vb.doh_url === ref.doh_url) {
                 add('crypto', 'verify.doh_url', 'pass', esc(vb.doh_url), 1);
             } else if (typeof vb.doh_url === 'string' && /^https:\/\//.test(vb.doh_url) && ref.dns_name && vb.doh_url.includes(ref.dns_name)) {
@@ -1073,13 +1108,19 @@ function runChecks(json, rawText) {
                 vb.spec === T.SPEC_SIGNATURE_URL ? esc(vb.spec) : `Reference value: ${code(T.SPEC_SIGNATURE_URL)}`, 1, !vb.spec);
         }
 
-        const s = typeof sig.signature === 'string' ? sig.signature : '';
-        if (/^[A-Za-z0-9_-]{86}$/.test(s)) {
+        // Decoded like arp_cli (SPEC §13.3): one alphabet, optional "==", canonical bits, nothing else
+        let encodingError = null;
+        try {
+            T.decodeSignatureStrict(sig.signature);
+        } catch (e) {
+            encodingError = e.message;
+        }
+        if (encodingError === null && /^[A-Za-z0-9_-]{86}$/.test(sig.signature)) {
             add('crypto', 'signature encoding', 'pass', 'Unpadded base64url, 86 characters', 1);
-        } else if (/^[A-Za-z0-9_-]{86}==$/.test(s)) {
-            add('crypto', 'signature encoding', 'warn', 'Padded base64url (accepted on read; emission format is unpadded)', 1);
+        } else if (encodingError === null) {
+            add('crypto', 'signature encoding', 'warn', 'Padded or standard Base64 alphabet (accepted on read; emission format is unpadded base64url)', 1);
         } else {
-            add('crypto', 'signature encoding', 'fail', 'Not a base64url Ed25519 signature', 1, true);
+            add('crypto', 'signature encoding', 'fail', `${esc(encodingError)} — verifiers report INVALID (malformed_signature, SPEC §13.3)`, 1, true);
         }
     }
 
@@ -1129,81 +1170,44 @@ function runChecks(json, rawText) {
     return { checks, version, findings: allFindings, domain };
 }
 
-// ── Network checks: signature (DNS) and reasoning.md hash ──
-async function runNetworkChecks(json, report) {
+// ── Results of arp_cli verify for this input: signature and reasoning.md hash ──
+async function applyVerifyOutcome(json, report, outcome) {
     const add = (group, name, status, detail, weight, must) =>
         report.checks.push({ group, name, status, detail: detail || '', weight: weight || 0, must: !!must });
-
-    const overrideDomain = T.normalizeDomain(document.getElementById('opt-domain').value);
-    const publicKey = document.getElementById('opt-pubkey').value.trim();
-    // Like arp_cli verify: URL host, else --domain, else the domain field of a local file
-    const bindDomain = retrieval ? retrieval.domain
-        : (overrideDomain || (typeof json.domain === 'string' ? T.normalizeDomain(json.domain) : ''));
-
-    const trust = await T.verifyManifest(json, {
-        domain: bindDomain || undefined,
-        publicKey: publicKey || undefined
-    });
+    const trust = outcome.result;
 
     if (isObject(json._arp_signature)) {
-        if (trust.level === 'CRYPTOGRAPHIC' || trust.reason === 'expired') {
+        if (trust.status === 'CRYPTOGRAPHIC' || trust.reason === 'expired') {
             add('crypto', 'signature covers content and metadata', 'pass', 'Enveloped pattern (SPEC §13.4): expires_at, dns_selector, statement and verify are signed too', 4, true);
         } else if (trust.reason === 'legacy_payload_only') {
             add('crypto', 'signature covers content and metadata', 'fail', 'Legacy payload-only pattern: the signature metadata is unprotected — rejected', 4, true);
-        } else if (trust.level === 'INVALID') {
+        } else if (trust.status === 'INVALID') {
             add('crypto', 'signature check', 'fail', `INVALID (${esc(trust.reason)})`, 4, true);
         } else {
             add('crypto', 'signature check', 'info', 'Not checked — see the trust level above', 0);
         }
     }
 
-    // Representations (SPEC §13.12.3): compare the SHA-256 of each entry with the actual bytes.
-    // Like arp_cli verify: only https URLs on the retrieval domain are fetched; for pasted
-    // files a local reasoning.md can be selected instead.
+    // Representations (SPEC §13.12.3), compared as arp_cli verify does: for a fetched
+    // file the https URLs on the retrieval domain, for a pasted file the selected
+    // local reasoning.md in place of the file next to the manifest.
     const reps = Array.isArray(json.representations) ? json.representations : [];
-    const mdInput = document.getElementById('opt-md');
-    const localFile = mdInput && mdInput.files && mdInput.files[0] ? mdInput.files[0] : null;
-    const localBytes = localFile ? new Uint8Array(await localFile.arrayBuffer()) : null;
-    for (let i = 0; i < reps.length; i++) {
-        const r = reps[i];
-        const label = `representations[${i}]`;
-        if (!isObject(r) || typeof r.href !== 'string' || typeof r.sha256 !== 'string' || !/^[0-9a-fA-F]{64}$/.test(r.sha256)) {
-            add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(label)}: href or sha256 missing or malformed`, 0);
-            continue;
-        }
-        let parsed = null;
-        try { parsed = new URL(r.href); } catch (e) { parsed = null; }
-        let bytes = null;
-        let source = '';
-        const baseName = parsed ? parsed.pathname.split('/').pop() : '';
-        if (localBytes && (baseName === localFile.name || (r.media_type === 'text/markdown' && /\.md$/i.test(localFile.name)))) {
-            bytes = localBytes;
-            source = `the selected file ${localFile.name}`;
-        } else if (parsed && parsed.protocol === 'https:' && bindDomain && parsed.hostname.toLowerCase() === bindDomain) {
-            try {
-                const resp = await fetch(r.href, { cache: 'no-store' });
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                bytes = new Uint8Array(await resp.arrayBuffer());
-                source = `the published ${r.href}`;
-            } catch (e) {
-                add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(r.href)}: ${esc(e.message)} (not deployed, or no CORS header)`, 0);
-                continue;
-            }
-        } else {
-            add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(r.href)}: not an https URL on the retrieval domain${bindDomain ? ' ' + code(bindDomain) : ''}; not fetched`, 0);
-            continue;
-        }
-        const hash = await T.sha256Hex(bytes);
-        if (hash === r.sha256.toLowerCase()) {
-            add('representation', 'REPRESENTATION_MATCH', 'pass', `${esc(source)} has exactly the declared SHA-256`, i === 0 ? 3 : 0);
-        } else {
+    outcome.representations.forEach((r, i) => {
+        const label = typeof r.href === 'string' ? r.href : `representations[${i}]`;
+        if (r.status === 'REPRESENTATION_MATCH') {
+            add('representation', 'REPRESENTATION_MATCH', 'pass', `${esc(r.checked || label)} has exactly the declared SHA-256`, i === 0 ? 3 : 0);
+        } else if (r.status === 'REPRESENTATION_MISMATCH') {
             add('representation', 'REPRESENTATION_MISMATCH', 'fail',
-                `${esc(source)} differs from the declared SHA-256 (${code(hash.slice(0, 16) + '…')} ≠ ${code(r.sha256.slice(0, 16) + '…')}). This does not invalidate the manifest signature, but the representation no longer matches the manifest`, i === 0 ? 3 : 0);
+                `${esc(r.checked || label)} differs from the declared SHA-256 (${code(String(r.actual).slice(0, 16) + '…')} ≠ ${code(String(r.expected).slice(0, 16) + '…')}). This does not invalidate the manifest signature, but the representation no longer matches the manifest`, i === 0 ? 3 : 0);
+        } else {
+            const hint = /^fetch failed/.test(r.note) ? ' (not deployed, or no CORS header)' : '';
+            add('representation', 'REPRESENTATION_UNCHECKED', 'info', `${esc(label)}: ${esc(r.note)}${hint}`, 0);
         }
-    }
+    });
 
     // Optional: render the manifest with the reference rules and compare (SPEC §13.12.3, MAY)
-    const md = reps.find(r => isObject(r) && typeof json.domain === 'string' && r.href === T.markdownUrl(T.normalizeDomain(json.domain)));
+    const fileDomain = T.normalizeDomainSafe(json.domain);
+    const md = fileDomain ? reps.find(r => isObject(r) && r.href === T.markdownUrl(fileDomain)) : null;
     if (md && typeof json.entity === 'string' && typeof md.sha256 === 'string') {
         let local = null;
         try { local = await T.sha256Hex(T.renderMarkdown(json)); } catch (e) { local = null; }
@@ -1211,31 +1215,32 @@ async function runNetworkChecks(json, report) {
             local === md.sha256.toLowerCase() ? 'Rendering this manifest with the reference rules (arp_cli render-md) gives the declared SHA-256'
                 : 'Rendering this manifest with the reference rules gives a different SHA-256. Informational: the published file decides; key order or a different renderer can cause this', 0);
     }
-
-    return trust;
 }
 
-function renderTrust(trust, json) {
+function renderTrust(trust, json, command) {
     const box = document.getElementById('trust-box');
-    const sig = isObject(json._arp_signature) ? json._arp_signature : {};
-    const levelClass = trust.level === 'CRYPTOGRAPHIC' ? 'level-cryptographic'
-        : trust.level === 'INVALID' ? 'level-invalid'
-        : trust.level === 'UNSIGNED' ? 'level-unsigned' : '';
-    const label = trust.level === 'ERROR' ? 'ERROR (not checked)' : trust.level;
-    const domain = retrieval ? retrieval.domain : (T.normalizeDomain(document.getElementById('opt-domain').value) || json.domain || '');
+    const sig = isObject(json) && isObject(json._arp_signature) ? json._arp_signature : {};
+    const levelClass = trust.status === 'CRYPTOGRAPHIC' ? 'level-cryptographic'
+        : trust.status === 'INVALID' ? 'level-invalid'
+        : trust.status === 'UNSIGNED' ? 'level-unsigned' : '';
+    const label = trust.status === 'ERROR' ? 'ERROR (not checked)' : trust.status;
     const explanation = T.explainResult(trust, {
-        domain: domain,
-        fileDomain: json.domain,
+        domain: trust.domain || '',
+        fileDomain: isObject(json) ? json.domain : undefined,
         expiresAt: sig.expires_at
     });
     const items = [];
-    if (trust.dnsName) items.push(`DNS name: ${code(trust.dnsName)}`);
+    if (trust.dns_name) items.push(`DNS name: ${code(trust.dns_name)}`);
     if (trust.method === 'local_public_key') items.push('Method: offline check with the entered public key (no DNS request)');
-    if (trust.method === 'dns' && trust.dnssec !== null) {
+    if (trust.method === 'dns' && trust.dnssec !== null && trust.dnssec !== undefined) {
         items.push(trust.dnssec ? 'DNSSEC: validated by the resolver (AD flag set)' : 'DNSSEC: not validated (AD flag not set)');
     }
     if (!retrieval && trust.method === 'dns') items.push('Pasted file: the DNS name is built from the ' + (document.getElementById('opt-domain').value.trim() ? 'entered domain' : 'domain field') + '; fetch the file from its URL to bind it to the retrieval domain');
-    trust.notes.forEach(n => items.push(esc(n)));
+    (trust.notes || []).forEach(n => items.push(esc(n)));
+    (trust.warnings || []).forEach(w => items.push(esc(w)));
+    if (trust.detail && (trust.status === 'INVALID' || trust.status === 'ERROR')) items.push(`Detail: ${esc(trust.detail)}`);
+    const cli = command || (retrieval ? 'arp_cli verify ' + retrieval.url : 'arp_cli verify FILE');
+    items.push(`Same result as ${code(cli)} v${esc(T.CLI_VERSION)}: ${code(trust.status + ' (' + trust.reason + ')')}`);
 
     box.className = 'trust-box ' + levelClass;
     box.innerHTML = `
@@ -1278,27 +1283,10 @@ function migrationItems(json, report) {
 }
 
 async function validate() {
-    const input = textarea.value.trim();
-    if (!input) {
+    const pasted = !retrieval;
+    const input = textarea.value;
+    if (pasted && !input.trim()) {
         alert('Please paste a reasoning.json file or fetch one from a URL.');
-        return;
-    }
-
-    let json;
-    try {
-        json = JSON.parse(input);
-    } catch (e) {
-        showError('Invalid JSON', `Parse error: ${e.message}`);
-        return;
-    }
-    if (!isObject(json)) {
-        showError('Invalid file', 'reasoning.json must be a JSON object.');
-        return;
-    }
-
-    const sizeKB = new Blob([input]).size / 1024;
-    if (sizeKB > 100) {
-        showError('File too large', `reasoning.json exceeds the 100 KB limit (${sizeKB.toFixed(1)} KB).`);
         return;
     }
 
@@ -1309,15 +1297,87 @@ async function validate() {
     document.getElementById('trust-box').className = 'trust-box';
     document.getElementById('trust-box').textContent = 'Checking signature …';
 
-    const report = runChecks(json, input);
-    let trust;
+    // arp_cli verify and lint on the same input (script.js ports of the CLI): a pasted
+    // text counts as a local file, a fetched file as its URL.
+    const mdInput = document.getElementById('opt-md');
+    const localFile = pasted && mdInput && mdInput.files && mdInput.files[0] ? mdInput.files[0] : null;
+    const options = {
+        source: pasted ? 'file' : 'url',
+        text: pasted ? input : undefined,
+        url: pasted ? undefined : retrieval.url,
+        bytes: pasted ? undefined : retrieval.bytes,
+        contentType: pasted ? undefined : retrieval.contentType,
+        domain: document.getElementById('opt-domain').value.trim() || undefined,
+        publicKey: document.getElementById('opt-pubkey').value.trim() || undefined,
+        localMarkdown: localFile ? new Uint8Array(await localFile.arrayBuffer()) : undefined,
+        localMarkdownName: localFile ? localFile.name : undefined
+    };
+    let outcome;
     try {
-        trust = await runNetworkChecks(json, report);
+        outcome = await T.verifySource(options);
     } catch (e) {
-        trust = { level: 'ERROR', reason: 'error', dnsName: null, dnssec: null, method: null, notes: [e.message] };
+        const result = Object.assign(T.newVerifyResult(null), { status: 'ERROR', level: 'ERROR', reason: 'verifier_error', detail: e.message });
+        outcome = { result, representations: [], data: null, parseError: null, text: null };
     }
-    renderTrust(trust, json);
+    const lintOutcome = T.lintSource(pasted ? { text: input } : { bytes: retrieval.bytes });
+
+    // The page's own checks read the parsed object. Duplicate member names and values
+    // outside I-JSON are reported above (verify: INVALID; lint: errors); here the last
+    // of several equal names is read, as JSON parsers do.
+    let json = null, parseFailure = null;
+    try {
+        const text = outcome.text !== null && outcome.text !== undefined ? outcome.text : T.textAsFile(input);
+        json = T.parseJsonCollecting(text).data;
+    } catch (e) {
+        parseFailure = e;
+    }
+    if (parseFailure || !isObject(json)) {
+        const reason = parseFailure && parseFailure.reason;
+        const title = !parseFailure ? 'Invalid file' : reason === 'non_ijson' ? 'Not I-JSON' : reason === 'not_utf8' ? 'Not UTF-8' : 'Invalid JSON';
+        showError(title, parseFailure ? parseFailure.message : 'reasoning.json must be a JSON object.');
+        renderTrust(outcome.result, json);
+        renderCliLint(lintOutcome);
+        return;
+    }
+
+    const report = runChecks(json, pasted ? input : outcome.text, lintOutcome);
+    await applyVerifyOutcome(json, report, outcome);
+    renderTrust(outcome.result, json);
     displayResults(report, migrationItems(json, report));
+}
+
+function renderChecks(group, checks) {
+    const icons = { pass: ['check-pass', '✓'], warn: ['check-warn', '⚠'], fail: ['check-fail', '✗'], info: ['check-info', 'ℹ'] };
+    document.getElementById('checks-' + group).innerHTML = checks.filter(c => c.group === group).map(c => {
+        const [iconClass, icon] = icons[c.status];
+        return `
+            <div class="check-item">
+                <div class="check-icon ${iconClass}">${icon}</div>
+                <div class="check-detail">
+                    <strong>${esc(c.name)}</strong>
+                    <span>${c.detail}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// arp_cli lint result when the page's own checks cannot run (not loadable, not an object)
+function renderCliLint(lintOutcome) {
+    const checks = [];
+    const add = (name, status, detail) => checks.push({ group: 'cli', name, status, detail });
+    if (lintOutcome.ok) {
+        add('arp_cli lint equivalent', lintOutcome.errors ? 'fail' : (lintOutcome.warnings ? 'warn' : 'pass'),
+            `${lintOutcome.errors} error(s), ${lintOutcome.warnings} warning(s) — the result of ${code('arp_cli lint')} v${esc(T.CLI_VERSION)} for this file`);
+        for (const f of lintOutcome.findings) {
+            add(`${f.severity === 'error' ? 'ERROR' : 'WARNING'} ${f.rule}`, f.severity === 'error' ? 'fail' : 'warn',
+                `${code(f.path)} ${esc(f.message)}${f.excerpt ? `<span class="excerpt">${esc(f.excerpt)}</span>` : ''}`);
+        }
+    } else {
+        add('arp_cli lint equivalent', 'fail',
+            `${code('arp_cli lint')} v${esc(T.CLI_VERSION)} does not load this file (exit code 2): ${esc(lintOutcome.error.message)}`);
+    }
+    renderChecks('cli', checks);
 }
 
 function showError(title, message) {
@@ -1331,12 +1391,19 @@ function showError(title, message) {
     document.getElementById('trust-box').className = 'trust-box';
     document.getElementById('trust-box').textContent = '';
 
-    ['schema', 'provenance', 'wording', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'representation', 'diagnostics', 'authority'].forEach(id => {
+    GROUPS.forEach(id => {
         document.getElementById('checks-' + id).innerHTML = '';
     });
 
     document.getElementById('cta-box').style.display = 'none';
     document.getElementById('migration-banner').style.display = 'none';
+}
+
+// A URL that arp_cli verify would not load either (ERROR load_failed)
+function showLoadFailure(title, detail, url) {
+    showError(title, detail);
+    const result = Object.assign(T.newVerifyResult(null), { status: 'ERROR', level: 'ERROR', reason: 'load_failed', detail: detail });
+    renderTrust(result, null, 'arp_cli verify ' + url);
 }
 
 function displayResults(report, migrations) {
@@ -1384,22 +1451,7 @@ function displayResults(report, migrations) {
         banner.style.display = 'none';
     }
 
-    const icons = { pass: ['check-pass', '✓'], warn: ['check-warn', '⚠'], fail: ['check-fail', '✗'], info: ['check-info', 'ℹ'] };
-    ['schema', 'provenance', 'wording', 'identity', 'corrections', 'claims', 'limits', 'crypto', 'representation', 'diagnostics', 'authority'].forEach(group => {
-        const container = document.getElementById('checks-' + group);
-        container.innerHTML = checks.filter(c => c.group === group).map(c => {
-            const [iconClass, icon] = icons[c.status];
-            return `
-                <div class="check-item">
-                    <div class="check-icon ${iconClass}">${icon}</div>
-                    <div class="check-detail">
-                        <strong>${esc(c.name)}</strong>
-                        <span>${c.detail}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    });
+    GROUPS.forEach(group => renderChecks(group, checks));
 
     document.getElementById('cta-box').style.display = errors || score < 85 ? 'block' : 'none';
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
